@@ -179,7 +179,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | species         | VARCHAR(50)  | NULL                                       | 종                    |
 | sex             | VARCHAR(10)  | NULL                                       | 성별                   |
 | age             | INT          | NULL                                       | 나이                   |
-| missing_date    | DATE         | NOT NULL                                   | 실종일자                 |
+| missing_date    | DATETIME     | NOT NULL                                   | 실종일자                 |
 | missing_address | VARCHAR(255) | NOT NULL                                   | 실종장소                 |
 | detail          | TEXT         |  NULL                                      | 특이사항                 |
 | image_url       | VARCHAR(255) | NULL                                       | 실종 반려동물 대표사진  S3 URL |
@@ -195,6 +195,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | address             | VARCHAR(255) | NOT NULL                                             | 종                    |
 | detail              | TEXT         | NULL                                                 | 목격 상황 및 상태 설명(추가 추천) |
 | image_url           | VARCHAR(255) | NULL                                                 | 제보자가 찰영한 이미지 S3 URL  |
+| is_protected        | TINYINT(1)   | NOT NULL, DEFAULT 0                                  | 보호 여부 (0: 보호 중 아님, 1: 보호 중) |
 | created_at          | DATETIME     | DEFAULT CURRENT_TIMESTAMP                            | 제보 등록 일시             |
 | updated_at          | DATETIME     | DEFAULT CURRENT_TIMESTAMP                            | 제보 수정 일시             |
 

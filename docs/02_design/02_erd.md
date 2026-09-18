@@ -12,97 +12,7 @@
 사자그램 서비스의 7개 핵심 도메인 테이블과 결제 및 정기 구독을 위한 2개 테이블의 전체 구조도.
 
 ```mermaid
-erDiagram
-    MEMBER ||--|| MEMBER_DETAIL : "1:1 수직 분할"
-    MEMBER ||--o{ POST : "1:N 작성"
-    POST ||--o{ POST_HASHTAG : "1:N 태그 분할"
-    POST ||--o{ COMMENT : "1:N 댓글 작성"
-    MEMBER ||--o{ COMMENT : "1:N 댓글 작성"
-    MEMBER ||--o{ POST_LIKE : "1:N 좋아요"
-    POST ||--o{ POST_LIKE : "1:N 피드 좋아요"
-    MEMBER ||--o{ BOOKMARK : "1:N 보관"
-    POST ||--o{ BOOKMARK : "1:N 피드 보관"
-    MEMBER ||--o{ PAYMENT : "1:N 결제 이력"
-    MEMBER ||--o| SUBSCRIPTION : "1:1 VIP 정기 구독"
 
-    MEMBER {
-        bigint id PK "회원 고유 식별자"
-        varchar email "이메일 (UK)"
-        varchar password "암호화된 비밀번호"
-        varchar nickname "닉네임"
-        varchar profile_image "프로필 이미지 S3 URL"
-        varchar role "회원 권한 (ROLE_USER, ROLE_VIP, ROLE_ADMIN)"
-        datetime created_at "가입 일시"
-    }
-
-    MEMBER_DETAIL {
-        bigint member_id PK, FK "회원 기본 키"
-        text introduction "자기소개 한 줄"
-        varchar address "주소"
-        varchar marketing_agreed "마케팅 수신 동의 (Y/N)"
-    }
-
-    POST {
-        bigint id PK "피드 고유 식별자"
-        bigint member_id FK "작성자 회원 ID"
-        text content "피드 본문 텍스트"
-        varchar image_url "피드 첨부 이미지 S3 URL"
-        int like_count "좋아요 집계 수"
-        datetime created_at "등록 일시"
-        datetime updated_at "수정 일시"
-    }
-
-    POST_HASHTAG {
-        bigint id PK "해시태그 매핑 식별자"
-        bigint post_id FK "피드 게시글 ID"
-        varchar tag_name "해시태그 단어"
-    }
-
-    COMMENT {
-        bigint id PK "댓글 고유 식별자"
-        bigint post_id FK "피드 게시글 ID"
-        bigint member_id FK "작성자 회원 ID"
-        text content "댓글 내용"
-        datetime created_at "등록 일시"
-    }
-
-    POST_LIKE {
-        bigint id PK "좋아요 고유 식별자"
-        bigint member_id FK "좋아요 누른 회원 ID"
-        bigint post_id FK "피드 게시글 ID"
-        datetime created_at "등록 일시"
-    }
-
-    BOOKMARK {
-        bigint id PK "북마크 고유 식별자"
-        bigint member_id FK "보관한 회원 ID"
-        bigint post_id FK "피드 게시글 ID"
-        datetime created_at "등록 일시"
-    }
-
-    PAYMENT {
-        bigint id PK "결제 고유 식별자"
-        bigint member_id FK "결제 회원 ID"
-        varchar imp_uid "결제 승인 고유번호"
-        varchar merchant_uid "상점 고유 주문번호 (UK)"
-        int amount "결제 금액"
-        varchar status "결제 상태 (READY, PAID, FAILED, CANCELLED)"
-        varchar pay_method "결제 수단 (card, trans 등)"
-        datetime paid_at "결제 완료 일시"
-        datetime created_at "등록 일시"
-    }
-
-    SUBSCRIPTION {
-        bigint id PK "구독 고유 식별자"
-        bigint member_id FK "구독 회원 ID (UK)"
-        varchar customer_uid "정기결제 빌링키"
-        varchar plan_name "구독 플랜명 (VIP_MONTHLY)"
-        int price "월 결제 금액"
-        varchar status "구독 상태 (ACTIVE, PAUSED, CANCELLED)"
-        datetime next_billing_at "다음 자동 결제 예정일"
-        datetime started_at "구독 시작일"
-        datetime ended_at "구독 종료일"
-    }
 ```
 
 ---
@@ -214,11 +124,13 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | ended_at        | DATETIME | NULL                                       | 구독 해지 완료일                         |
 
 ### 1.2.10 follow (팔로우)
-| 컬럼명        | 데이터 타입   | 제약 조건                                      | 설명        |
-|:-----------|:---------|:-------------------------------------------|:----------|
-| member_id  | BIGINT   | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자 |
-| pet_id     | BIGINT   | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자 |
-| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 팔로우 일시    |
+| 컬럼명        | 데이터 타입   | 제약 조건                                      | 설명          |
+|:-----------|:---------|:-------------------------------------------|:------------|
+| id  | BIGINT   | PK, AUTO_INCREMENT                         | 팔로우 식별자     |
+| member_id  | BIGINT   | NOT NULL, FK (member.id ON DELETE CASCADE) | 팔로우 하는 회원   |
+| pet_id     | BIGINT   | NOT NULL, FK (pet.id ON DELETE CASCADE)    | 팔로우 대상 펫 ID |
+| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 팔로우 일시      |
+UNIQUE KEY uk_member_pet_follow (member_id, pet_id)
 
 ### 1.2.11 notifications(알림)
 | 컬럼명               | 데이터 타입       | 제약 조건                                      | 설명                                            |

@@ -99,29 +99,29 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 - 고유 제약조건: UNIQUE KEY `uk_member_post_bookmark` (`member_id`, `post_id`)
 
 ### 1.2.8 payment (결제 이력)
-| 컬럼명           | 데이터 타입       | 제약 조건                                      | 설명                                     |
-|:--------------|:-------------|:-------------------------------------------|:---------------------------------------|
-| id            | BIGINT       | PK, AUTO_INCREMENT                         | 결제 내역 식별자                              |
-| member_id     | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 결제 회원 ID                               |
-| target_pet_id | BIGINT       | NOT NULL, FK                               | 후원할 동물                                 |
-| imp_uid       | VARCHAR(100) | NULL                                       | 결제 승인 고유 번호                            |
-| merchant_uid  | VARCHAR(100) | NOT NULL, UNIQUE                           | 자체 생성 주문 식별자 (예: ORD_20260917_001)     |
-| amount        | INT          | NOT NULL                                   | 결제 금액                                  |
-| pay_type      | VARCHAR(30)  | NOT NULL                                   | 결제 유형(간식쏘기, 펫클럽 구독)                    |
-| status        | VARCHAR(20)  | NOT NULL                                   | 결제 상태 (READY, PAID, FAILED, CANCELLED) |
-| pay_method    | VARCHAR(30)  | NOT NULL                                   | 결제 수단 (card, point 등)                  |
-| paid_at       | DATETIME     | NULL                                       | 실제 결제 완료 시각                            |
-| created_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 결제 요청 시각                               |
+| 컬럼명              | 데이터 타입       | 제약 조건                                      | 설명                                     |
+|:-----------------|:-------------|:-------------------------------------------|:---------------------------------------|
+| id               | BIGINT       | PK, AUTO_INCREMENT                         | 결제 내역 식별자                              |
+| member_id        | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 결제 회원 ID                               |
+| target_member_id | BIGINT       | NOT NULL, FK                               | 후원할 동물                                 |
+| imp_uid          | VARCHAR(100) | NULL                                       | 결제 승인 고유 번호                            |
+| merchant_uid     | VARCHAR(100) | NOT NULL, UNIQUE                           | 자체 생성 주문 식별자 (예: ORD_20260917_001)     |
+| amount           | INT          | NOT NULL                                   | 결제 금액                                  |
+| pay_type         | VARCHAR(30)  | NOT NULL                                   | 결제 유형(간식쏘기, 펫클럽 구독)                    |
+| status           | VARCHAR(20)  | NOT NULL                                   | 결제 상태 (READY, PAID, FAILED, CANCELLED) |
+| pay_method       | VARCHAR(30)  | NOT NULL                                   | 결제 수단 (card, point 등)                  |
+| created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 결제 요청 시각                               |
 
 ### 1.2.9 subscription (펫클럽 정기 후원)
 | 컬럼명              | 데이터 타입 | 제약 조건                                      | 설명                                |
 |:-----------------| :--- |:-------------------------------------------|:----------------------------------|
 | id               | BIGINT | PK, AUTO_INCREMENT                         | 구독 식별자                            |
 | member_id        | BIGINT | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자                         |
-| target_member_id | BIGINT | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 대상 펫 식별자                       |
+| target_member_id | BIGINT | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 대상 회원 식별자                      |
 | customer_uid     | VARCHAR(100) | NOT NULL                                   | 정기 결제 카드 빌링키                      |
 | plan_name        | VARCHAR(50) | NOT NULL, DEFAULT 'VIP_MONTHLY'            | 구독 플랜 이름                          |
 | price            | INT | NOT NULL                                   | 매월 정기 결제 금액 (예: 9,900원)           |
+| total_months     | INT | NOT NULL, DEFAULT 1                        | 누적 구독 개월 수                        |
 | status           | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE'                 | 구독 상태 (ACTIVE, PAUSED, CANCELLED) |
 | next_billing_at  | DATETIME | NOT NULL                                   | 다음 자동 결제 예정일                      |
 | started_at       | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 최초 구독 시작일                         |
@@ -140,17 +140,17 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | 컬럼명               | 데이터 타입       | 제약 조건                                      | 설명                                            |
 |:------------------|:-------------|:-------------------------------------------|:----------------------------------------------|
 | id                | BIGINT       | PK, AUTO_INCREMENT                         | 알림 식별자                                        |
-| member_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자                                     |
+| member_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 회원 식별자                                        |
 | notification_type | VARCHAR(30)  | NOT NULL                                   | 알림 유형(FOLLOW, COMMENT, DONATION, SUBSCRIPTION |
 | al_content        | VARCHAR(255) | NOT NULL                                   | 알림 메시지 내용                                     |
-| created_at        | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 알림 발생 시각                                              |
+| is_checked        | TINYINT(1) | NOT NULL, DEFAULT 0                                  | 알림 확인 여부 (0: 안읽음, 1: 읽음)                                   |
+| created_at        | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 알림 발생 시각                                      |
 
 ### 1.2.12 attendances(출석체크)
 | 컬럼명        | 데이터 타입   | 제약 조건                                      | 설명        |
 |:-----------|:---------|:-------------------------------------------|:----------|
 | id         | BIGINT   | PK, AUTO_INCREMENT                         | 출석 기록 식별자 |
 | member_id  | BIGINT   | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자 |
-| check_date | DATE     | NOT NULL                                   | 출석일자      |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 실제 출석 버튼 클릭 일시          |
 
 ### 1.2.13 chat_room(1:1 채팅방)
@@ -183,7 +183,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | missing_address | VARCHAR(255) | NOT NULL                                   | 실종장소                 |
 | detail          | TEXT         |  NULL                                      | 특이사항                 |
 | image_url       | VARCHAR(255) | NULL                                       | 실종 반려동물 대표사진  S3 URL |
-| created_at      | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 매시지 전송 시각            |
+| created_at      | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 작성 시각                |
 | updated_at      | DATETIME     | DEFAULT CURRENT_TIMESTAMP                                       | 게시글 수정 일시            |
 
 ### 1.2.16 missing_pet_report(실종 동물 목격 제보)
@@ -192,15 +192,15 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | id                  | BIGINT       | PK, AUTO_INCREMENT                                   | 실종 신고 게시글 고유 ID      |
 | missing_pet_post_id | BIGINT       | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE) | 대상 실종 신고 게시글 ID      |
 | member_id           | BIGINT       | NOT NULL, FK(member.id ON DELETE CASCADE)            | 제보자 회원 ID            |
-| address             | VARCHAR(255) | NOT NULL                                             | 종                    |
+| address             | VARCHAR(255) | NOT NULL                                             | 목격 장소                |
 | detail              | TEXT         | NULL                                                 | 목격 상황 및 상태 설명(추가 추천) |
 | image_url           | VARCHAR(255) | NULL                                                 | 제보자가 찰영한 이미지 S3 URL  |
 | created_at          | DATETIME     | DEFAULT CURRENT_TIMESTAMP                            | 제보 등록 일시             |
 | updated_at          | DATETIME     | DEFAULT CURRENT_TIMESTAMP                            | 제보 수정 일시             |
 
-### 1.2.17
-| 컬럼명     | 데이터 타입      | 제약 조건                                                | 설명          |
-|:--------|:------------|:-----------------------------------------------------|:------------|
-| id      | BIGINT      | PK, AUTO_INCREMENT                                   | 해시태그 고유 식별자 |
-| name    | VARCHAR(50) | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE) | 헤시태크 키워드    |
-| post_id | BIGINT      | NOT NULL, FK(post_main.id ON DELETE CASCADE)         | 사용된 게시글 식별자 |
+### 1.2.17 (해시태그)
+| 컬럼명     | 데이터 타입      | 제약 조건                                               | 설명          |
+|:--------|:------------|:----------------------------------------------------|:------------|
+| id      | BIGINT      | PK, AUTO_INCREMENT                                  | 해시태그 고유 식별자 |
+| name    | VARCHAR(50) | NOT NULL, FK                                        | 헤시태크 키워드    |
+| post_id | BIGINT      | NOT NULL, FK(post_main.id ON DELETE CASCADE)        | 사용된 게시글 식별자 |

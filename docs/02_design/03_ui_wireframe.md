@@ -37,6 +37,7 @@
 ## 1.2 주요 화면별 명세
 
 ### 1.2.1 로그인 및 회원가입 화면 (`/login`, `/signup`)
+<img src="../images/login&signup.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 로고 및 헤더: 펫토리 서비스 로고 및 환영 문구
@@ -52,6 +53,7 @@
   - 로그인 정보가 일치하지 않으면 오류를 표시하고, 이용 제한 상태(`BLOCKED`)인 계정은 서비스 이용 제한 안내를 표시한다.
 
 ### 1.2.2 비밀번호 찾기 화면 (`/findPw`)
+<img src="../images/findPw.png" width="500" alt="">
 
 - 입력 데이터 및 검증 규칙 (Input Data & Validation):
   - 사용자 아이디(이메일): 필수 입력 항목, 공백 제출 제한
@@ -60,6 +62,7 @@
   - 취소하기 버튼 클릭시 로그인 페이지로 이동한다.
 
 ### 1.2.3 메인 피드 목록 화면 (`/main`)
+<img src="../images/main.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 사이드 바 영역 : 서비스 타이틀, 인기펫 랭킹, 분실동물 찾기, 산책 친구, QnA 게시판, 1대1 채팅, 마이페이지
@@ -77,6 +80,7 @@
 
 
 ### 1.2.4 피드 상세 조회 및 댓글 모달 화면 (`/main/{postId}`)
+<img src="../images/maindetail&reply.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 좌측 영역: 순서대로 넘겨 볼 수 있는 피드 이미지, 현재 이미지 위치 표시
@@ -91,6 +95,7 @@
   - 구독 권한이 없으면 댓글을 포함한 상세 내용을 노출하지 않고 해당 작성자의 펫클럽 가입 화면으로 안내한다. 직접 URL로 접근한 경우에도 같은 기준을 적용한다.
 
 ### 1.2.5 신규 피드 작성 및 수정 화면 (`/posts/new`, `/posts/{postId}/edit`)
+<img src="../images/postsnew&edit.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 상단 바: 작성 취소 버튼, 게시하기 또는 수정 완료 버튼
@@ -109,6 +114,8 @@
   - 작성 중 취소하거나 화면을 떠나는 경우 입력 내용이 사라질 수 있음을 확인한다.
 
 ### 1.2.6 마이페이지·회원 프로필 및 북마크 화면 (`/profile/{memberId}`)
+<img src="../images/mypage.png" width="500" alt="">
+<img src="../images/profilepage.png.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 프로필 헤더: 프로필 정보(사진/닉네임/아이디/소개글), 게시글/팔로워/팔로잉 수
@@ -129,6 +136,8 @@
   - 본인 프로필에서는 자신을 팔로우하거나 후원·구독하는 버튼을 표시하지 않는다.
 
 ### 1.2.7 간식 후원·펫클럽 구독 및 결제 관리 화면 (`/donate/{memberId}`, `/membership/{memberId}`, `/payments/{memberId}`)
+<img src="../images/donate&subscribe.png" width="500" alt="">
+<img src="../images/payments.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 후원 대상 영역: 대상 회원의 프로필 사진·닉네임, 후원·구독하기 선택 탭
@@ -149,6 +158,7 @@
   - 카드번호·카드사 표시 정보가 ERD에 없으므로 등록 카드 상세 영역은 두지 않는다. 결제 인증은 결제창에서 진행한다. - 보류
 
 ### 1.2.8 팔로워 및 팔로잉 목록 화면 (`/{memberId}/followers`, `/{memberId}/following`)
+<img src="../images/follow&following.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 상단 영역: 조회 대상 회원의 닉네임, 팔로워·팔로잉 탭, 각 목록의 인원수
@@ -159,6 +169,7 @@
   - 회원 프로필을 선택하면 해당 회원 화면으로 이동한다. 목록이 비어 있으면 안내 문구를 표시한다.
 
 ### 1.2.9 알림 화면 (`/notifications`)
+<img src="../images/notification.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 알림 목록: 알림 유형, 알림 내용, 발생 시간, 읽음·안읽음 표시
@@ -169,6 +180,7 @@
   - 알림 확인 시 `is_checked`를 읽음으로 변경하고 안읽음 수를 갱신한다.
 
 ### 1.2.10 1:1 채팅 목록 및 대화 화면 (`/chat`, `/chat/{roomId}`)
+<img src="../images/chatting.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 좌측 채팅방 목록: 상대 회원의 프로필 사진·닉네임, 마지막 메시지, 마지막 메시지 시간
@@ -185,6 +197,7 @@
   - 참여자가 아닌 회원은 직접 URL로 접근해도 대화를 볼 수 없다. 읽음 여부·미확인 메시지 수·사진 첨부는 현재 채팅 메시지 컬럼에 없어 포함하지 않는다.
 
 ### 1.2.11 인기펫 랭킹 화면 (`/ranking`)
+<img src="../images/ranking.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data): 랭킹에 등재된 사용자의 닉네임/아이디/팔로워 수
 - 화면 제어 및 권한 규칙 (Behavior Rules):
@@ -192,6 +205,8 @@
   - 사이드 바 및 상단영역 요소 클릭시 요소에 해당하는 게시판으로 이동
 
 ### 1.2.12 실종 반려동물 목록 및 상세 화면 (`/missing-pets`, `/missing-pets/{missingPetPostId}`)
+<img src="../images/missing-pet-main.png" width="500" alt="">
+<img src="../images/missing-pet-detail.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 목록 상단 영역: 실종 장소·동물 종 검색 조건, 실종 신고 작성 버튼, 목록·지도 전환
@@ -210,6 +225,8 @@
   - 제보가 없으면 첫 제보 안내를 표시하며, 회원의 비공개 주소·이메일은 상세 화면에 표시하지 않는다.
 
 ### 1.2.13 실종 신고 및 목격 제보 작성·수정 화면 (`/missing-pets/new`, `/missing-pets/{missingPetPostId}/edit`, `/missing-pets/{missingPetPostId}/reports/new`, `/missing-pets/{missingPetPostId}/reports/{reportId}/edit`)
+<img src="../images/missing-pet-regist.png" width="500" alt="">
+<img src="../images/missing-pet-report.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 실종 신고 입력 폼: 동물 이름, 종, 성별, 나이, 실종일자, 실종 장소, 특이사항, 대표 사진 한 장
@@ -227,6 +244,7 @@
   - 등록·수정 완료 후 해당 실종 신고 상세 화면으로 돌아가 변경 내용을 표시한다. 저장 실패 시 입력 내용을 유지한다.
 
 ### 1.2.14 QnA 페이지 목록/상세 화면 (`/qna` , `/qna/{qnaId}` )
+<img src="../images/qna.png" width="500" alt="">
 
 - 출력 데이터 항목 (Output Data):
   - 목록 영역: QnA 게시판 배너, 검색 바, QnA 게시글 목록, 조회순/최신순 필터
@@ -242,6 +260,7 @@
     - 글 작성하기, 후원하기 및 댓글 작성 접근 시 HttpSession 검증 후 로그인 페이지 이동
 
 ### 1.2.15 QnA 작성/수정 화면 (POST `/qna/write`, `/qna/edit`)
+<img src="../images/qna-write&edit.png" width="500" alt="">
 
 - 입력 데이터 및 검증 규칙 (Input Data & Validation):
   - 제목: 필수 입력 항목, 공백 제출 제한, 최대 50자 이하

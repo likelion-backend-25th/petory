@@ -353,18 +353,19 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                     | 매시지 전송 시각 |
 
 ### 1.2.13 missing_pet_post(실종 신고 게시글)
-| 컬럼명             | 데이터 타입        | 제약 조건                                       | 설명                   |
-|:----------------|:--------------|:--------------------------------------------|:---------------------|
-| id              | BIGINT        | PK, AUTO_INCREMENT                          | 실종 신고 게시글 고유 ID      |
-| member_id       | BIGINT        | NOT NULL, FK (member.id ON DELETE CASCADE)  | 작성자 회원 ID            |
-| missing_date    | DATE          | NOT NULL                                    | 실종일자                 |
-| missing_address | VARCHAR(255)  | NOT NULL                                    | 실종장소                 |
-| detail          | TEXT          | NULL                                        | 특이사항                 |
-| image_url       | VARCHAR(255)  | NULL                                        | 실종 반려동물 대표사진  S3 URL |
-| latitude        | DECIMAL(10,7) | NULL                                        | 위도                   |
-| longitude       | DECIMAL(10,7) | NULL                                        | 경도                   |
-| created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                   | 작성 시각                |
-| updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                   | 게시글 수정 일시            |
+| 컬럼명             | 데이터 타입        | 제약 조건                                      | 설명                            |
+|:----------------|:--------------|:-------------------------------------------|:------------------------------|
+| id              | BIGINT        | PK, AUTO_INCREMENT                         | 실종 신고 게시글 고유 ID               |
+| member_id       | BIGINT        | NOT NULL, FK (member.id ON DELETE CASCADE) | 작성자 회원 ID                     |
+| missing_date    | DATE          | NOT NULL                                   | 실종일자                          |
+| missing_address | VARCHAR(255)  | NOT NULL                                   | 실종장소                          |
+| detail          | TEXT          | NULL                                       | 특이사항                          |
+| image_url       | VARCHAR(255)  | NULL                                       | 실종 반려동물 대표사진  S3 URL          |
+| status          | VARCHAR(20)   | NOT NULL                                   | 상태(MISSING, FOUND, CANCELLED) |
+| latitude        | DECIMAL(10,7) | NULL                                       | 위도                            |
+| longitude       | DECIMAL(10,7) | NULL                                       | 경도                            |
+| created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 작성 시각                         |
+| updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 게시글 수정 일시                     |
 
 ### 1.2.14 missing_pet_report(실종 동물 목격 제보)
 | 컬럼명                 | 데이터 타입        | 제약 조건                                                 | 설명                            |
@@ -375,8 +376,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | address             | VARCHAR(255)  | NOT NULL                                              | 목격 장소                         |
 | detail              | TEXT          | NULL                                                  | 목격 상황 및 상태 설명(추가 추천)          |
 | image_url           | VARCHAR(255)  | NULL                                                  | 제보자가 찰영한 이미지 S3 URL           |
-| sight_at            | DATETIME      | NOT NULL   , DEFAULT 'MISSING'                        | 실제 동물을 목격한 일시                 |
-| status              | VARCHAR(20)   | NOT NULL                                              | 상태(MISSING, FOUND, CANCELLED) |
+| sight_at            | DATETIME      | NOT NULL                                              | 실제 동물을 목격한 일시                 |
 | latitude            | DECIMAL(10,7) | NULL                                                  | 위도                            |
 | longitude           | DECIMAL(10,7) | NULL                                                  | 경도                            |
 | created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                             | 제보 등록 일시                      |

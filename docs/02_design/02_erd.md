@@ -273,7 +273,6 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 - 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `post_id`, `interaction_type`)
 - 데이터의 중복을 차단하기 위해 unique key설정
 
-
 ### 1.2.6 payment (결제 이력)
 | 컬럼명              | 데이터 타입       | 제약 조건                                      | 설명                                     |
 |:-----------------|:-------------|:-------------------------------------------|:---------------------------------------|
@@ -283,10 +282,11 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | imp_uid          | VARCHAR(100) | NULL                                       | 결제 승인 고유 번호                            |
 | merchant_uid     | VARCHAR(100) | NOT NULL, UNIQUE                           | 자체 생성 주문 식별자 (예: ORD_20260917_001)     |
 | amount           | INT          | NOT NULL                                   | 결제 금액                                  |
-| pay_type         | VARCHAR(30)  | NOT NULL                                   | 결제 유형(간식쏘기, 펫클럽 구독)                    |
+| category         | VARCHAR(30)  | NOT NULL                                   | 결제 상품 (간식 쏘기, 펫 클럽 구독)                 | 
 | status           | VARCHAR(20)  | NOT NULL                                   | 결제 상태 (READY, PAID, FAILED, CANCELLED) |
-| pay_method       | VARCHAR(30)  | NOT NULL                                   | 결제 수단 (card, point 등)                  |
+| pay_type         | VARCHAR(30)  | NOT NULL                                   | 결제 수단 (card, point 등)                  |
 | created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 결제 요청 시각                               |
+| completed_at     | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 결제 완료 시각                               |
 
 ### 1.2.7 subscription_plan (정기 후원 플랜)
 | 컬럼명         | 데이터 타입      | 제약 조건                                      | 설명               |
@@ -299,17 +299,18 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 - 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `plan_name`)
 
 ### 1.2.8 subscription (펫클럽 정기 후원)
-| 컬럼명              | 데이터 타입 | 제약 조건                                      | 설명                                |
-|:-----------------| :--- |:-------------------------------------------|:----------------------------------|
-| id               | BIGINT | PK, AUTO_INCREMENT                         | 구독 식별자                            |
-| member_id        | BIGINT | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자                         |
-| target_member_id | BIGINT | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 대상 회원 식별자                      |
+| 컬럼명              | 데이터 타입       | 제약 조건                                      | 설명                                |
+|:-----------------|:-------------|:-------------------------------------------|:----------------------------------|
+| id               | BIGINT       | PK, AUTO_INCREMENT                         | 구독 식별자                            |
+| member_id        | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자                         |
+| target_member_id | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 대상 회원 식별자                      |
+| plan_id          | VARCHAR(50)  | NOT NULL, DEFAULT 'VIP_MONTHLY'            | 구독 플랜 식별자                         |
 | customer_uid     | VARCHAR(100) | NOT NULL                                   | 정기 결제 카드 빌링키                      |
-| plan_name        | VARCHAR(50) | NOT NULL, DEFAULT 'VIP_MONTHLY'            | 구독 플랜 이름                          |
-| price            | INT | NOT NULL                                   | 매월 정기 결제 금액 (예: 9,900원)           |
-| status           | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE'                 | 구독 상태 (ACTIVE, PAUSED, CANCELLED) |
-| next_billing_at  | DATETIME | NOT NULL                                   | 다음 자동 결제 예정일                      |
-| created_at       | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 최초 구독 생성 시각                       |
+| status           | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                 | 구독 상태 (ACTIVE, PAUSED, CANCELLED) |
+| started_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 시작일                               |
+| ended_at         | DATETIME     | NULL                                       | 만료일                               |
+| next_billing_at  | DATETIME     | NULL                                       | 다음 자동 결제 예정일                      |
+| agreement        | TINYINT      | NOT NULL, DEFAULT 1                        | 자동결제 동의여부 (0: 비동의, 1: 동의)         |
 
 ### 1.2.9subscription_history (팔로우)
 | 컬럼명             | 데이터 타입   | 제약 조건                                            | 설명           |

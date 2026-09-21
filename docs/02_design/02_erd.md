@@ -13,193 +13,172 @@
 
 ```mermaid
 erDiagram
-    MEMBER ||--o{ PET : "owns"
-    MEMBER ||--o{ POST_MAIN : "writes"
-    MEMBER ||--o{ COMMENT : "writes"
-    MEMBER ||--o{ POST_LIKE : "likes"
-    MEMBER ||--o{ BOOKMARK : "bookmarks"
-    MEMBER ||--o{ PAYMENT : "pays"
-    MEMBER ||--o{ PAYMENT : "receives_payout"
-    MEMBER ||--o{ SUBSCRIPTION : "subscribes"
-    MEMBER ||--o{ SUBSCRIPTION : "receives_subscription"
-    MEMBER ||--o{ FOLLOW : "follower"
-    MEMBER ||--o{ FOLLOW : "following"
-    MEMBER ||--o{ NOTIFICATIONS : "receives"
-    MEMBER ||--o{ ATTENDANCES : "checks-in"
-    MEMBER ||--o{ CHAT_ROOM : "participates(member1)"
-    MEMBER ||--o{ CHAT_ROOM : "participates(member2)"
-    MEMBER ||--o{ CHAT_MESSAGE : "sends"
-    MEMBER ||--o{ MISSING_PET_POST : "writes"
-    MEMBER ||--o{ MISSING_PET_REPORT : "reports"
+    member ||--o{ post_main : "작성함 (1:N)"
+    member ||--o{ comment : "작성함 (1:N)"
+    member ||--o{ post_interaction : "인터랙션함 (1:N)"
+    member ||--o{ payment : "결제함 (1:N)"
+    member ||--o{ subscription_plan : "플랜생성함 (1:N)"
+    member ||--o{ subscription : "구독함 (1:N)"
+    member ||--o{ follow : "팔로우함 (1:N)"
+    member ||--o{ notifications : "알림받음 (1:N)"
+    member ||--o{ chat_room : "채팅참여함 (1:N)"
+    member ||--o{ chat_message : "메시지전송함 (1:N)"
+    member ||--o{ missing_pet_post : "실종신고함 (1:N)"
+    member ||--o{ missing_pet_report : "제보함 (1:N)"
 
-    POST_MAIN ||--o{ POST_IMAGE : "contains"
-    POST_MAIN ||--o{ COMMENT : "has"
-    POST_MAIN ||--o{ POST_LIKE : "liked_by"
-    POST_MAIN ||--o{ BOOKMARK : "bookmarked_by"
-    POST_MAIN ||--o{ POST_HASHTAG : "tagged_with"
+    post_main ||--o{ post_image : "포함함 (1:N)"
+    post_main ||--o{ comment : "달림 (1:N)"
+    post_main ||--o{ post_interaction : "받음 (1:N)"
 
-    CHAT_ROOM ||--o{ CHAT_MESSAGE : "contains"
+    missing_pet_post ||--o{ missing_pet_report : "제보받음 (1:N)"
+    chat_room ||--o{ chat_message : "포함함 (1:N)"
 
-    MISSING_PET_POST ||--o{ MISSING_PET_REPORT : "receives_reports"
-
-    MEMBER {
-        BIGINT id PK "AUTO_INCREMENT"
-        VARCHAR email "로그인 이메일 (UNIQUE)"
-        VARCHAR password "BCrypt 암호화 비밀번호"
+    member {
+        BIGINT id PK "회원 고유 식별자"
+        VARCHAR email "로그인 아이디 (이메일)"
+        VARCHAR password "BCrypt 암호화된 비밀번호"
         VARCHAR nickname "화면 표시용 닉네임"
-        VARCHAR intro "한줄 자기소개"
-        VARCHAR profile_image "프로필 사진 S3 URL"
-        VARCHAR address "회원 주소"
-        VARCHAR status "계정 상태 (ACTIVE, BLOCKED)"
-        VARCHAR role "권한 (ROLE_USER, ROLE_ADMIN)"
-        DATETIME created_at "계정 생성 일시"
-        DATETIME info_provide_agreement "개인정보 제공 동의 일시"
-    }
-
-    PET {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "소유 회원 ID (member.id 참조)"
-        VARCHAR species "반려동물 종"
-        VARCHAR name "반려동물 이름"
+        VARCHAR species "동물 종 카테고리"
         VARCHAR sex "성별"
         DATE birth_date "생년월일"
-        INT age "나이"
-        DATETIME created_at "등록 일시"
+        VARCHAR intro "한줄 자기소개"
+        VARCHAR profile_image "회원 프로필 사진 S3 URL"
+        VARCHAR address "회원주소"
+        VARCHAR status "계정 상태 (ACTIVE, BLOCKED)"
+        VARCHAR role "권한 (ROLE_USER, ROLE_VIP, ROLE_ADMIN)"
+        DATETIME created_at "계정 생성 일시"
+        DATETIME info_provide_agreement "개인정보 제3자 제공 동의 일시"
     }
 
-    POST_MAIN {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "작성자 회원 ID (member.id 참조)"
+    post_main {
+        BIGINT id PK "피드 게시글 고유 식별자"
+        BIGINT member_id FK "작성자 회원 ID"
         TEXT content "피드 본문 내용"
         VARCHAR bgm_url "배경음악 S3 URL"
-        TINYINT is_subscriber_only "구독자 전용 여부 (0:전체, 1:구독자)"
-        DATETIME created_at "최초 작성 일시"
-        DATETIME updated_at "최종 수정 일시"
+        TINYINT is_subscriber_only "유료 구독자 전용 여부"
+        TEXT hashtags "해시태그 문자열"
+        DATETIME created_at "피드 최초 작성 일시"
+        DATETIME updated_at "피드 최종 수정 일시"
     }
 
-    POST_IMAGE {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT post_id FK "피드 게시글 ID (post_main.id 참조)"
-        VARCHAR image_url "첨부 이미지 S3 URL"
-        INT sort_order "슬라이드 순서 (DEFAULT 0)"
+    post_image {
+        BIGINT id PK "이미지 식별자"
+        BIGINT post_id FK "피드 게시글 식별자"
+        VARCHAR image_url "피드 첨부 이미지 S3 URL"
+        INT sort_order "이미지 슬라이드 순서"
     }
 
-    COMMENT {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT post_id FK "피드 게시글 ID (post_main.id 참조)"
-        BIGINT member_id FK "댓글 작성자 ID (member.id 참조)"
-        TEXT content "댓글 내용"
+    comment {
+        BIGINT id PK "댓글 고유 식별자"
+        BIGINT post_id FK "댓글이 달린 피드 식별자"
+        BIGINT member_id FK "댓글 작성자 식별자"
+        TEXT content "댓글 텍스트 내용"
         DATETIME created_at "댓글 등록 일시"
     }
 
-    POST_LIKE {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "좋아요 회원 ID (member.id 참조)"
-        BIGINT post_id FK "피드 게시글 ID (post_main.id 참조)"
+    post_interaction {
+        BIGINT id PK "좋아요/북마크 식별자"
+        BIGINT member_id FK "회원 ID"
+        BIGINT post_id FK "대상 피드 게시글 ID"
+        VARCHAR type "인터랙션 유형(LIKE, BOOKMARK)"
         DATETIME created_at "등록 일시"
     }
 
-    BOOKMARK {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "북마크 회원 ID (member.id 참조)"
-        BIGINT post_id FK "피드 게시글 ID (post_main.id 참조)"
-        DATETIME created_at "등록 일시"
-    }
-
-    PAYMENT {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "결제 회원 ID (member.id 참조)"
-        BIGINT target_member_id FK "대상 회원 ID (member.id 참조)"
+    payment {
+        BIGINT id PK "결제 내역 식별자"
+        BIGINT member_id FK "결제 회원 ID"
+        BIGINT target_member_id FK "후원 대상 동물 유저 ID"
         VARCHAR imp_uid "결제 승인 고유 번호"
-        VARCHAR merchant_uid "주문 식별자 (UNIQUE)"
+        VARCHAR merchant_uid "자체 생성 주문 식별자"
         INT amount "결제 금액"
-        VARCHAR pay_type "결제 유형"
-        VARCHAR status "결제 상태 (READY, PAID, FAILED, CANCELLED)"
-        VARCHAR pay_method "결제 수단"
+        VARCHAR category "결제 상품"
+        VARCHAR status "결제 상태"
+        VARCHAR pay_type "결제 수단"
         DATETIME created_at "결제 요청 시각"
+        DATETIME completed_at "결제 완료 시각"
     }
 
-    SUBSCRIPTION {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "구독 신청 회원 ID (member.id 참조)"
-        BIGINT target_member_id FK "구독 대상 회원 ID (member.id 참조)"
-        VARCHAR customer_uid "정기 결제 빌링키"
+    subscription_plan {
+        BIGINT id PK "구독 플랜 식별자"
+        BIGINT member_id FK "해당 플랜을 만든 회원 식별자"
         VARCHAR plan_name "플랜 이름"
-        INT price "매월 결제 금액"
-        INT total_months "누적 구독 개월 수 (DEFAULT 1)"
-        VARCHAR status "구독 상태 (ACTIVE, PAUSED, CANCELLED)"
-        DATETIME next_billing_at "다음 결제 예정일"
-        DATETIME started_at "최초 구독 시작일"
-        DATETIME ended_at "구독 해지 완료일"
+        INT price "플랜 가격"
+        TEXT description "플랜 설명"
     }
 
-    FOLLOW {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT follower_id FK "팔로우 신청 회원 ID (member.id 참조)"
-        BIGINT following_id FK "팔로우 대상 회원 ID (member.id 참조)"
+    subscription {
+        BIGINT id PK "구독 식별자"
+        BIGINT member_id FK "구독 회원 식별자"
+        BIGINT target_member_id FK "구독 대상 회원 식별자"
+        VARCHAR plan_id "구독 플랜 식별자"
+        VARCHAR customer_uid "정기 결제 카드 빌링키"
+        VARCHAR status "구독 상태"
+        DATETIME started_at "시작일"
+        DATETIME ended_at "만료일"
+        DATETIME next_billing_at "다음 자동 결제 예정일"
+        TINYINT agreement "자동결제 동의여부"
+    }
+
+    follow {
+        BIGINT id PK "팔로우 식별자"
+        BIGINT follower_id FK "팔로우 하는 회원 ID"
+        BIGINT following_id FK "팔로우 대상 회원 ID"
         DATETIME created_at "팔로우 일시"
     }
 
-    NOTIFICATIONS {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "수신 회원 ID (member.id 참조)"
+    notifications {
+        BIGINT id PK "알림 식별자"
+        BIGINT member_id FK "수신 회원 식별자"
+        BIGINT sender_id FK "알림 유발 회원 ID"
         VARCHAR notification_type "알림 유형"
         VARCHAR al_content "알림 메시지 내용"
-        TINYINT is_checked "확인 여부 (0:안읽음, 1:읽음)"
+        TINYINT is_checked "알림 확인 여부"
         DATETIME created_at "알림 발생 시각"
     }
 
-    ATTENDANCES {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "출석 회원 ID (member.id 참조)"
-        DATETIME created_at "출석 버튼 클릭 일시"
-    }
-
-    CHAT_ROOM {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member1_id FK "참여자 1 ID (member.id 참조)"
-        BIGINT member2_id FK "참여자 2 ID (member.id 참조)"
+    chat_room {
+        BIGINT id PK "채팅방 식별자"
+        BIGINT member1_id FK "채팅 참여자 1"
+        BIGINT member2_id FK "채팅 참여자 2"
+        TINYINT member1_exited "참여자 1 나가기 여부"
+        TINYINT member2_exited "참여자 2 나가기 여부"
         DATETIME created_at "채팅방 생성 일시"
     }
 
-    CHAT_MESSAGE {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT room_id FK "채팅방 ID (chat_room.id 참조)"
-        BIGINT sender_id FK "발신자 회원 ID (member.id 참조)"
+    chat_message {
+        BIGINT id PK "메시지 식별자"
+        BIGINT room_id FK "속한 채팅방 ID"
+        BIGINT sender_id FK "메시지 보낸 사람 ID"
         TEXT message "메시지 본문"
         DATETIME created_at "메시지 전송 시각"
     }
 
-    MISSING_PET_POST {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT member_id FK "작성자 회원 ID (member.id 참조)"
-        VARCHAR pet_name "실종 반려동물 이름"
-        VARCHAR species "종"
-        VARCHAR sex "성별"
-        INT age "나이"
+    missing_pet_post {
+        BIGINT id PK "실종 신고 게시글 고유 ID"
+        BIGINT member_id FK "작성자 회원 ID"
         DATE missing_date "실종일자"
         VARCHAR missing_address "실종장소"
         TEXT detail "특이사항"
-        VARCHAR image_url "대표 사진 S3 URL"
+        VARCHAR image_url "대표사진 S3 URL"
+        VARCHAR status "상태"
+        DECIMAL latitude "위도"
+        DECIMAL longitude "경도"
         DATETIME created_at "작성 시각"
-        DATETIME updated_at "수정 일시"
+        DATETIME updated_at "게시글 수정 일시"
     }
 
-    MISSING_PET_REPORT {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT missing_pet_post_id FK "실종 게시글 ID (missing_pet_post.id 참조)"
-        BIGINT member_id FK "제보자 회원 ID (member.id 참조)"
+    missing_pet_report {
+        BIGINT id PK "제보 식별자"
+        BIGINT missing_pet_post_id FK "대상 실종 신고 게시글 ID"
+        BIGINT member_id FK "제보자 회원 ID"
         VARCHAR address "목격 장소"
-        TEXT detail "목격 상황 설명"
-        VARCHAR image_url "제보 사진 S3 URL"
+        TEXT detail "목격 상황 및 상태 설명"
+        VARCHAR image_url "제보 이미지 S3 URL"
+        DATETIME sight_at "실제 동물을 목격한 일시"
+        DECIMAL latitude "위도"
+        DECIMAL longitude "경도"
         DATETIME created_at "제보 등록 일시"
         DATETIME updated_at "제보 수정 일시"
-    }
-
-    POST_HASHTAG {
-        BIGINT id PK "AUTO_INCREMENT"
-        BIGINT post_id FK "사용된 피드 ID (post_main.id 참조)"
-        VARCHAR name "해시태그 키워드"
     }
 ```
 

@@ -270,7 +270,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | post_id   | BIGINT      | NOT NULL, FK (post_main.id ON DELETE CASCADE) | 대상 피드 게시글 ID            |
 | type      | VARCHAR(20) | NOT NULL | 인터랙션 유형(LIKE, BOOKMARK) |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                     |  등록 일시                  |
-- 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `post_id`)
+- 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `post_id`, `interaction_type`)
 - 데이터의 중복을 차단하기 위해 unique key설정
 
 

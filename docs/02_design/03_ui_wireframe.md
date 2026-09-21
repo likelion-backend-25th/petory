@@ -279,3 +279,4 @@
 ---
 
 ## 1.3 전체 화면 와이어프레임 배치도
+https://www.tldraw.com/f/rLPLoVhAmzzLC8Jn_1ZSM?d=v-10856.-9384.20982.10600.page

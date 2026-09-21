@@ -118,12 +118,12 @@ jobs:
             AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }}
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
             EOF
-
+            
             echo ">>> 2. 최신 Docker 이미지 다운로드"
-            docker-compose pull
-
+            docker compose pull
+  
             echo ">>> 3. 컨테이너 갱신 및 백그라운드 구동"
-            docker-compose up -d
+            docker compose up -d
 
             echo ">>> 4. 사용되지 않는 구버전 이미지 정리"
             docker image prune -f

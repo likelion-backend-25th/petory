@@ -208,17 +208,17 @@ erDiagram
 
 
 ### 1.2.2 post_main (피드 게시글)
-| 컬럼명                | 데이터 타입       | 제약 조건                                                 | 설명                                 |
-|:-------------------|:-------------|:------------------------------------------------------|:-----------------------------------|
-| id                 | BIGINT       | PK, AUTO_INCREMENT                                    | 피드 게시글 고유 식별자                      |
-| member_id          | BIGINT       | NOT NULL, FK(member.id ON DELETE CASCADE)             | 작성자 회원 ID                          |
-| type               | TINYINT      | NOT NULL, DEFAULT 1             | 게시글 유형 (1: 일반 피드, 2: Q&A 게시글)|
-| content            | TEXT         | NOT NULL                                              | 피드 본문 내용                           |
-| bgm_url            | VARCHAR(255) | NULL                                                  | 배경음악 S3 URL                        |
-| is_subscriber_only | TINYINT(1)   | NOT NULL, DEFAULT 0                                   | 유료 구독자 전용 여부 (0: 전체공개, 1: 구독자전용)   |
-| hashtags           | TEXT         | NULL                                                  | 해시태그 문자열 (예: "#강아지 #산책 #일상")       |
-| created_at         | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | 피드 최초 작성 일시                        |
-| updated_at         | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 피드 최종 수정 일시                        |
+| 컬럼명                | 데이터 타입       | 제약 조건                                                 | 설명                               |
+|:-------------------|:-------------|:------------------------------------------------------|:---------------------------------|
+| id                 | BIGINT       | PK, AUTO_INCREMENT                                    | 피드 게시글 고유 식별자                    |
+| member_id          | BIGINT       | NOT NULL, FK(member.id ON DELETE CASCADE)             | 작성자 회원 ID                        |
+| type               | TINYINT      | NOT NULL, DEFAULT 1                                   | 게시글 유형 (1: 일반 피드, 2: Q&A 게시글)    |
+| content            | TEXT         | NOT NULL                                              | 피드 본문 내용                         |
+| bgm_url            | VARCHAR(255) | NULL                                                  | 배경음악 S3 URL                      |
+| is_subscriber_only | TINYINT(1)   | NOT NULL, DEFAULT 0                                   | 유료 구독자 전용 여부 (0: 전체공개, 1: 구독자전용) |
+| hashtags           | TEXT         | NULL                                                  | 해시태그 문자열 (예: "#강아지 #산책 #일상")     |
+| created_at         | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | 피드 최초 작성 일시                      |
+| updated_at         | DATETIME     | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 피드 최종 수정 일시                      |
 
 
 ### 1.2.3 post_image
@@ -269,29 +269,29 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | completed_at     | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 결제 완료 시각                               |
 
 ### 1.2.7 subscription_plan (정기 후원 플랜)
-| 컬럼명         | 데이터 타입      | 제약 조건                                      | 설명              |
-|:------------|:------------|:-------------------------------------------|:----------------|
-| id          | BIGINT      | PK, AUTO_INCREMENT                         | 구독 플랜 식별자       |
-| member_id   | BIGINT      | NOT NULL, FK (member.id ON DELETE CASCADE) | 해당 플랜을 만든 회원 식별자 |
-| plan_name   | VARCHAR(50) | NOT NULL                                   | 플랜 이름           |
-| price       | INT         | NOT NULL                                   | 플랜 가격           |
-| description | TEXT        | NOT NULL                                   | 플랜 설명           |
-| status | VARCHAR(20)        | NOT NULL, DEFAULT 'ACTIVE'                              |플랜 상태 (ACTIVE, PENDING_DELETION , DELETED)                 |
+| 컬럼명         | 데이터 타입       | 제약 조건                                        | 설명                                         |
+|:------------|:-------------|:---------------------------------------------|:-------------------------------------------|
+| id          | BIGINT       | PK, AUTO_INCREMENT                           | 구독 플랜 식별자                                  |
+| member_id   | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)   | 해당 플랜을 만든 회원 식별자                           |
+| plan_name   | VARCHAR(50)  | NOT NULL                                     | 플랜 이름                                      |
+| price       | INT          | NOT NULL                                     | 플랜 가격                                      |
+| description | TEXT         | NOT NULL                                     | 플랜 설명                                      |
+| status      | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                   | 플랜 상태 (ACTIVE, PENDING_DELETION , DELETED) |
 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `plan_name`)
 
 ### 1.2.8 subscription (펫클럽 정기 후원)
-| 컬럼명              | 데이터 타입       | 제약 조건                                      | 설명                        |
-|:-----------------|:-------------|:-------------------------------------------|:--------------------------|
-| id               | BIGINT       | PK, AUTO_INCREMENT                         | 구독 식별자                    |
-| member_id        | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 회원 식별자                 |
-| target_member_id | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 구독 대상 회원 식별자              |
-| plan_id          | BIGINT       | NOT NULL, FK (subscription_plan.id ON DELETE CASCADE)            | 구독 플랜 식별자                 |
-| customer_uid     | VARCHAR(100) | NOT NULL                                   | 정기 결제 카드 빌링키              |
-| status           | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                 | 구독 상태 (ACTIVE, CANCELLED) |
-| started_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 시작일                       |
-| ended_at         | DATETIME     | NULL                                       | 만료일                       |
-| next_billing_at  | DATETIME     | NULL                                       | 다음 자동 결제 예정일              |
-| agreement        | TINYINT      | NOT NULL, DEFAULT 1                        | 자동결제 동의여부 (0: 비동의, 1: 동의) |
+| 컬럼명              | 데이터 타입       | 제약 조건                                                 | 설명                        |
+|:-----------------|:-------------|:------------------------------------------------------|:--------------------------|
+| id               | BIGINT       | PK, AUTO_INCREMENT                                    | 구독 식별자                    |
+| member_id        | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)            | 구독 회원 식별자                 |
+| target_member_id | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)            | 구독 대상 회원 식별자              |
+| plan_id          | BIGINT       | NOT NULL, FK (subscription_plan.id ON DELETE CASCADE) | 구독 플랜 식별자                 |
+| customer_uid     | VARCHAR(100) | NOT NULL                                              | 정기 결제 카드 빌링키              |
+| status           | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                            | 구독 상태 (ACTIVE, CANCELLED) |
+| started_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | 시작일                       |
+| ended_at         | DATETIME     | NULL                                                  | 만료일                       |
+| next_billing_at  | DATETIME     | NULL                                                  | 다음 자동 결제 예정일              |
+| agreement        | TINYINT      | NOT NULL, DEFAULT 1                                   | 자동결제 동의여부 (0: 비동의, 1: 동의) |
 
 
 ### 1.2.9 follow (팔로우)

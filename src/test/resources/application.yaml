@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: petory
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/petory?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  # 데이터베이스 초기화 설정 (애플리케이션 구동 시 schema.sql 및 data.sql 자동 실행)
+  sql:
+    init:
+      mode: never
+
+# MyBatis 설정
+mybatis:
+  # 매퍼 XML 파일 경로 매핑
+  mapper-locations: classpath:mapper/**/*.xml
+  # DTO 패키지 별칭 지정 (매퍼 XML에서 패키지명 생략 가능)
+  type-aliases-package: net.likelion.bebc25.projectpatory.dto
+  configuration:
+    # DB 컬럼명 스네이크 케이스를 자바 카멜 케이스 필드로 자동 변환
+    map-underscore-to-camel-case: true
+    # 쿼리 실행 로그 콘솔 출력 (개발/테스트 디버깅용)
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

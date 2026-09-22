@@ -223,14 +223,14 @@ erDiagram
 
 ### 1.2.1-1 linked_account (회원 기본)
 
-| 컬럼명              | 데이터 타입       | 제약 조건                         | 설명                            |
-|:-----------------|:-------------|:------------------------------|:------------------------------|
-| id               | BIGINT       | PK, AUTO_INCREMENT            | 서드파티 계정정보 식별자                 |
-| member_id        | BIGINT       | FK, NOT NULL                  | 회원 고유 식별자                     |
-| provider         | VARCHAR(50)  | NOT NULL                      | 연동된 외부 계정 제공자 (GOOGLE, KAKAO) |
-| provider_user_id | VARCHAR(100) | NOT NULL                      | 계정 제공자가 전달해 준 회원의 ID          |
-| provider_email   | VARCHAR(100) | NOT NULL                      | 계정 제공자가 전달해 준 회원의 email       |
-| created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                      |
+| 컬럼명              | 데이터 타입       | 제약 조건                                      | 설명                            |
+|:-----------------|:-------------|:-------------------------------------------|:------------------------------|
+| id               | BIGINT       | PK, AUTO_INCREMENT                         | 서드파티 계정정보 식별자                 |
+| member_id        | BIGINT       | FK, NOT NULL (member.id ON DELETE CASCADE) | 회원 고유 식별자                     |
+| provider         | VARCHAR(50)  | NOT NULL                                   | 연동된 외부 계정 제공자 (GOOGLE, KAKAO) |
+| provider_user_id | VARCHAR(100) | NOT NULL                                   | 계정 제공자가 전달해 준 회원의 ID          |
+| provider_email   | VARCHAR(100) | NOT NULL                                   | 계정 제공자가 전달해 준 회원의 email       |
+| created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 계정 생성 일시                      |
 - 고유 제약조건: UNIQUE KEY `uk_member_linked_account` (`member_id`, `provider`), UNIQUE KEY `uk_member_linked_account_info` (`provider`, `provider_user_id`), 
 
 ### 1.2.2 post_main (피드 게시글)

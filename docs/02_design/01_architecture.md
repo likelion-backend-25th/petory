@@ -44,11 +44,14 @@ graph TD
 
 ## 1.2 AWS 인프라 및 배포 아키텍처
 
-### 1.2.1 프론트엔드 호스팅 (AWS S3 + CloudFront)
-- 정적 사이트 빌드 배포:
-  - React 애플리케이션을 빌드한 정적 결과물(HTML, JS, CSS, Asset)을 AWS S3 버킷에 업로드.
-  - S3 버킷 앞단에 AWS CloudFront를 구성하여 SSL/TLS(HTTPS) 인증서 적용 및 글로벌 엣지 캐싱 제공.
-  - SPA 특성에 맞춰 라우팅 경로 새로고침 시 404 에러 대신 index.html을 반환하도록 CloudFront 사용자 정의 오류 응답(Error Response) 200 설정.
+### 1.2.1 프론트엔드 호스팅 및 배포 (Netlify)
+- **정적 사이트 빌드 및 자동 배포 (CI/CD)**:
+  - GitHub 저장소(`main` 브랜치)와 Netlify를 연동하여 코드 `push` 시 정적 결과물(`dist`)을 자동 빌드 및 글로벌 Edge 네트워크로 즉시 배포.
+  - Netlify 기본 SSL/TLS 인증서를 적용하여 **HTTPS 보안 프로토콜 단일화** 및 안전한 통신 환경 제공.
+- **SPA 라우팅 및 리다이렉트 설정**:
+  - React SPA(Single Page Application) 특성에 맞춰, 상세 페이지 접근 후 새로고침(F5) 시 발생할 수 있는 404 에러를 방지하도록 `netlify.toml` 기반 리다이렉트(`/*` ➔ `/index.html`, Status 200) 규칙 적용.
+- **환경 변수(Environment Variables) 관리**:
+  - 백엔드 REST API 엔드포인트(`http://3.39.133.123:8080`) 및 외부 SDK Key를 Netlify 대시보드의 환경 변수(`VITE_API_BASE_URL`)로 분리 등록하여 보안성 및 유지보수성 확보.
 
 ### 1.2.2 백엔드 및 데이터베이스 배포 (AWS EC2 + Docker Compose)
 - 백엔드 컨테이너 환경:

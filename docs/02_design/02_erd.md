@@ -190,22 +190,30 @@ erDiagram
 | 컬럼명                    | 데이터 타입       | 제약 조건                         | 설명                                   |
 |:-----------------------|:-------------|:------------------------------|:-------------------------------------|
 | id                     | BIGINT       | PK, AUTO_INCREMENT            | 회원 고유 식별자                            |
-| email                  | VARCHAR(100) | NOT NULL, UNIQUE              | 로그인 아이디 (이메일)                        |
-| password               | VARCHAR(255) | NOT NULL                      | BCrypt 암호화된 비밀번호                     |
+| email                  | VARCHAR(100) | NULL, UNIQUE                  | 로그인 아이디 (이메일)                        |
+| password               | VARCHAR(255) | NULL                          | BCrypt 암호화된 비밀번호                     |
 | nickname               | VARCHAR(50)  | NOT NULL                      | 화면 표시용 닉네임                           |
 | species                | VARCHAR(50)  | NOT NULL                      | 동물 종 카테고리 (개, 고양이 등)                 |
-| sex                    | VARCHAR(10)  | NULL                          | 성별                                   |
-| birth_date             | DATE         | NULL                          | 생년월일                                 |
+| sex                    | VARCHAR(10)  | NOT NULL                      | 성별                                   |
+| birth_date             | DATE         | NOT NULL                      | 생년월일                                 |
 | intro                  | VARCHAR(255) | NULL                          | 한줄 자기소개                              |
 | profile_image          | VARCHAR(255) | NULL                          | 회원 프로필 사진 S3 URL                     |
 | address                | VARCHAR(255) | NULL                          | 회원주소                                 |
-| status                 | VARCHAR(50)  | NOT NULL , DEFAULT 'ACTIVE'   | 계정 상태 (ACTIVE, BLOCKED)              |
+| status                 | VARCHAR(50)  | NOT NULL, DEFAULT 'ACTIVE'    | 계정 상태 (ACTIVE, BLOCKED)              |
 | role                   | VARCHAR(20)  | NOT NULL, DEFAULT 'ROLE_USER' | 권한 (ROLE_USER, ROLE_VIP, ROLE_ADMIN) |
 | created_at             | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                             |
 | info_provide_agreement | DATETIME     | Null                          | 개인정보 제3자 제공 동의 일시                    |
 
+### 1.2.1-1 linked_account (회원 기본)
 
-
+| 컬럼명              | 데이터 타입       | 제약 조건                         | 설명                            |
+|:-----------------|:-------------|:------------------------------|:------------------------------|
+| id               | BIGINT       | PK, AUTO_INCREMENT            | 서드파티 계정정보 식별자                 |
+| member_id        | BIGINT       | FK, NOT NULL                  | 회원 고유 식별자                     |
+| provider         | VARCHAR(50)  | NOT NULL                      | 연동된 외부 계정 제공자 (GOOGLE, KAKAO) |
+| provider_user_id | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 ID          |
+| provider_email   | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 email       |
+| created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                      |
 
 ### 1.2.2 post_main (피드 게시글)
 | 컬럼명                | 데이터 타입       | 제약 조건                                                 | 설명                               |

@@ -133,7 +133,7 @@ erDiagram
         DATETIME started_at "시작일"
         DATETIME ended_at "만료일"
         DATETIME next_billing_at "다음 자동 결제 예정일"
-        TINYINT agreement "자동결제 동의여부"
+        TINYINT(1) agreement "자동결제 동의여부"
     }
 
     follow {
@@ -216,7 +216,7 @@ erDiagram
 | intro                  | VARCHAR(255) | NULL                          | 한줄 자기소개                              |
 | profile_image          | VARCHAR(255) | NULL                          | 회원 프로필 사진 S3 URL                     |
 | address                | VARCHAR(255) | NULL                          | 회원주소                                 |
-| status                 | VARCHAR(50)  | NOT NULL, DEFAULT 'ACTIVE'    | 계정 상태 (ACTIVE, BLOCKED)              |
+| status                 | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'    | 계정 상태 (ACTIVE, BLOCKED)              |
 | role                   | VARCHAR(20)  | NOT NULL, DEFAULT 'ROLE_USER' | 권한 (ROLE_USER, ROLE_VIP, ROLE_ADMIN) |
 | created_at             | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                             |
 | info_provide_agreement | DATETIME     | Null                          | 개인정보 제3자 제공 동의 일시                    |
@@ -228,8 +228,8 @@ erDiagram
 | id               | BIGINT       | PK, AUTO_INCREMENT            | 서드파티 계정정보 식별자                 |
 | member_id        | BIGINT       | FK, NOT NULL                  | 회원 고유 식별자                     |
 | provider         | VARCHAR(50)  | NOT NULL                      | 연동된 외부 계정 제공자 (GOOGLE, KAKAO) |
-| provider_user_id | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 ID          |
-| provider_email   | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 email       |
+| provider_user_id | VARCHAR(100) | NOT NULL                      | 계정 제공자가 전달해 준 회원의 ID          |
+| provider_email   | VARCHAR(100) | NOT NULL                      | 계정 제공자가 전달해 준 회원의 email       |
 | created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                      |
 - 고유 제약조건: UNIQUE KEY `uk_member_linked_account` (`member_id`, `provider`), UNIQUE KEY `uk_member_linked_account_info` (`provider`, `provider_user_id`), 
 
@@ -317,7 +317,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | started_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | 시작일                       |
 | ended_at         | DATETIME     | NULL                                                  | 만료일                       |
 | next_billing_at  | DATETIME     | NULL                                                  | 다음 자동 결제 예정일              |
-| agreement        | TINYINT      | NOT NULL, DEFAULT 1                                   | 자동결제 동의여부 (0: 비동의, 1: 동의) |
+| agreement        | TINYINT(1)   | NOT NULL, DEFAULT 1                                   | 자동결제 동의여부 (0: 비동의, 1: 동의) |
 
 
 ### 1.2.9 follow (팔로우)

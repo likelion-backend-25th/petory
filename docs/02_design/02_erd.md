@@ -9,18 +9,23 @@
 
 ## 1.1 엔티티 관계 다이어그램 (ERD)
 
-사자그램 서비스의 7개 핵심 도메인 테이블과 결제 및 정기 구독을 위한 2개 테이블의 전체 구조도.
+사자그램 서비스의 회원·피드·소셜·결제·구독·채팅·실종 신고 도메인 테이블 전체 구조도.
 
 ```mermaid
 erDiagram
+    member ||--o{ linked_account : "연동함 (1:N)"
     member ||--o{ post_main : "작성함 (1:N)"
     member ||--o{ comment : "작성함 (1:N)"
     member ||--o{ post_interaction : "인터랙션함 (1:N)"
     member ||--o{ payment : "결제함 (1:N)"
+    member ||--o{ payment : "후원받음 (1:N)"
     member ||--o{ subscription_plan : "플랜생성함 (1:N)"
     member ||--o{ subscription : "구독함 (1:N)"
+    member ||--o{ subscription : "구독받음 (1:N)"
     member ||--o{ follow : "팔로우함 (1:N)"
-    member ||--o{ notifications : "알림받음 (1:N)"
+    member ||--o{ follow : "팔로우받음 (1:N)"
+    member ||--o{ notification : "알림받음 (1:N)"
+    member ||--o{ notification : "알림유발함 (1:N)"
     member ||--o{ chat_room : "채팅참여함 (1:N)"
     member ||--o{ chat_message : "메시지전송함 (1:N)"
     member ||--o{ missing_pet_post : "실종신고함 (1:N)"
@@ -30,6 +35,7 @@ erDiagram
     post_main ||--o{ comment : "달림 (1:N)"
     post_main ||--o{ post_interaction : "받음 (1:N)"
 
+    subscription_plan ||--o{ subscription : "적용됨 (1:N)"
     missing_pet_post ||--o{ missing_pet_report : "제보받음 (1:N)"
     chat_room ||--o{ chat_message : "포함함 (1:N)"
 
@@ -50,9 +56,19 @@ erDiagram
         DATETIME info_provide_agreement "개인정보 제3자 제공 동의 일시"
     }
 
+    linked_account {
+        BIGINT id PK "서드파티 계정정보 식별자"
+        BIGINT member_id FK "회원 고유 식별자"
+        VARCHAR provider "연동된 외부 계정 제공자"
+        VARCHAR provider_user_id "제공자 회원 ID"
+        VARCHAR provider_email "제공자 회원 email"
+        DATETIME created_at "계정 생성 일시"
+    }
+
     post_main {
         BIGINT id PK "피드 게시글 고유 식별자"
         BIGINT member_id FK "작성자 회원 ID"
+        TINYINT type "게시글 유형 (1: 일반 피드, 2: Q&A)"
         TEXT content "피드 본문 내용"
         VARCHAR bgm_url "배경음악 S3 URL"
         TINYINT is_subscriber_only "유료 구독자 전용 여부"
@@ -80,7 +96,7 @@ erDiagram
         BIGINT id PK "좋아요/북마크 식별자"
         BIGINT member_id FK "회원 ID"
         BIGINT post_id FK "대상 피드 게시글 ID"
-        VARCHAR type "인터랙션 유형(LIKE, BOOKMARK)"
+        VARCHAR interaction_type "인터랙션 유형(LIKE, BOOKMARK)"
         DATETIME created_at "등록 일시"
     }
 
@@ -104,13 +120,14 @@ erDiagram
         VARCHAR plan_name "플랜 이름"
         INT price "플랜 가격"
         TEXT description "플랜 설명"
+        VARCHAR status "플랜 상태 (ACTIVE, PENDING_DELETION, DELETED)"
     }
 
     subscription {
         BIGINT id PK "구독 식별자"
         BIGINT member_id FK "구독 회원 식별자"
         BIGINT target_member_id FK "구독 대상 회원 식별자"
-        VARCHAR plan_id "구독 플랜 식별자"
+        BIGINT plan_id FK "구독 플랜 식별자"
         VARCHAR customer_uid "정기 결제 카드 빌링키"
         VARCHAR status "구독 상태"
         DATETIME started_at "시작일"
@@ -126,12 +143,12 @@ erDiagram
         DATETIME created_at "팔로우 일시"
     }
 
-    notifications {
+    notification {
         BIGINT id PK "알림 식별자"
         BIGINT member_id FK "수신 회원 식별자"
         BIGINT sender_id FK "알림 유발 회원 ID"
         VARCHAR notification_type "알림 유형"
-        VARCHAR al_content "알림 메시지 내용"
+        VARCHAR content "알림 메시지 내용"
         TINYINT is_checked "알림 확인 여부"
         DATETIME created_at "알림 발생 시각"
     }
@@ -214,6 +231,7 @@ erDiagram
 | provider_user_id | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 ID          |
 | provider_email   | VARCHAR(50)  | NOT NULL                      | 계정 제공자가 전달해 준 회원의 email       |
 | created_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP     | 계정 생성 일시                      |
+- 고유 제약조건: UNIQUE KEY `uk_member_linked_account` (`member_id`, `provider`), UNIQUE KEY `uk_member_linked_account_info` (`provider`, `provider_user_id`), 
 
 ### 1.2.2 post_main (피드 게시글)
 | 컬럼명                | 데이터 타입       | 제약 조건                                                 | 설명                               |
@@ -251,14 +269,14 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 
 
 ### 1.2.5 post_interaction (피드 인터랙션-좋아요 & 북마크 통합)
-| 컬럼명        | 데이터 타입      | 제약 조건                                         | 설명                      |
-|:-----------|:------------|:----------------------------------------------|:------------------------|
-| id         | BIGINT      | PK, AUTO_INCREMENT                            | 좋아요 식별자                 |
-| member_id  | BIGINT      | NOT NULL, FK (member.id ON DELETE CASCADE)    | 좋아요를 누른 회원 ID           |
-| post_id    | BIGINT      | NOT NULL, FK (post_main.id ON DELETE CASCADE) | 대상 피드 게시글 ID            |
-| type       | VARCHAR(20) | NOT NULL                                      | 인터랙션 유형(LIKE, BOOKMARK) |
-| created_at | DATETIME    | DEFAULT CURRENT_TIMESTAMP                     | 등록 일시                   |
-- 고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `post_id`, `interaction_type`)
+| 컬럼명              | 데이터 타입      | 제약 조건                                         | 설명                      |
+|:-----------------|:------------|:----------------------------------------------|:------------------------|
+| id               | BIGINT      | PK, AUTO_INCREMENT                            | 좋아요 식별자                 |
+| member_id        | BIGINT      | NOT NULL, FK (member.id ON DELETE CASCADE)    | 좋아요를 누른 회원 ID           |
+| post_id          | BIGINT      | NOT NULL, FK (post_main.id ON DELETE CASCADE) | 대상 피드 게시글 ID            |
+| interaction_type | VARCHAR(20) | NOT NULL                                      | 인터랙션 유형(LIKE, BOOKMARK) |
+| created_at       | DATETIME    | DEFAULT CURRENT_TIMESTAMP                     | 등록 일시                   |
+- 고유 제약조건: UNIQUE KEY `uk_member_post_interaction_type` (`member_id`, `post_id`, `interaction_type`)
 - 데이터의 중복을 차단하기 위해 unique key설정
 
 ### 1.2.6 payment (결제 이력)
@@ -285,7 +303,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | price       | INT          | NOT NULL                                     | 플랜 가격                                      |
 | description | TEXT         | NOT NULL                                     | 플랜 설명                                      |
 | status      | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                   | 플랜 상태 (ACTIVE, PENDING_DELETION , DELETED) |
-고유 제약조건: UNIQUE KEY `uk_member_post_like` (`member_id`, `plan_name`)
+고유 제약조건: UNIQUE KEY `uk_member_plan_name` (`member_id`, `plan_name`)
 
 ### 1.2.8 subscription (펫클럽 정기 후원)
 | 컬럼명              | 데이터 타입       | 제약 조건                                                 | 설명                        |
@@ -311,16 +329,16 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | created_at   | DATETIME | DEFAULT CURRENT_TIMESTAMP                  | 팔로우 일시       |
 UNIQUE KEY uk_follower_following (follower_id, following_id)
 
-### 1.2.10 notifications(알림)
-| 컬럼명                | 데이터 타입       | 제약 조건                                       | 설명                                                           |
-|:-------------------|:-------------|:--------------------------------------------|:-------------------------------------------------------------|
-| id                 | BIGINT       | PK, AUTO_INCREMENT                          | 알림 식별자                                                       |
-| member_id          | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)  | 회원 식별자                                                       |
-| sender_id          | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)  | 알림을 유발한 회원 ID                                                |
-| notification_type  | VARCHAR(30)  | NOT NULL                                    | 알림 유형(FOLLOW, COMMENT, DONATION, SUBSCRIPTION, PET BIRTHDAY) |
-| al_content         | VARCHAR(255) | NOT NULL                                    | 알림 메시지 내용                                                    |
-| is_checked         | TINYINT(1)   | NOT NULL, DEFAULT 0                         | 알림 확인 여부 (0: 안읽음, 1: 읽음)                                     |
-| created_at         | DATETIME     | DEFAULT CURRENT_TIMESTAMP                   | 알림 발생 시각                                                     |
+### 1.2.10 notification(알림)
+| 컬럼명               | 데이터 타입       | 제약 조건                                       | 설명                                                           |
+|:------------------|:-------------|:--------------------------------------------|:-------------------------------------------------------------|
+| id                | BIGINT       | PK, AUTO_INCREMENT                          | 알림 식별자                                                       |
+| member_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)  | 회원 식별자                                                       |
+| sender_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)  | 알림을 유발한 회원 ID                                                |
+| notification_type | VARCHAR(30)  | NOT NULL                                    | 알림 유형(FOLLOW, COMMENT, DONATION, SUBSCRIPTION, PET BIRTHDAY) |
+| content           | VARCHAR(255) | NOT NULL                                    | 알림 메시지 내용                                                    |
+| is_checked        | TINYINT(1)   | NOT NULL, DEFAULT 0                         | 알림 확인 여부 (0: 안읽음, 1: 읽음)                                     |
+| created_at        | DATETIME     | DEFAULT CURRENT_TIMESTAMP                   | 알림 발생 시각                                                     |
 
 ### 1.2.11 chat_room(1:1 채팅방)
 | 컬럼명            | 데이터 타입     | 제약 조건                                       | 설명                           |
@@ -331,7 +349,8 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | member1_exited | TINYINT(1) | NOT NULL, DEFAULT 0                         | 참여자 1 나가기 여부 (0: 참여중, 1: 나감) |
 | member2_exited | TINYINT(1) | NOT NULL, DEFAULT 0                         | 참여자 2 나가기 여부 (0: 참여중, 1: 나감) |
 | created_at     | DATETIME   | DEFAULT CURRENT_TIMESTAMP                   | 채팅방 생성 일시                    |
-
+- 고유 제약조건: UNIQUE KEY `uk_member_chat` (`member1_id`, `member2_id`)
+- 
 ### 1.2.12 chat_message(채팅 메시지 이력)
 | 컬럼명        | 데이터 타입   | 제약 조건                                         | 설명        |
 |:-----------|:---------|:----------------------------------------------|:----------|

@@ -13,9 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns(
                         "http://localhost:5173",
                         "http://localhost:3000",
-                        "https://*.vercel.app",
-                        "https://*.cloudfront.net",
-                        "*" // 개발 완료 전까지 프론트 테스트 용이성을 위해 모든 도메인 허용
+                        "https://petory-web.netlify.app"
+
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

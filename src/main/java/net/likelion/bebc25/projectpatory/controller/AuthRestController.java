@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 
 @Tag(name = "Auth API", description = "회원 인증을 담당하는 REST 컨트롤러")
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class AuthRestController {
 

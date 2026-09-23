@@ -9,6 +9,9 @@ import java.util.List;
 
 @Mapper
 public interface MemberMapper {
+    // 회원가입
+    void createMember(@Param("member") Member member);
+
     // 이메일 기반 회원 정보 조회
     Member findByEmail(@Param("email") String email);
 
@@ -19,7 +22,7 @@ public interface MemberMapper {
     List<Member> findAll();
 
     // 회원 계정 정지
-    int updateStatusToBlocked(@Param("id")  long id);
+    int updateStatusToBlocked(@Param("id") long id);
 
     // 회원 계정 삭제
     int deleteById(@Param("id") long id);

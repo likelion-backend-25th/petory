@@ -8,20 +8,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping("/api/v1")
 public class MemberRestController {
-    @GetMapping("/test")
-    public String test() {
-        return "test";
+    @PostMapping("signup")
+    public void signUp() {
+        
     }
 
-    @GetMapping("/{memberId}")
+    @GetMapping("/profile/{memberId}")
     public ResponseEntity<MemberProfileResponse> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -30,7 +31,7 @@ public class MemberRestController {
         return ResponseEntity.ok(MemberProfileResponse.from(member));
     }
 
-    @GetMapping("/{memberId}/auth-info")
+    @GetMapping("/profile/{memberId}/auth-info")
     public ResponseEntity<Map<String, Object>> getAuthInfo(Authentication authentication) {
         // 1. 사용자 식별자 및 보유 권한 획득(UserDetails 에서도 확인 가능)
         String email = authentication.getName();

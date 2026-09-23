@@ -1,7 +1,7 @@
 package net.likelion.bebc25.projectpatory.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import net.likelion.bebc25.sns.dto.ApiErrorResponse;
+import net.likelion.bebc25.projectpatory.dto.ApiErrorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;

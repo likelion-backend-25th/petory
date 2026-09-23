@@ -5,8 +5,11 @@ info:
 
 http:
   method: GET
-  url: ""
-  auth: inherit
+  url: "{{baseUrl}}/profile/2"
+  auth:
+    type: basic
+    username: mungchi@petory.com
+    password: password123
 
 settings:
   encodeUrl: true

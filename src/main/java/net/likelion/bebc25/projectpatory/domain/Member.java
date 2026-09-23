@@ -2,6 +2,7 @@ package net.likelion.bebc25.projectpatory.domain;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,7 +17,7 @@ public class Member {
     private String nickname;
     private String species;
     private String sex;
-    private String birthDate;
+    private LocalDate birthDate;
     @Builder.Default
     private String intro = "안녕하세요";
     @Builder.Default

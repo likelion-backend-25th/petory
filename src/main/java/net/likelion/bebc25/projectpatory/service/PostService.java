@@ -1,8 +1,6 @@
 package net.likelion.bebc25.projectpatory.service;
 
-import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
-import net.likelion.bebc25.projectpatory.dto.PostListResponse;
-import net.likelion.bebc25.projectpatory.dto.SliceResponse;
+import net.likelion.bebc25.projectpatory.dto.*;
 
 public interface PostService {
     /**
@@ -14,4 +12,5 @@ public interface PostService {
      * 게시글 상세 조회 (단건 조회)
      */
     PostDetailResponse getPostDetail(Long postId);
+    PostCreateResponse createPost(PostCreateRequest request);
 }

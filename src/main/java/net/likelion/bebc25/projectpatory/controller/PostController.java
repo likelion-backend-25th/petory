@@ -1,5 +1,8 @@
 package net.likelion.bebc25.projectpatory.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import net.likelion.bebc25.projectpatory.dto.SliceResponse;
 import net.likelion.bebc25.projectpatory.service.PostService;
@@ -28,6 +31,23 @@ public class PostController {
             @RequestParam(defaultValue = "10") int size
     ) {
         SliceResponse<PostListResponse> response = postService.getPostListCursor(lastPostId, size);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * REQ-POST-02: 게시글 상세 조회 (단건 조회)
+     *
+     * @param postId 조회할 게시글 ID
+     *
+     * 요청 예시: GET /api/v1/posts/3
+     */
+    @Operation(summary = "게시글 상세 조회", description = "게시글 ID(postId)를 받아서 단건 상세 정보를 조회합니다.")
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostDetailResponse> getPostDetail(
+            @Parameter(description = "조회할 게시글 ID", example = "3")
+            @PathVariable Long postId
+    ) {
+        PostDetailResponse response = postService.getPostDetail(postId);
         return ResponseEntity.ok(response);
     }
 }

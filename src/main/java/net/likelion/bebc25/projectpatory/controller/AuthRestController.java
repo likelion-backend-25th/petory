@@ -1,9 +1,15 @@
 package net.likelion.bebc25.projectpatory.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.dto.ApiErrorResponse;
 import net.likelion.bebc25.projectpatory.dto.LoginRequest;
 import net.likelion.bebc25.projectpatory.dto.RefreshTokenRequest;
 import net.likelion.bebc25.projectpatory.dto.TokenResponse;
@@ -23,10 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.NoSuchElementException;
 
+@Tag(name = "Auth API", description = "회원 인증을 담당하는 REST 컨트롤러")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthRestController {
 
     private final AuthenticationManager authenticationManager;
@@ -35,11 +41,19 @@ public class AuthRestController {
     private final CustomUserDetailsService userDetailsService;
 
     @PostMapping("/login")
+    @Operation(summary = "회원 로그인 시도", description = "주어진 email로 해당하는 사용자가 있는지 확인한 뒤 password가 일치하면 access/refresh 토큰을 반환")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그인 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "잘못된 이메일/비밀번호",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
         // 1. 클라이언트가 입력한 이메일과 비밀번호로 미인증 토큰 생성
         Authentication unauthenticatedToken =
                 new UsernamePasswordAuthenticationToken(request.email(), request.password());
-        log.info(request.email(), request.password());
 
         // 2. AuthenticationManager를 통한 인증 검증 위임
         Authentication authentication = authenticationManager.authenticate(unauthenticatedToken);
@@ -61,6 +75,32 @@ public class AuthRestController {
 
     // Refresh Token 기반 Access Token 갱신 엔드포인트
     @PostMapping("/refresh")
+    @Operation(
+            summary = "토큰 갱신",
+            description = "유효한 refreshToken으로 새 access/refresh 토큰을 발급한다 (RTR)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "토큰 갱신 성공",
+                    content = @Content(schema = @Schema(implementation = TokenResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "refreshToken 누락 또는 공백",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "유효하지 않거나 만료된 Refresh Token",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "토큰에 해당하는 회원이 존재하지 않음",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     public ResponseEntity<TokenResponse> refresh(@RequestBody @Valid RefreshTokenRequest request) {
         String refreshToken = request.refreshToken();
 

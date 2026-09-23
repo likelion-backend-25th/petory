@@ -8,6 +8,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -49,5 +51,62 @@ class MemberMapperTest {
 
         // then
         assertThat(member).isNull();
+    }
+
+    @Test
+    @DisplayName("전체 회원 목록을 조회한다")
+    void findAllTest() {
+
+        // when
+        List<Member> members = memberMapper.findAll();
+
+        // then
+        assertThat(members)
+                .allSatisfy(member -> {
+//                    member domain 완성되는데로 추가 필요
+                    assertThat(member.getId()).isNotNull();
+                    assertThat(member.getNickname()).isNotNull();
+                    assertThat(member.getRole()).isNotNull();
+                });
+    }
+
+    @Test
+    @DisplayName("회원 계정을 정지하면 status가 BLOCKED로 변경된다")
+    void updateStatusToBlockedTest() {
+
+        // given
+        Long id = 1L;
+
+        // when
+        int result = memberMapper.updateStatusToBlocked(id);
+
+        // then
+        assertThat(result).isEqualTo(1);
+
+        Member member = memberMapper.findById(id);
+
+        assertThat(member).isNotNull();
+        assertThat(member.getStatus()).isEqualTo("BLOCKED");
+    }
+
+    @Test
+    @DisplayName("회원 ID로 회원을 삭제한다")
+    void deleteByIdTest() {
+
+        // given
+        Long id = 1L;
+
+        // 삭제 전에 회원이 실제로 존재하는지 확인
+        Member beforeMember = memberMapper.findById(id);
+        assertThat(beforeMember).isNotNull();
+
+        // when
+        int result = memberMapper.deleteById(id);
+
+        // then
+        assertThat(result).isEqualTo(1);
+
+        Member afterMember = memberMapper.findById(id);
+        assertThat(afterMember).isNull();
     }
 }

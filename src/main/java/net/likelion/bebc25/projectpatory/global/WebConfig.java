@@ -9,13 +9,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                // 로컬 개발 환경 및 Vercel/CloudFront 배포 주소 허용
+        registry.addMapping("/**") // 모든 경로에 대해 CORS 허용
                 .allowedOriginPatterns(
                         "http://localhost:5173",
                         "http://localhost:3000",
                         "https://*.vercel.app",
-                        "https://*.cloudfront.net"
+                        "https://*.cloudfront.net",
+                        "*" // 개발 완료 전까지 프론트 테스트 용이성을 위해 모든 도메인 허용
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

@@ -2,11 +2,10 @@ package net.likelion.bebc25.projectpatory.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
-import net.likelion.bebc25.projectpatory.dto.PostListResponse;
-import net.likelion.bebc25.projectpatory.dto.SliceResponse;
+import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,5 +48,12 @@ public class PostController {
     ) {
         PostDetailResponse response = postService.getPostDetail(postId);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "게시글 작성", description = "새로운 게시글을 등록합니다.")
+    @PostMapping
+    public ResponseEntity<PostCreateResponse> createPost(@RequestBody PostCreateRequest request) {
+        PostCreateResponse response = postService.createPost(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

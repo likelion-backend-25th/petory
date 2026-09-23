@@ -1,8 +1,6 @@
 package net.likelion.bebc25.projectpatory.service;
 
-import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
-import net.likelion.bebc25.projectpatory.dto.PostListResponse;
-import net.likelion.bebc25.projectpatory.dto.SliceResponse;
+import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,5 +42,16 @@ public class PostServiceImpl implements PostService {
         }
 
         return postDetail;
+    }
+    @Transactional
+    @Override
+    public PostCreateResponse createPost(PostCreateRequest request) {
+        // 1. 게시글 데이터 INSERT (useGeneratedKeys 설정으로 request.getId()에 자동 세팅됨)
+        postMapper.insertPost(request);
+
+        // 2. 생성된 ID를 담아 응답 DTO 반환
+        return PostCreateResponse.builder()
+                .id(request.getId())
+                .build();
     }
 }

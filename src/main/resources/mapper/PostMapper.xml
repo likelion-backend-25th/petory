@@ -84,4 +84,25 @@
         WHERE p.id = #{postId}
     </select>
 
+    <!-- 게시글 생성 -->
+    <insert id="insertPost" parameterType="net.likelion.bebc25.projectpatory.dto.PostCreateRequest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_main (
+        member_id,
+        content,
+        bgm_url,
+        is_subscriber_only,
+        hashtags,
+        created_at,
+        updated_at
+        ) VALUES (
+        #{memberId},
+        #{content},
+        #{bgmUrl},
+        COALESCE(#{isSubscriberOnly}, 0),
+        #{hashtags},
+        NOW(),
+        NOW()
+        )
+    </insert>
+
 </mapper>

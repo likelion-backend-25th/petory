@@ -1,5 +1,6 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
+import net.likelion.bebc25.projectpatory.dto.PostCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,4 +22,6 @@ public interface PostMapper {
             @Param("limit") int limit
     );
     PostDetailResponse selectPostDetail(Long postId);
+
+    void insertPost(PostCreateRequest request);
 }

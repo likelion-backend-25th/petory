@@ -1,37 +1,63 @@
 package net.likelion.bebc25.projectpatory.security.config;
 
+import net.likelion.bebc25.projectpatory.security.jwt.JwtAuthenticationFilter;
+import net.likelion.bebc25.projectpatory.security.jwt.JwtProvider;
+import net.likelion.bebc25.projectpatory.security.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private final JwtProvider jwtProvider;
+    private final CustomUserDetailsService userDetailsService;
+
+    public SecurityConfig(JwtProvider jwtProvider, CustomUserDetailsService userDetailsService) {
+        this.jwtProvider = jwtProvider;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // REST API 환경: CSRF, Form 로그인 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
 
                 // HTTP Basic 인증 활성화 (학습/테스트용)
                 .httpBasic(Customizer.withDefaults())
+
+                // 기본 폼 로그인 비활성화
+                .formLogin(AbstractHttpConfigurer::disable)
 
                 // WebConfig의 CORS 설정을 Security 필터에서도 적용
                 .cors(Customizer.withDefaults())
 
                 // 세션을 사용하지 않는 Stateless 방식
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                                           session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // 커스텀 JWT 인증 필터를 UsernamePasswordAuthenticationFilter 바로 앞에 배치
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtProvider, userDetailsService),
+                        UsernamePasswordAuthenticationFilter.class
                 )
 
                 // URL 엔드포인트별 접근 인가

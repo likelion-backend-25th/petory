@@ -9,4 +9,8 @@ import org.apache.ibatis.annotations.Param;
 public interface MemberMapper {
     // 이메일 기반 회원 정보 조회
     Member findByEmail(@Param("email") String email);
+
+    // 회원 ID로 정보 조회
+    Member findById(@Param("id") Long id);
+
 }

@@ -9,7 +9,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class AdminMemberServiceImpl implements AdminMemberService{
+public class AdminMemberServiceImpl implements AdminMemberService {
 
     private final MemberMapper memberMapper;
 
@@ -23,7 +23,7 @@ public class AdminMemberServiceImpl implements AdminMemberService{
 
         int result = memberMapper.updateStatusToBlocked(memberId);
 
-        if (result == 0){
+        if (result == 0) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다");
         }
     }
@@ -36,7 +36,5 @@ public class AdminMemberServiceImpl implements AdminMemberService{
         if (result == 0) {
             throw new IllegalArgumentException("존재하지 않는 회원입니다.");
         }
-    }
-
     }
 }

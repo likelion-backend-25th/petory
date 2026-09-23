@@ -1,5 +1,6 @@
 package net.likelion.bebc25.projectpatory.service;
 
+import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import net.likelion.bebc25.projectpatory.dto.SliceResponse;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -30,5 +32,17 @@ public class PostServiceImpl implements PostService {
         Long nextCursorId = posts.isEmpty() ? null : posts.get(posts.size() - 1).getId();
 
         return new SliceResponse<>(posts, hasNext, nextCursorId);
+    }
+    @Override
+    public PostDetailResponse getPostDetail(Long postId) {
+        // MyBatis Mapper를 통해 게시글 단건 및 member 조인 데이터 조회
+        PostDetailResponse postDetail = postMapper.selectPostDetail(postId);
+
+        // 게시글이 존재하지 않으면 NoSuchElementException 던짐 -> GlobalRestExceptionHandler가 404로 처리
+        if (postDetail == null) {
+            throw new NoSuchElementException("해당 ID의 게시글을 찾을 수 없습니다. id=" + postId);
+        }
+
+        return postDetail;
     }
 }

@@ -67,4 +67,21 @@
         LIMIT #{limit}
     </select>
 
+    <select id="selectPostDetail" resultType="net.likelion.bebc25.projectpatory.dto.PostDetailResponse">
+        SELECT
+        p.id AS id,
+        p.content AS content,
+        p.bgm_url AS bgmUrl,
+        p.is_subscriber_only AS isSubscriberOnly,
+        p.hashtags AS hashtags,
+        p.created_at AS createdAt,
+        p.updated_at AS updatedAt,
+        m.id AS memberId,
+        m.nickname AS authorName,
+        m.profile_image AS authorProfileImage
+        FROM post_main p
+        INNER JOIN member m ON p.member_id = m.id
+        WHERE p.id = #{postId}
+    </select>
+
 </mapper>

@@ -1,5 +1,6 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
+import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -19,4 +20,5 @@ public interface PostMapper {
             @Param("lastPostId") Long lastPostId,
             @Param("limit") int limit
     );
+    PostDetailResponse selectPostDetail(Long postId);
 }

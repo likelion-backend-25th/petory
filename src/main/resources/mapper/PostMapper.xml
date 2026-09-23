@@ -1,184 +1,70 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="net.likelion.bebc25.sns.mapper.PostMapper">
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.PostMapper">
 
-    <!-- 공통 컬럼 SQL 조각 -->
-    <sql id="postColumns">
-        id, member_id, content, image_url, like_count, created_at, updated_at
-    </sql>
+    <!-- 피드 목록 응답 DTO 매핑 정의 -->
+    <resultMap id="PostListResultMap" type="net.likelion.bebc25.projectpatory.dto.PostListResponse">
+        <!-- 1. post_main (피드 기본 정보) -->
+        <id property="id" column="id" />
+        <result property="type" column="type" />
+        <result property="content" column="content" />
+        <result property="bgmUrl" column="bgm_url" />
+        <result property="isSubscriberOnly" column="is_subscriber_only" />
+        <result property="hashtags" column="hashtags" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
 
-    <!-- 1. 전체 목록 조회 -->
-    <select id="findAll" resultType="PostResponse">
-        SELECT <include refid="postColumns" />
-        FROM post
-        ORDER BY id DESC
-    </select>
+        <!-- 2. member (작성자 프로필 정보) -->
+        <result property="memberId" column="member_id" />
+        <result property="nickname" column="nickname" />
+        <result property="profileImage" column="profile_image" />
 
-    <!-- 2. ID 기반 단건 상세 조회 -->
-    <select id="findById" parameterType="long" resultType="PostResponse">
-        SELECT <include refid="postColumns" />
-        FROM post
-        WHERE id = #{id}
-    </select>
+        <!-- 3. 반응/소셜 수치 (집계) -->
+        <result property="likeCount" column="like_count" />
+        <result property="commentCount" column="comment_count" />
 
-    <!-- 3. 작성자 ID 기반 목록 조회 -->
-    <select id="findByMemberId" parameterType="long" resultType="PostResponse">
-        SELECT <include refid="postColumns" />
-        FROM post
-        WHERE member_id = #{memberId}
-        ORDER BY id DESC
-        LIMIT 10
-    </select>
-
-    <!-- 4. 신규 게시글 등록 (자동 생성 PK 바인딩) -->
-    <insert id="save" parameterType="PostCreateRequest" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO post (member_id, content, image_url, created_at, updated_at)
-        VALUES (#{memberId}, #{content}, #{imageUrl}, NOW(), NOW())
-    </insert>
-
-    <!-- 5. 게시글 수정 -->
-    <update id="update">
-        UPDATE post
-        SET content = #{content},
-        image_url = #{imageUrl},
-        updated_at = NOW()
-        WHERE id = #{id}
-    </update>
-
-    <!-- 6. 단건 삭제 -->
-    <delete id="deleteById" parameterType="long">
-        DELETE FROM post
-        WHERE id = #{id}
-    </delete>
-
-    <!-- ResultMap 복합 객체 조립 정의 (1:1 작성자, 1:N 댓글 목록) -->
-    <resultMap id="PostDetailResultMap" type="PostDetailResponse">
-        <id property="id" column="post_id" />
-        <result property="content" column="post_content" />
-        <result property="imageUrl" column="post_image_url" />
-        <result property="createdAt" column="post_created_at" />
-
-        <!-- 작성자 회원 정보 1:1 매핑 -->
-        <association property="author" javaType="MemberResponse">
-            <constructor>
-                <idArg column="member_id" javaType="Long" />
-                <arg column="member_nickname" javaType="String" />
-                <arg column="member_profile_image" javaType="String" />
-            </constructor>
-        </association>
-
-        <!-- 댓글 목록 1:N 매핑 -->
-        <collection property="comments" ofType="CommentResponse" javaType="ArrayList">
-            <constructor>
-                <idArg column="comment_id" javaType="Long" />
-                <arg column="commenter_id" javaType="Long" />
-                <arg column="commenter_nickname" javaType="String" />
-                <arg column="comment_content" javaType="String" />
-                <arg column="comment_created_at" javaType="java.time.LocalDateTime" />
-            </constructor>
+        <!-- 4. post_image (1:N 첨부 이미지 목록 매핑) -->
+        <collection property="imageUrls" ofType="java.lang.String">
+            <result column="image_url" />
         </collection>
     </resultMap>
 
-    <!-- 7. 게시글 상세 + 작성자 + 댓글 3중 조인 쿼리 -->
-    <select id="findPostDetailById" parameterType="long" resultMap="PostDetailResultMap">
+    <!-- 메인 피드 무한 스크롤 조회 쿼리 -->
+    <select id="selectPostListCursor" resultMap="PostListResultMap">
         SELECT
-        p.id AS post_id,
-        p.content AS post_content,
-        p.image_url AS post_image_url,
-        p.created_at AS post_created_at,
+        p.id,
+        p.type,
+        p.content,
+        p.bgm_url,
+        p.is_subscriber_only,
+        p.hashtags,
+        p.created_at,
+        p.updated_at,
         m.id AS member_id,
-        m.nickname AS member_nickname,
-        m.profile_image AS member_profile_image,
-        c.id AS comment_id,
-        c.member_id AS commenter_id,
-        cm.nickname AS commenter_nickname,
-        c.content AS comment_content,
-        c.created_at AS comment_created_at
-        FROM post p
+        m.nickname,
+        m.profile_image,
+        img.image_url,
+        (SELECT COUNT(*)
+        FROM post_interaction pi
+        WHERE pi.post_id = p.id
+        AND pi.interaction_type = 'LIKE') AS like_count,
+        (SELECT COUNT(*)
+        FROM comment c
+        WHERE c.post_id = p.id) AS comment_count
+        FROM post_main p
         INNER JOIN member m ON p.member_id = m.id
-        LEFT JOIN comment c ON p.id = c.post_id
-        LEFT JOIN member cm ON c.member_id = cm.id
-        WHERE p.id = #{id}
-        ORDER BY c.id ASC
-        LIMIT 10
-    </select>
-
-    <!-- 8. 다중 조건 동적 검색 쿼리 -->
-    <select id="searchPosts" parameterType="PostSearchRequest" resultType="PostResponse">
-        SELECT <include refid="postColumns" />
-        FROM post
+        LEFT JOIN post_image img ON p.id = img.post_id
         <where>
-            <if test="keyword != null and keyword != ''">
-                AND content LIKE CONCAT('%', #{keyword}, '%')
-            </if>
-            <if test="memberId != null">
-                AND member_id = #{memberId}
-            </if>
-            <if test="targetMemberIds != null and !targetMemberIds.isEmpty()">
-                AND member_id IN
-                <foreach item="targetId" collection="targetMemberIds" open="(" separator="," close=")">
-                    #{targetId}
-                </foreach>
+
+            AND p.type = 1
+            <if test="lastPostId != null">
+                AND p.id &lt; #{lastPostId}
             </if>
         </where>
-        ORDER BY id DESC
-        LIMIT 10
+        ORDER BY p.id DESC, img.sort_order ASC
+        LIMIT #{limit}
     </select>
-
-    <!-- 9. 동적 정렬 분기 조회 -->
-    <select id="findPostsWithSort" parameterType="PostSearchRequest" resultType="PostResponse">
-        SELECT <include refid="postColumns" />
-        FROM post
-        <choose>
-            <when test="sortOrder == 'POPULAR'">
-                ORDER BY like_count DESC, id DESC
-            </when>
-            <otherwise>
-                ORDER BY id DESC
-            </otherwise>
-        </choose>
-        LIMIT 10
-    </select>
-
-    <!-- 10. 동적 부분 수정 (<set>, <if>) -->
-    <update id="updateSelective" parameterType="map">
-        UPDATE post
-        <set>
-            <if test="content != null">
-                content = #{content},
-            </if>
-            <if test="imageUrl != null">
-                image_url = #{imageUrl},
-            </if>
-            updated_at = NOW()
-        </set>
-        WHERE id = #{id}
-    </update>
-
-    <!-- 11. 다중 ID 일괄 삭제 (동적 foreach) -->
-    <delete id="deleteByIds">
-        DELETE FROM post
-        WHERE id IN
-        <foreach item="targetId" collection="idList" open="(" separator="," close=")">
-            #{targetId}
-        </foreach>
-    </delete>
-
-    <!-- 게시글 like_count 1 증가 -->
-    <update id="increaseLikeCount">
-        UPDATE post
-        SET like_count = like_count + 1
-        WHERE id = #{postId}
-    </update>
-
-    <!-- 게시글 like_count 1 감소 -->
-    <update id="decreaseLikeCount">
-        UPDATE post
-        SET like_count = GREATEST(like_count - 1, 0)
-        WHERE id = #{postId}
-    </update>
 
 </mapper>

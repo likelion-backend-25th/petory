@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: project-patory-test
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/petory?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: petoryuser
+    password: petorypassword
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: net.likelion.bebc25.projectpatory.dto
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 테스트 실행 시 AWS 환경변수 부재로 인한 빈 생성 에러 방지용 더미값
+cloud:
+  aws:
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    s3:
+      bucket: test-bucket
+    region:
+      static: ap-northeast-2
+
+jwt:
+  secret: default_jwt_secret_key_for_local_development_environment

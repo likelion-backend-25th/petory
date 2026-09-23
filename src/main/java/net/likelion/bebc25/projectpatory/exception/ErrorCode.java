@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 // 비즈니스 에러 코드 열거형 Enum
 public enum ErrorCode {
     UNAUTHORIZED_ACCESS("UNAUTHORIZED_ACCESS", "인증이 필요하거나 유효하지 않은 자격 증명입니다.", HttpStatus.UNAUTHORIZED),
-
     INVALID_INPUT_VALUE("INVALID_INPUT_VALUE", "입력값 검증에 실패했습니다.", HttpStatus.BAD_REQUEST),
     BUSINESS_RULE_VIOLATION("BUSINESS_RULE_VIOLATION", "비즈니스 업무 규칙을 위반했습니다.", HttpStatus.BAD_REQUEST),
     FORBIDDEN_OPERATION("FORBIDDEN_OPERATION", "해당 작업을 수행할 권한이 없습니다.", HttpStatus.FORBIDDEN),

@@ -44,3 +44,17 @@ out/
 
 ### VS Code ###
 .vscode/
+# 1. 민감한 키 파일 및 인증서
+*.pem
+*.key
+*.p12
+*.json
+
+# 2. 로컬 환경 변수 파일
+.env
+.env.*
+!.env.example
+
+# 3. 설정 파일 (만약 키를 직접 적어둔 yml/properties 파일이 있다면)
+application-secret.yml
+application-local.yml

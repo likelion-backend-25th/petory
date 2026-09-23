@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.PostMapper">
+
+    <!-- 피드 목록 응답 DTO 매핑 정의 -->
+    <resultMap id="PostListResultMap" type="net.likelion.bebc25.projectpatory.dto.PostListResponse">
+        <!-- 1. post_main (피드 기본 정보) -->
+        <id property="id" column="id" />
+        <result property="type" column="type" />
+        <result property="content" column="content" />
+        <result property="bgmUrl" column="bgm_url" />
+        <result property="isSubscriberOnly" column="is_subscriber_only" />
+        <result property="hashtags" column="hashtags" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+
+        <!-- 2. member (작성자 프로필 정보) -->
+        <result property="memberId" column="member_id" />
+        <result property="nickname" column="nickname" />
+        <result property="profileImage" column="profile_image" />
+
+        <!-- 3. 반응/소셜 수치 (집계) -->
+        <result property="likeCount" column="like_count" />
+        <result property="commentCount" column="comment_count" />
+
+        <!-- 4. post_image (1:N 첨부 이미지 목록 매핑) -->
+        <collection property="imageUrls" ofType="java.lang.String">
+            <result column="image_url" />
+        </collection>
+    </resultMap>
+
+    <!-- 메인 피드 무한 스크롤 조회 쿼리 -->
+    <select id="selectPostListCursor" resultMap="PostListResultMap">
+        SELECT
+        p.id,
+        p.type,
+        p.content,
+        p.bgm_url,
+        p.is_subscriber_only,
+        p.hashtags,
+        p.created_at,
+        p.updated_at,
+        m.id AS member_id,
+        m.nickname,
+        m.profile_image,
+        img.image_url,
+        (SELECT COUNT(*)
+        FROM post_interaction pi
+        WHERE pi.post_id = p.id
+        AND pi.interaction_type = 'LIKE') AS like_count,
+        (SELECT COUNT(*)
+        FROM comment c
+        WHERE c.post_id = p.id) AS comment_count
+        FROM post_main p
+        INNER JOIN member m ON p.member_id = m.id
+        LEFT JOIN post_image img ON p.id = img.post_id
+        <where>
+
+            AND p.type = 1
+            <if test="lastPostId != null">
+                AND p.id &lt; #{lastPostId}
+            </if>
+        </where>
+        ORDER BY p.id DESC, img.sort_order ASC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

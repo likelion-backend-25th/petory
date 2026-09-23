@@ -127,7 +127,7 @@
 - Method: `GET`
 - URI: `/api/v1/members/me`
 - 인증 필요 여부: 필수 (`Authorization: Bearer <accessToken>`)
-- Response Body (HTTP 200, MemberProfileResponse - data.sql 1번 회원 기준):
+- Response Body (HTTP 200, MemberProfileResponse - schema.sql 1번 회원 기준):
 ```json
 {
   "id": 1,
@@ -151,7 +151,7 @@
   - `memberId`: 특정 작성자 회원 ID 필터 (선택, 예: `1`)
   - `targetMemberIds`: 다중 회원 ID 목록 필터 (선택)
   - `sortOrder`: 정렬 조건 (선택, `latest`, `oldest` 등)
-- Response Body (HTTP 200, List<PostResponse> - data.sql 실제 데이터):
+- Response Body (HTTP 200, List<PostResponse> - schema.sql 실제 데이터):
 ```json
 [
   {
@@ -214,7 +214,7 @@
 - Method: `GET`
 - URI: `/api/v1/posts/{id}`
 - Path Variable: `id` (게시글 식별자 ID, 예: `1`)
-- Response Body (HTTP 200, PostDetailResponse - data.sql 1번 게시글 및 댓글 연동):
+- Response Body (HTTP 200, PostDetailResponse - schema.sql 1번 게시글 및 댓글 연동):
 ```json
 {
   "id": 1,

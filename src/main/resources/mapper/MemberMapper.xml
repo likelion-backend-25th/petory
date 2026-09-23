@@ -18,4 +18,24 @@
         FROM member
         WHERE id = #{id}
     </select>
+
+    <select id="findAll" resultType="net.likelion.bebc25.projectpatory.domain.Member">
+        SELECT
+        id, email, nickname, species, sex, birth_date, intro, profile_image, address, status, role, created_at,
+        info_provide_agreement
+        FROM member
+        ORDER BY id DESC
+    </select>
+
+    <update id="updateStatusToBlocked">
+        UPDATE member
+        SET status = 'BLOCKED'
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM member
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

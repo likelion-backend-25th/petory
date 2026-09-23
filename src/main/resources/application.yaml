@@ -27,7 +27,3 @@ cloud:
       bucket: ${AWS_S3_BUCKET_NAME:dummy_bucket}
     region:
       static: ap-northeast-2
-
-mybatis:
-  mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: net.likelion.bebc25.projectpatory.dto

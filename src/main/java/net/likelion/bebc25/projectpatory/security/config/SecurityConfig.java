@@ -65,18 +65,18 @@ public class SecurityConfig {
                         // 예외 포워딩이 403으로 가려지지 않도록 허용
                         .requestMatchers("/error").permitAll()
 
-                        // 인증 API
+                        // 인증 API (login, refresh)
                         .requestMatchers("/api/v1/auth/**").permitAll()
+
+                        // 회원가입
+                        .requestMatchers("/api/v1/signup").permitAll()
 
                         // 게시글 GET 공개
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/**").permitAll()
 
                         // Swagger UI 및 API 문서
                         .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs"
+                                "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs"
                         ).permitAll()
 
                         // 그 외는 인증 필요

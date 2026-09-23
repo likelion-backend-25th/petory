@@ -1,6 +1,5 @@
 package net.likelion.bebc25.projectpatory.dto;
 
-
 import net.likelion.bebc25.projectpatory.exception.ErrorCode;
 
 import java.time.LocalDateTime;

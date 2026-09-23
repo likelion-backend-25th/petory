@@ -32,4 +32,5 @@ public record AdminMemberResponse(
                 member.getRole(),
                 member.getCreatedAt()
         );
+    }
 }

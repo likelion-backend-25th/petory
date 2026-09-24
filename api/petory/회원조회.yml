@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/profile/2"
+  url: "{{baseUrl}}/profile/6"
   auth:
     type: basic
-    username: mungchi@petory.com
+    username: qudgh0217@example.com
     password: password123
 
 settings:

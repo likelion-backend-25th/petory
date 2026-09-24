@@ -66,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
 
                         // 인증 API (login, refresh)
-                        .requestMatchers("/api/v1/login").permitAll()
+                        .requestMatchers("/api/v1/login", "/api/v1/represh").permitAll()
 
                         // 회원가입
                         .requestMatchers("/api/v1/signup").permitAll()

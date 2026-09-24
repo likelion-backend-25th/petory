@@ -23,6 +23,12 @@ public interface MemberMapper {
     // 회원 전체 조회
     List<Member> findAll();
 
+    // 팔로우 한 사람 수 조회
+    long countFollowings(@Param("memberId") Long memberId);
+
+    // 팔로우 수 조회
+    long countFollowers(@Param("memberId") Long memberId);
+
     // 회원 계정 정지
     int updateStatusToBlocked(@Param("id") long id);
 

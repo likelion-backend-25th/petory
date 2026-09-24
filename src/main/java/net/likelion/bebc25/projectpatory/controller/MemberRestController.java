@@ -2,24 +2,31 @@ package net.likelion.bebc25.projectpatory.controller;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
+import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
 import net.likelion.bebc25.projectpatory.service.MemberService;
+import net.likelion.bebc25.projectpatory.service.PostService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
 public class MemberRestController {
     private final MemberService memberService;
+    private final PostService postService;
 
-    public MemberRestController(MemberService memberService) {this.memberService = memberService;}
+    public MemberRestController(MemberService memberService, PostService postService) {
+        this.memberService = memberService;
+        this.postService = postService;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest request) {
@@ -29,13 +36,31 @@ public class MemberRestController {
 
     @GetMapping("/profile/{memberId}")
     public ResponseEntity<MemberProfileResponse> getMyProfile(
+            @PathVariable Long memberId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        // CustomUserDetails로부터 도메인 엔티티를 획득하여 마이페이지 응답 DTO로 변환
-        Member member = userDetails.getMember();
-        return ResponseEntity.ok(MemberProfileResponse.from(member));
+        Member member = memberService.findMemberById(memberId);
+        return ResponseEntity.ok(memberService.getMyProfile(member));
     }
 
+    @GetMapping("/profile/{memberId}/posts")
+    public ResponseEntity<List<MyPagePostResponse>> getMyMainPosts(
+            @PathVariable Long memberId
+    ) {return ResponseEntity.ok(postService.getMyMainPosts(memberId));}
+
+    @GetMapping("/profile/{memberId}/qna")
+    public ResponseEntity<List<MyPagePostResponse>> getMyQnAPosts(
+            @PathVariable Long memberId
+    ) {return ResponseEntity.ok(postService.getMyQnAPosts(memberId));}
+
+    @GetMapping("/profile/{memberId}/bookmarks")
+    public ResponseEntity<List<MyPagePostResponse>> getMyBookmarks(
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {return ResponseEntity.ok(postService.getMyBookmarks(memberId, userDetails.getId()));}
+
+
+    // 서비스용 기능x / 학습 or 디버깅용
     @GetMapping("/profile/{memberId}/auth-info")
     public ResponseEntity<Map<String, Object>> getAuthInfo(Authentication authentication) {
         // 1. 사용자 식별자 및 보유 권한 획득(UserDetails 에서도 확인 가능)

@@ -1,12 +1,13 @@
 package net.likelion.bebc25.projectpatory.security.config;
 
+import net.likelion.bebc25.projectpatory.security.handler.CustomAccessDeniedHandler;
+import net.likelion.bebc25.projectpatory.security.handler.CustomAuthenticationEntryPoint;
 import net.likelion.bebc25.projectpatory.security.jwt.JwtAuthenticationFilter;
 import net.likelion.bebc25.projectpatory.security.jwt.JwtProvider;
 import net.likelion.bebc25.projectpatory.security.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -15,7 +16,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -35,13 +35,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            CustomAccessDeniedHandler customAccessDeniedHandler
+    ) throws Exception {
         http
                 // REST API 환경: CSRF, Form 로그인 비활성화
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // HTTP Basic 인증 활성화 (학습/테스트용)
-                .httpBasic(Customizer.withDefaults())
+                // HTTP Basic 인증을 비활성화하고 무상태 JWT 인증 체계로 전환
+                .httpBasic(AbstractHttpConfigurer::disable)
 
                 // 기본 폼 로그인 비활성화
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -66,7 +70,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
 
                         // 인증 API (login, refresh)
-                        .requestMatchers("/api/v1/login", "/api/v1/represh").permitAll()
+                        .requestMatchers("/api/v1/login", "/api/v1/refresh").permitAll()
 
                         // 회원가입
                         .requestMatchers("/api/v1/signup").permitAll()
@@ -85,7 +89,8 @@ public class SecurityConfig {
 
                 // 미인증 요청은 401로 응답
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 );
 
         return http.build();

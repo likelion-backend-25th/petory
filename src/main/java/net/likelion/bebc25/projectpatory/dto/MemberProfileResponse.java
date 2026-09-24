@@ -18,9 +18,12 @@ public record MemberProfileResponse(
         String status,
         String role,
         LocalDateTime createdAt,
-        LocalDateTime infoProvideAgreement
+        LocalDateTime infoProvideAgreement,
+        long postsCount,
+        long followers,
+        long followings
 ) {
-    public static MemberProfileResponse from(Member member) {
+    public static MemberProfileResponse from(Member member, long postsCount, long followerCount, long followingCount) {
         return new MemberProfileResponse(
                 member.getId(),
                 member.getEmail(),
@@ -34,7 +37,10 @@ public record MemberProfileResponse(
                 member.getStatus(),
                 member.getRole(),
                 member.getCreatedAt(),
-                member.getInfoProvideAgreement()
+                member.getInfoProvideAgreement(),
+                postsCount,
+                followerCount,
+                followingCount
         );
     }
 }

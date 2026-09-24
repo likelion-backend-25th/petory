@@ -42,5 +42,5 @@ public class SignUpRequest {
     private String address = "";
 
     @Schema(description = "개인정보 제공 동의여부, 프론트에서 넘어온 체크박스의 값이 저장됨")
-    private boolean isAgreed;
+    private Boolean isAgreed;
 }

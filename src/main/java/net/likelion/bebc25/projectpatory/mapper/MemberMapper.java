@@ -2,15 +2,17 @@ package net.likelion.bebc25.projectpatory.mapper;
 
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
 public interface MemberMapper {
     // 회원가입
-    void createMember(@Param("member") Member member);
+    void createMember(@Param("member") SignUpRequest member, @Param("infoProvideAgreement") LocalDateTime infoProvideAgreement);
 
     // 이메일 기반 회원 정보 조회
     Member findByEmail(@Param("email") String email);

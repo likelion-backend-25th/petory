@@ -2,24 +2,29 @@ package net.likelion.bebc25.projectpatory.controller;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
+import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
+import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
+import net.likelion.bebc25.projectpatory.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1")
 public class MemberRestController {
-    @PostMapping("signup")
-    public void signUp() {
-        
+    private final MemberService memberService;
+
+    public MemberRestController(MemberService memberService) {this.memberService = memberService;}
+
+    @PostMapping("/signup")
+    public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest request) {
+        Member member = memberService.signup(request);
+        return ResponseEntity.ok(SignUpResponse.from(member));
     }
 
     @GetMapping("/profile/{memberId}")

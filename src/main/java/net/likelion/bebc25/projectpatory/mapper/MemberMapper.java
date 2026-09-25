@@ -2,15 +2,18 @@ package net.likelion.bebc25.projectpatory.mapper;
 
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
+import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
 public interface MemberMapper {
     // 회원가입
-    void createMember(@Param("member") Member member);
+    void createMember(@Param("member") SignUpRequest member, @Param("infoProvideAgreement") LocalDateTime infoProvideAgreement);
 
     // 이메일 기반 회원 정보 조회
     Member findByEmail(@Param("email") String email);
@@ -20,6 +23,14 @@ public interface MemberMapper {
 
     // 회원 전체 조회
     List<Member> findAll();
+
+    // 팔로우 한 사람 수 조회
+    long countFollowings(@Param("memberId") Long memberId);
+
+    // 팔로우 수 조회
+    long countFollowers(@Param("memberId") Long memberId);
+
+    void editMember(@Param("member") MemberProfileEditRequest member, @Param("infoProvideAgreement") LocalDateTime infoProvideAgreement);
 
     // 회원 계정 정지
     int updateStatusToBlocked(@Param("id") long id);

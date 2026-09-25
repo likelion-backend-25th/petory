@@ -1,5 +1,6 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
+import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
 import net.likelion.bebc25.projectpatory.dto.PostCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
@@ -21,7 +22,16 @@ public interface PostMapper {
             @Param("lastPostId") Long lastPostId,
             @Param("limit") int limit
     );
+
     PostDetailResponse selectPostDetail(Long postId);
+
+    long countMyPosts(Long memberId);
+
+    List<MyPagePostResponse> getMyMainPosts(Long memberId);
+
+    List<MyPagePostResponse> getMyQnAPosts(Long memberId);
+
+    List<MyPagePostResponse> getMyBookmarks(Long memberId);
 
     void insertPost(PostCreateRequest request);
 }

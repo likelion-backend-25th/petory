@@ -2,6 +2,8 @@ package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
+import net.likelion.bebc25.projectpatory.dto.MyProfileResponse;
+import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -47,17 +49,15 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public MemberProfileResponse getMyProfile(Member member) {
+    public ProfileResponse getMyProfile(Member member, Long loginMemberId) {
         Long memberId = member.getId();
         long postCount = postMapper.countMyPosts(memberId);
         long followerCount = memberMapper.countFollowers(memberId);
         long followingCount = memberMapper.countFollowings(memberId);
+
+        if (memberId.equals(loginMemberId)) {
+            return MyProfileResponse.from(member, postCount, followerCount, followingCount);
+        }
         return MemberProfileResponse.from(member, postCount, followerCount, followingCount);
     }
-
-    @Override
-    public long countFollowers(Long memberId) {return memberMapper.countFollowers(memberId);}
-
-    @Override
-    public long countFollowings(Long memberId) {return memberMapper.countFollowings(memberId);}
 }

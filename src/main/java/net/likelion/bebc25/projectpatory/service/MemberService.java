@@ -2,7 +2,7 @@ package net.likelion.bebc25.projectpatory.service;
 
 
 import net.likelion.bebc25.projectpatory.domain.Member;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
+import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 
 public interface MemberService {
@@ -12,9 +12,5 @@ public interface MemberService {
 
     Member findMemberById(Long id);
 
-    MemberProfileResponse getMyProfile(Member member);
-
-    long countFollowers(Long memberId);
-
-    long countFollowings(Long memberId);
+    ProfileResponse getMyProfile(Member member, Long loginMemberId);
 }

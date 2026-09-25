@@ -1,8 +1,8 @@
 package net.likelion.bebc25.projectpatory.controller;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
+import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
@@ -35,12 +35,13 @@ public class MemberRestController {
     }
 
     @GetMapping("/profile/{memberId}")
-    public ResponseEntity<MemberProfileResponse> getMyProfile(
+    public ResponseEntity<ProfileResponse> getMyProfile(
             @PathVariable Long memberId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long loginMemberId = userDetails.getId();
         Member member = memberService.findMemberById(memberId);
-        return ResponseEntity.ok(memberService.getMyProfile(member));
+        return ResponseEntity.ok(memberService.getMyProfile(member, loginMemberId));
     }
 
     @GetMapping("/profile/{memberId}/posts")

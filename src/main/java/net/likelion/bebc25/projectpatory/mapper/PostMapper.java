@@ -3,6 +3,7 @@ package net.likelion.bebc25.projectpatory.mapper;
 import net.likelion.bebc25.projectpatory.dto.PostCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.PostDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.PostListResponse;
+import net.likelion.bebc25.projectpatory.dto.PostUpdateRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -24,4 +25,10 @@ public interface PostMapper {
     PostDetailResponse selectPostDetail(Long postId);
 
     void insertPost(PostCreateRequest request);
+
+    // 게시글 수정 (성공 시 수정된 행 수 반환)
+    int updatePost(@Param("postId") Long postId, @Param("memberId") Long memberId, @Param("request") PostUpdateRequest request);
+
+    // 게시글 삭제 (성공 시 삭제된 행 수 반환)
+    int deletePost(@Param("postId") Long postId, @Param("memberId") Long memberId);
 }

@@ -54,4 +54,22 @@ public class PostServiceImpl implements PostService {
                 .id(request.getId())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void updatePost(Long postId, Long memberId, PostUpdateRequest request) {
+        int updatedRows = postMapper.updatePost(postId, memberId, request);
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("게시글을 찾을 수 없거나 수정 권한이 없습니다. (postId: " + postId + ")");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deletePost(Long postId, Long memberId) {
+        int deletedRows = postMapper.deletePost(postId, memberId);
+        if (deletedRows == 0) {
+            throw new IllegalArgumentException("게시글을 찾을 수 없거나 삭제 권한이 없습니다. (postId: " + postId + ")");
+        }
+    }
 }

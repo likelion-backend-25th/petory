@@ -1,0 +1,31 @@
+info:
+  name: 게시글 삭제
+  type: http
+  seq: 7
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/posts/1?memberId=2
+  params:
+    - name: memberId
+      value: "2"
+      type: query
+  body:
+    type: json
+    data: |-
+      {
+        "content": "수정된 게시글 내용입니다.",
+        "bgmUrl": "https://example.com/new-bgm.mp3",
+        "isSubscriberOnly": 1,
+        "hashtags": "#수정 #테스트"
+      }
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjIiLCJlbWFpbCI6Im11bmdjaGlAcGV0b3J5LmNvbSIsInJvbGVzIjpbIlJPTEVfVklQIl0sImlhdCI6MTc5MDQ3OTU1MiwiZXhwIjoxNzkwNDgzMTUyfQ.z-fj5VbVOp7cucmcNbzyCJM7dNzV9Zgxn3Woy-skMaLYCNx55uQlHENW04gMHbxF
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

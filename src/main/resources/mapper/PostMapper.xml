@@ -105,4 +105,21 @@
         )
     </insert>
 
+    <!-- 게시글 수정 -->
+    <update id="updatePost">
+        UPDATE post_main
+        SET content = #{request.content},
+        bgm_url = #{request.bgmUrl},
+        is_subscriber_only = #{request.isSubscriberOnly},
+        hashtags = #{request.hashtags},
+        updated_at = NOW()
+        WHERE id = #{postId} AND member_id = #{memberId}
+    </update>
+
+    <!-- 게시글 삭제 -->
+    <delete id="deletePost">
+        DELETE FROM post_main
+        WHERE id = #{postId} AND member_id = #{memberId}
+    </delete>
+
 </mapper>

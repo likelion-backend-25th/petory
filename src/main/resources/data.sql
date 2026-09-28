@@ -60,27 +60,31 @@ INSERT INTO post_interaction (id, member_id, post_id, interaction_type, created_
 (10, 2, 6, 'LIKE', '2025-07-06 11:20:00');
 
 -- 7. payment
-INSERT INTO payment (id, member_id, target_member_id, imp_uid, merchant_uid, amount, category, status, pay_type, created_at, completed_at) VALUES
-(1, 3, 2, 'imp_0000000001', 'ORD_20250710_001', 5000, '간식 쏘기', 'PAID', 'card', '2025-07-10 12:00:00', '2025-07-10 12:00:30'),
-(2, 4, 2, 'imp_0000000002', 'ORD_20250711_001', 9900, '펫 클럽 구독', 'PAID', 'card', '2025-07-11 09:00:00', '2025-07-11 09:00:20'),
-(3, 5, 2, NULL, 'ORD_20250712_001', 3000, '간식 쏘기', 'READY', 'card', '2025-07-12 15:00:00', '2025-07-12 15:00:00'),
-(4, 3, 2, 'imp_0000000004', 'ORD_20250713_001', 5000, '간식 쏘기', 'FAILED', 'card', '2025-07-13 11:00:00', '2025-07-13 11:00:10'),
-(5, 4, 5, 'imp_0000000005', 'ORD_20250714_001', 3000, '간식 쏘기', 'CANCELLED', 'point', '2025-07-14 16:00:00', '2025-07-14 16:05:00');
+INSERT INTO payment (id, member_id, target_member_id, payment_id, order_name, currency, total_amount, paid_amount, pay_method, status, transaction_id, pg_tx_id, receipt_url, fail_code, fail_message, cancel_amount, cancel_reason, created_at, paid_at, cancelled_at) VALUES
+(1, 3, 2, 'pay_0000000001', 'ORD_20250710_001', 'KRW', 5000, 5000, '간식 쏘기', 'PAID', 'tx_0000000001', 'pg_0000000001', 'https://receipt.example.com/pay/1', NULL, NULL, NULL, NULL, '2025-07-10 12:00:00', '2025-07-10 12:00:30', NULL),
+(2, 4, 2, 'pay_0000000002', 'ORD_20250711_001', 'KRW', 9900, 9900, '펫 클럽 구독', 'PAID', 'tx_0000000002', 'pg_0000000002', 'https://receipt.example.com/pay/2', NULL, NULL, NULL, NULL, '2025-07-11 09:00:00', '2025-07-11 09:00:20', NULL),
+(3, 5, 2, 'pay_0000000003', 'ORD_20250712_001', 'KRW', 3000, NULL, '간식 쏘기', 'READY', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-12 15:00:00', NULL, NULL),
+(4, 3, 2, 'pay_0000000004', 'ORD_20250713_001', 'KRW', 5000, NULL, '간식 쏘기', 'FAILED', NULL, NULL, NULL, 'PAY_PROCESS_FAILED', '잔액 부족', NULL, NULL, '2025-07-13 11:00:00', NULL, NULL),
+(5, 4, 5, 'pay_0000000005', 'ORD_20250714_001', 'KRW', 3000, 3000, '간식 쏘기', 'CANCELLED', 'tx_0000000005', 'pg_0000000005', 'https://receipt.example.com/pay/5', NULL, NULL, 3000, '단순 변심', '2025-07-14 16:00:00', '2025-07-14 16:00:30', '2025-07-14 16:05:00');
 
--- 8. subscription_plan
+-- 8. cancel_payment
+INSERT INTO cancel_payment (id, payment_id, cancellation_id, pg_cancellation_id, status, cancel_amount, reason, receipt_url, fail_code, fail_message, requested_at, cancelled_at) VALUES
+(1, 5, 'cancel_0000000005', 'pg_cancel_0005', 'SUCCEEDED', 3000, '단순 변심', 'https://receipt.example.com/cancel/5', NULL, NULL, '2025-07-14 16:04:00', '2025-07-14 16:05:00');
+
+-- 9. subscription_plan
 INSERT INTO subscription_plan (id, member_id, plan_name, price, description, status) VALUES
 (1, 2, '베이직', 4900, '월간 전용 피드 + 감사 메시지', 'ACTIVE'),
 (2, 2, '프리미엄', 9900, '전용 피드 + 월 1회 화상 만남 + 간식 배송', 'ACTIVE'),
 (3, 5, '초코 팬클럽', 3900, '초코의 공놀이 하이라이트 영상 제공', 'ACTIVE'),
 (4, 2, '올드플랜', 2900, '더 이상 판매하지 않는 플랜', 'DELETED');
 
--- 9. subscription
-INSERT INTO subscription (id, member_id, target_member_id, plan_id, customer_uid, status, started_at, ended_at, next_billing_at, agreement) VALUES
-(1, 4, 2, 2, 'cust_coco_001', 'ACTIVE', '2025-07-11 09:00:20', NULL, '2025-08-11 09:00:00', 1),
-(2, 3, 2, 1, 'cust_nabi_001', 'ACTIVE', '2025-07-15 10:00:00', NULL, '2025-08-15 10:00:00', 1),
-(3, 6, 5, 3, 'cust_kakao_001', 'CANCELLED', '2025-06-20 12:00:00', '2025-07-20 12:00:00', NULL, 0);
+-- 10. subscription
+INSERT INTO subscription (id, member_id, target_member_id, plan_id, billing_key, started_at, ended_at, next_billing_at, status, agreement) VALUES
+(1, 4, 2, 2, 'billing_coco_001', '2025-07-11 09:00:20', NULL, '2025-08-11 09:00:00', 'ACTIVE', 1),
+(2, 3, 2, 1, 'billing_nabi_001', '2025-07-15 10:00:00', NULL, '2025-08-15 10:00:00', 'ACTIVE', 1),
+(3, 6, 5, 3, 'billing_kakao_001', '2025-06-20 12:00:00', '2025-07-20 12:00:00', NULL, 'CANCELLED', 0);
 
--- 10. follow
+-- 11. follow
 INSERT INTO follow (id, follower_id, following_id, created_at) VALUES
 (1, 3, 2, '2025-07-01 09:00:00'),
 (2, 4, 2, '2025-07-01 09:10:00'),
@@ -90,7 +94,7 @@ INSERT INTO follow (id, follower_id, following_id, created_at) VALUES
 (6, 6, 2, '2025-07-06 12:00:00'),
 (7, 4, 5, '2025-07-05 08:00:00');
 
--- 11. notification
+-- 12. notification
 INSERT INTO notification (id, member_id, sender_id, notification_type, content, is_checked, created_at) VALUES
 (1, 2, 3, 'FOLLOW', '나비가 회원님을 팔로우하기 시작했습니다.', 1, '2025-07-01 09:00:01'),
 (2, 2, 3, 'COMMENT', '나비가 회원님의 게시글에 댓글을 남겼습니다.', 1, '2025-07-01 10:30:01'),
@@ -100,13 +104,13 @@ INSERT INTO notification (id, member_id, sender_id, notification_type, content, 
 (6, 2, 1, 'PET BIRTHDAY', '내일은 멍치의 생일이에요! 축하 메시지를 남겨보세요.', 0, '2025-03-14 09:00:00'),
 (7, 5, 4, 'FOLLOW', '코코가 회원님을 팔로우하기 시작했습니다.', 0, '2025-07-05 08:00:01');
 
--- 12. chat_room
+-- 13. chat_room
 INSERT INTO chat_room (id, member1_id, member2_id, member1_exited, member2_exited, created_at) VALUES
 (1, 2, 3, 0, 0, '2025-07-01 20:00:00'),
 (2, 2, 4, 0, 0, '2025-07-11 10:00:00'),
 (3, 4, 5, 0, 1, '2025-07-05 19:00:00');
 
--- 13. chat_message
+-- 14. chat_message
 INSERT INTO chat_message (id, room_id, sender_id, message, created_at) VALUES
 (1, 1, 3, '멍치야 한강 산책 재밌었어?', '2025-07-01 20:01:00'),
 (2, 1, 2, '응! 다음에 나비도 같이 가자~', '2025-07-01 20:02:00'),
@@ -116,13 +120,13 @@ INSERT INTO chat_message (id, room_id, sender_id, message, created_at) VALUES
 (6, 3, 4, '초코야 공놀이 영상 공유해줘!', '2025-07-05 19:01:00'),
 (7, 3, 5, '알겠어! 내일 올려줄게.', '2025-07-05 19:02:00');
 
--- 14. missing_pet_post
+-- 15. missing_pet_post
 INSERT INTO missing_pet_post (id, member_id, missing_date, missing_address, detail, image_url, status, latitude, longitude, created_at, updated_at) VALUES
 (1, 4, '2025-07-08', '경기도 성남시 분당구 정자동 공원 근처', '흰색 푸들, 빨간 목걸이 착용. 이름이 코코입니다.', 'https://s3.example.com/missing/1.jpg', 'MISSING', 37.3595000, 127.1052000, '2025-07-08 20:00:00', '2025-07-08 20:00:00'),
 (2, 6, '2025-06-25', '서울시 종로구 청계천 일대', '회색 코숏, 왼쪽 귀에 작은 상처 있음.', 'https://s3.example.com/missing/2.jpg', 'FOUND', 37.5700000, 126.9820000, '2025-06-25 18:30:00', '2025-06-28 12:00:00'),
 (3, 5, '2025-07-01', '부산시 해운대구 달맞이길', '갈색 믹스견. 찾아주셔서 감사합니다. 신고 취소합니다.', NULL, 'CANCELLED', 35.1587000, 129.1604000, '2025-07-01 07:00:00', '2025-07-01 22:00:00');
 
--- 15. missing_pet_report
+-- 16. missing_pet_report
 INSERT INTO missing_pet_report (id, missing_pet_post_id, member_id, address, detail, image_url, sight_at, latitude, longitude, created_at, updated_at) VALUES
 (1, 1, 2, '성남시 분당구 수내동 카페거리', '빨간 목걸이 흰 푸들 비슷한 아이를 봤어요. 사람 가까이 오진 않았습니다.', 'https://s3.example.com/report/1.jpg', '2025-07-09 08:30:00', 37.3781000, 127.1142000, '2025-07-09 09:00:00', '2025-07-09 09:00:00'),
 (2, 1, 3, '성남시 분당구 정자역 3번 출구', '목격 후 바로 사진 찍었어요. 아직 근처에 있을 수 있어요.', 'https://s3.example.com/report/2.jpg', '2025-07-09 17:00:00', 37.3660000, 127.1082000, '2025-07-09 17:20:00', '2025-07-09 17:20:00'),

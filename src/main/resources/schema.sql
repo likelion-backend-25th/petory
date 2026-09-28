@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS chat_message;
 DROP TABLE IF EXISTS notification;
 DROP TABLE IF EXISTS follow;
 DROP TABLE IF EXISTS subscription;
+DROP TABLE IF EXISTS cancel_payment;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS post_interaction;
 DROP TABLE IF EXISTS comment;
@@ -111,23 +112,54 @@ CREATE TABLE IF NOT EXISTS payment (
     id               BIGINT       NOT NULL AUTO_INCREMENT,
     member_id        BIGINT       NOT NULL,
     target_member_id BIGINT       NOT NULL,
-    imp_uid          VARCHAR(100) NULL,
-    merchant_uid     VARCHAR(100) NOT NULL,
-    amount           INT          NOT NULL,
-    category         VARCHAR(30)  NOT NULL,
-    status           VARCHAR(20)  NOT NULL,
-    pay_type         VARCHAR(30)  NOT NULL,
-    created_at       DATETIME     DEFAULT CURRENT_TIMESTAMP,
-    completed_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    payment_id       VARCHAR(100) NOT NULL,
+    order_name       VARCHAR(100) NOT NULL,
+    currency         VARCHAR(10)  NOT NULL DEFAULT 'KRW',
+    total_amount     INT          NOT NULL,
+    paid_amount      INT          NULL,
+    pay_method       VARCHAR(30)  NOT NULL,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'READY',
+    transaction_id   VARCHAR(100) NULL,
+    pg_tx_id         VARCHAR(100) NULL,
+    receipt_url      VARCHAR(500) NULL,
+    fail_code        VARCHAR(100) NULL,
+    fail_message     VARCHAR(500) NULL,
+    cancel_amount    INT          NULL,
+    cancel_reason    VARCHAR(255) NULL,
+    created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    paid_at          DATETIME     NULL,
+    cancelled_at     DATETIME     NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uk_payment_merchant_uid (merchant_uid),
+    UNIQUE KEY uk_payment_payment_id (payment_id),
+    KEY idx_payment_member_id (member_id),
     CONSTRAINT fk_payment_member
         FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE,
     CONSTRAINT fk_payment_target_member
         FOREIGN KEY (target_member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 8. subscription_plan
+-- 8. cancel_payment
+CREATE TABLE IF NOT EXISTS cancel_payment (
+    id                 BIGINT       NOT NULL AUTO_INCREMENT,
+    payment_id         BIGINT       NOT NULL,
+    cancellation_id    VARCHAR(100) NULL,
+    pg_cancellation_id VARCHAR(100) NULL,
+    status             VARCHAR(30)  NOT NULL,
+    cancel_amount      INT          NOT NULL,
+    reason             VARCHAR(255) NOT NULL,
+    receipt_url        VARCHAR(500) NULL,
+    fail_code          VARCHAR(100) NULL,
+    fail_message       VARCHAR(500) NULL,
+    requested_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cancelled_at       DATETIME     NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_cancel_payment_cancellation_id (cancellation_id),
+    KEY idx_payment_cancel_payment_id (payment_id),
+    CONSTRAINT fk_cancel_payment_payment
+        FOREIGN KEY (payment_id) REFERENCES payment (id) ON DELETE CASCADE
+);
+
+-- 9. subscription_plan
 CREATE TABLE IF NOT EXISTS subscription_plan (
     id          BIGINT       NOT NULL AUTO_INCREMENT,
     member_id   BIGINT       NOT NULL,
@@ -141,17 +173,17 @@ CREATE TABLE IF NOT EXISTS subscription_plan (
         FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 9. subscription
+-- 10. subscription
 CREATE TABLE IF NOT EXISTS subscription (
     id               BIGINT       NOT NULL AUTO_INCREMENT,
     member_id        BIGINT       NOT NULL,
     target_member_id BIGINT       NOT NULL,
     plan_id          BIGINT       NOT NULL,
-    customer_uid     VARCHAR(100) NOT NULL,
-    status           VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+    billing_key      VARCHAR(100) NOT NULL,
     started_at       DATETIME     DEFAULT CURRENT_TIMESTAMP,
     ended_at         DATETIME     NULL,
     next_billing_at  DATETIME     NULL,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
     agreement        TINYINT(1)   NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     CONSTRAINT fk_subscription_member
@@ -162,7 +194,7 @@ CREATE TABLE IF NOT EXISTS subscription (
         FOREIGN KEY (plan_id) REFERENCES subscription_plan (id) ON DELETE CASCADE
 );
 
--- 10. follow
+-- 11. follow
 CREATE TABLE IF NOT EXISTS follow (
     id           BIGINT   NOT NULL AUTO_INCREMENT,
     follower_id  BIGINT   NOT NULL,
@@ -176,7 +208,7 @@ CREATE TABLE IF NOT EXISTS follow (
         FOREIGN KEY (following_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 11. notification
+-- 12. notification
 CREATE TABLE IF NOT EXISTS notification (
     id                BIGINT       NOT NULL AUTO_INCREMENT,
     member_id         BIGINT       NOT NULL,
@@ -192,7 +224,7 @@ CREATE TABLE IF NOT EXISTS notification (
         FOREIGN KEY (sender_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 12. chat_room
+-- 13. chat_room
 CREATE TABLE IF NOT EXISTS chat_room (
     id             BIGINT     NOT NULL AUTO_INCREMENT,
     member1_id     BIGINT     NOT NULL,
@@ -208,7 +240,7 @@ CREATE TABLE IF NOT EXISTS chat_room (
         FOREIGN KEY (member2_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 13. chat_message
+-- 14. chat_message
 CREATE TABLE IF NOT EXISTS chat_message (
     id         BIGINT   NOT NULL AUTO_INCREMENT,
     room_id    BIGINT   NOT NULL,
@@ -222,7 +254,7 @@ CREATE TABLE IF NOT EXISTS chat_message (
         FOREIGN KEY (sender_id) REFERENCES member (id)
 );
 
--- 14. missing_pet_post
+-- 15. missing_pet_post
 CREATE TABLE IF NOT EXISTS missing_pet_post (
     id              BIGINT         NOT NULL AUTO_INCREMENT,
     member_id       BIGINT         NOT NULL,
@@ -240,7 +272,7 @@ CREATE TABLE IF NOT EXISTS missing_pet_post (
         FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
--- 15. missing_pet_report
+-- 16. missing_pet_report
 CREATE TABLE IF NOT EXISTS missing_pet_report (
     id                  BIGINT         NOT NULL AUTO_INCREMENT,
     missing_pet_post_id BIGINT         NOT NULL,

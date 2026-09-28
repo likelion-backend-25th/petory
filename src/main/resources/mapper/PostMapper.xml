@@ -7,27 +7,27 @@
     <!-- 피드 목록 응답 DTO 매핑 정의 -->
     <resultMap id="PostListResultMap" type="net.likelion.bebc25.projectpatory.dto.PostListResponse">
         <!-- 1. post_main (피드 기본 정보) -->
-        <id property="id" column="id" />
-        <result property="type" column="type" />
-        <result property="content" column="content" />
-        <result property="bgmUrl" column="bgm_url" />
-        <result property="isSubscriberOnly" column="is_subscriber_only" />
-        <result property="hashtags" column="hashtags" />
-        <result property="createdAt" column="created_at" />
-        <result property="updatedAt" column="updated_at" />
+        <id property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="content" column="content"/>
+        <result property="bgmUrl" column="bgm_url"/>
+        <result property="isSubscriberOnly" column="is_subscriber_only"/>
+        <result property="hashtags" column="hashtags"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
 
         <!-- 2. member (작성자 프로필 정보) -->
-        <result property="memberId" column="member_id" />
-        <result property="nickname" column="nickname" />
-        <result property="profileImage" column="profile_image" />
+        <result property="memberId" column="member_id"/>
+        <result property="nickname" column="nickname"/>
+        <result property="profileImage" column="profile_image"/>
 
         <!-- 3. 반응/소셜 수치 (집계) -->
-        <result property="likeCount" column="like_count" />
-        <result property="commentCount" column="comment_count" />
+        <result property="likeCount" column="like_count"/>
+        <result property="commentCount" column="comment_count"/>
 
         <!-- 4. post_image (1:N 첨부 이미지 목록 매핑) -->
         <collection property="imageUrls" ofType="java.lang.String">
-            <result column="image_url" />
+            <result column="image_url"/>
         </collection>
     </resultMap>
 
@@ -84,8 +84,46 @@
         WHERE p.id = #{postId}
     </select>
 
+    <select id="countMyPosts" resultType="long">
+        SELECT COUNT(*) FROM post_main WHERE member_id = #{memberId} AND type = 1
+    </select>
+
+    <!-- 마이페이지용 내가 작성한 메인 게시글 조회 / 이미지는 대표이미지 1장만  -->
+    <select id="getMyMainPosts" resultType="net.likelion.bebc25.projectpatory.dto.MyPagePostResponse">
+        SELECT post.id, post.content, post.is_subscriber_only, post.hashtags, img.image_url,
+        (SELECT COUNT(*) FROM post_interaction interact
+        WHERE interact.post_id = post.id AND interact.interaction_type = 'LIKE') AS like_count
+        FROM post_main post
+        LEFT JOIN post_image img ON img.post_id = post.id AND img.sort_order = 0
+        WHERE type = 1 AND post.member_id = #{memberId}
+        ORDER BY post.created_at DESC
+    </select>
+
+    <select id="getMyQnAPosts" resultType="net.likelion.bebc25.projectpatory.dto.MyPagePostResponse">
+        SELECT post.id, post.content, post.is_subscriber_only, post.hashtags, img.image_url,
+        (SELECT COUNT(*) FROM post_interaction interact
+        WHERE interact.post_id = post.id AND interact.interaction_type = 'LIKE') AS like_count
+        FROM post_main post
+        LEFT JOIN post_image img ON img.post_id = post.id AND img.sort_order = 0
+        WHERE type = 2 AND post.member_id = #{memberId}
+        ORDER BY post.created_at DESC
+    </select>
+
+    <select id="getMyBookmarks" resultType="net.likelion.bebc25.projectpatory.dto.MyPagePostResponse">
+        SELECT
+        post.id,post.content,post.is_subscriber_only,post.hashtags, img.image_url,
+        (SELECT COUNT(*) FROM post_interaction li
+        WHERE li.post_id = post.id AND li.interaction_type = 'LIKE') AS like_count
+        FROM post_interaction bm
+        INNER JOIN post_main post ON post.id = bm.post_id
+        LEFT JOIN post_image img ON img.post_id = post.id AND img.sort_order = 0
+        WHERE bm.member_id = #{memberId} AND bm.interaction_type = 'BOOKMARK'
+        ORDER BY bm.created_at DESC
+    </select>
+
     <!-- 게시글 생성 -->
-    <insert id="insertPost" parameterType="net.likelion.bebc25.projectpatory.dto.PostCreateRequest" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insertPost" parameterType="net.likelion.bebc25.projectpatory.dto.PostCreateRequest"
+            useGeneratedKeys="true" keyProperty="id">
         INSERT INTO post_main (
         member_id,
         content,

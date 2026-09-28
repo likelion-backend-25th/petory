@@ -235,7 +235,7 @@ class MemberServiceImplTest {
                 .nickname("수정뭉치")
                 .species("개")
                 .sex("수")
-                .birthDate("2020-05-01")
+                .birthDate(LocalDate.of(2020, 5, 1))
                 .intro("소개를 바꿨어요")
                 .profileImage("edited.png")
                 .address("서울시 마포구")
@@ -285,15 +285,39 @@ class MemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("로그인 정보가 없으면 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
-    void editMyProfile_whenLoginMemberIdIsNull_throwsException() {
+    @DisplayName("본인 프로필 삭제 시 매퍼에 삭제를 요청한다")
+    void deleteMyProfile_whenOwnProfile_callsMapper() {
         // given
-        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
-                .nickname("수정뭉치")
-                .build();
+        given(memberMapper.findById(1L)).willReturn(Member.builder().id(1L).build());
+
+        // when
+        memberService.deleteMyProfile(1L, 1L);
+
+        // then
+        verify(memberMapper).findById(1L);
+        verify(memberMapper).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("본인 프로필이지만 회원이 없으면 NoSuchElementException을 던지고 삭제하지 않는다")
+    void deleteMyProfile_whenOwnProfileMissing_throwsException() {
+        // given
+        given(memberMapper.findById(1L)).willReturn(null);
 
         // when & then
-        assertThatThrownBy(() -> memberService.editMyProfile(request, null, 1L))
+        assertThatThrownBy(() -> memberService.deleteMyProfile(1L, 1L))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessage("존재하지 않는 회원입니다.");
+
+        verify(memberMapper).findById(1L);
+        verify(memberMapper, never()).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("타인 프로필 삭제 시 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
+    void deleteMyProfile_whenOtherMember_throwsException() {
+        // when & then
+        assertThatThrownBy(() -> memberService.deleteMyProfile(1L, 2L))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("비정상적인 접근입니다.");
 

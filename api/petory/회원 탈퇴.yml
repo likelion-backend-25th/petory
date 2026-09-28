@@ -1,0 +1,16 @@
+info:
+  name: 회원 탈퇴
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{baseUrl}}/profile/7/delete"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

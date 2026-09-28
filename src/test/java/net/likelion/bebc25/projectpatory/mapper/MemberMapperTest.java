@@ -154,7 +154,7 @@ class MemberMapperTest {
                 .nickname("수정멍치")
                 .species("고양이")
                 .sex("여")
-                .birthDate("2021-08-20")
+                .birthDate(LocalDate.of(2021, 8, 20))
                 .intro("프로필을 수정했어요")
                 .profileImage("https://example.com/profile/edited.png")
                 .address("서울시 마포구")

@@ -92,12 +92,23 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void editMyProfile(MemberProfileEditRequest request, Long loginMemberId, Long memberId) {
-        if (loginMemberId == null || !loginMemberId.equals(memberId)) {
+        if (!loginMemberId.equals(memberId)) {
             throw new IllegalStateException("비정상적인 접근입니다.");
         }
         if (memberMapper.findById(memberId) == null) {
             throw new NoSuchElementException("존재하지 않는 회원입니다.");
         }
         memberMapper.editMyProfile(request, memberId);
+    }
+
+    @Override
+    public void deleteMyProfile(Long loginMemberId, Long memberId) {
+        if (!loginMemberId.equals(memberId)) {
+            throw new IllegalStateException("비정상적인 접근입니다.");
+        }
+        if (memberMapper.findById(memberId) == null) {
+            throw new NoSuchElementException("존재하지 않는 회원입니다.");
+        }
+        memberMapper.deleteById(memberId);
     }
 }

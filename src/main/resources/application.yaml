@@ -61,3 +61,8 @@ cloud:
       bucket: ${AWS_S3_BUCKET_NAME:dummy_bucket}
     region:
       static: ap-northeast-2
+
+portone:
+  api:
+    store-id: ${PORTONE_STORE_ID}
+    secret: ${PORTONE_API_SECRET}

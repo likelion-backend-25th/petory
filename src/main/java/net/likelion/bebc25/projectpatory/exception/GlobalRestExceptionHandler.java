@@ -56,6 +56,14 @@ public class GlobalRestExceptionHandler {
         return ResponseEntity.status(ErrorCode.FORBIDDEN_OPERATION.getHttpStatus()).body(response);
     }
 
+    // 변경: PortOne 등 외부 결제 API 통신 실패 시(502 Bad Gateway 응답)
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<ApiErrorResponse> handlePaymentGatewayException(PaymentGatewayException ex) {
+        log.error("결제 대행사 통신 실패", ex);
+        ApiErrorResponse response = ApiErrorResponse.of(ErrorCode.PAYMENT_GATEWAY_ERROR, ex.getMessage());
+        return ResponseEntity.status(ErrorCode.PAYMENT_GATEWAY_ERROR.getHttpStatus()).body(response);
+    }
+
     // 서버 내부 오류가 발생했을 때(500 Internal Server Error 응답)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneralException(Exception ex) {

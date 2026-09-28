@@ -30,7 +30,7 @@ public interface MemberMapper {
     // 팔로우 수 조회
     long countFollowers(@Param("memberId") Long memberId);
 
-    void editMember(@Param("member") MemberProfileEditRequest member, @Param("infoProvideAgreement") LocalDateTime infoProvideAgreement);
+    void editMyProfile(@Param("profile") MemberProfileEditRequest profile, @Param("memberId") Long memberId);
 
     // 회원 계정 정지
     int updateStatusToBlocked(@Param("id") long id);

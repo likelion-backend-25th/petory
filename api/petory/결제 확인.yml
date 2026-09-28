@@ -1,0 +1,32 @@
+info:
+  name: 결제 확인
+  type: http
+  seq: 14
+
+http:
+  method: POST
+  url: "{{baseUrl}}/payments/prepare"
+  body:
+    type: json
+    data: |-
+      {
+        "targetMemberId": 6,
+        "orderName": "간식쏘기",
+        "totalAmount": 5000,
+        "payMethod": "CARD"
+      }
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjMiLCJlbWFpbCI6Im5hYmlAcGV0b3J5LmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3OTA1NzkzODMsImV4cCI6MTc5MDU4Mjk4M30.O-vA6eXF1V1LRFOJ2wJxzSiY6kmUNTXP4WaSqg2Y3mCVDb8Epvz8wfAwNGi-kLYC
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("paymentId", res.body.paymentId);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

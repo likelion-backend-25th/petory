@@ -10,13 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.likelion.bebc25.projectpatory.domain.Member;
-import net.likelion.bebc25.projectpatory.dto.ApiErrorResponse;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
-import net.likelion.bebc25.projectpatory.dto.MyProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
-import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
+import net.likelion.bebc25.projectpatory.domain.MemberProfile;
+import net.likelion.bebc25.projectpatory.domain.MyProfile;
+import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
 import net.likelion.bebc25.projectpatory.service.MemberService;
 import net.likelion.bebc25.projectpatory.service.PostService;
@@ -58,7 +55,7 @@ public class MemberRestController {
             @ApiResponse(
                     responseCode = "200",
                     description = "프로필 조회 성공",
-                    content = @Content(schema = @Schema(oneOf = {MyProfileResponse.class, MemberProfileResponse.class}))
+                    content = @Content(schema = @Schema(oneOf = {MyProfile.class, MemberProfile.class}))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -71,7 +68,7 @@ public class MemberRestController {
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
             )
     })
-    public ResponseEntity<ProfileResponse> getMyProfile(
+    public ResponseEntity<Profile> getMyProfile(
             @Parameter(description = "조회할 회원 ID", example = "1")
             @PathVariable Long memberId,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -158,6 +155,72 @@ public class MemberRestController {
     ) {
         return ResponseEntity.ok(postService.getMyBookmarks(memberId, userDetails.getId()));
     }
+
+    @PostMapping("/profile/{memberId}/edit")
+    @Operation(
+            summary = "내 프로필 수정",
+            description = "로그인한 본인의 프로필을 수정한다. 경로의 회원 ID는 로그인 회원 ID와 동일해야 한다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "타인 프로필 수정 시도",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 회원",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> editMyProfile(
+            @RequestBody MemberProfileEditRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "수정할 회원 ID (로그인 회원 ID와 동일해야 함)", example = "1")
+            @PathVariable Long memberId
+    ) {
+        memberService.editMyProfile(request, userDetails.getId(), memberId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/profile/{memberId}/delete")
+    @Operation(
+            summary = "내 프로필 삭제",
+            description = "로그인한 본인의 프로필을 삭제한다. 경로의 회원 ID는 로그인 회원 ID와 동일해야 한다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프로필 삭제 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "타인 프로필 삭제 시도",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 회원",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
+    public ResponseEntity<Void> deleteMyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "삭제할 회원 ID (로그인 회원 ID와 동일해야 함)", example = "1")
+            @PathVariable Long memberId
+    ) {
+        memberService.deleteMyProfile(userDetails.getId(), memberId);
+        return ResponseEntity.ok().build();
+    }
+
 
     // 서비스용 기능x / 학습 or 디버깅용
     @Hidden

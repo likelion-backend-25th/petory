@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.RefreshTokenMapper">
+    <insert id="saveRefreshToken">
+        INSERT
+        INTO issued_refresh_token(member_id, refresh_token, expires_at)
+        VALUES (#{memberId}, #{refreshToken}, #{expiration})
+    </insert>
+
+    <select id="getRefreshToken" resultType="net.likelion.bebc25.projectpatory.domain.RefreshToken">
+        SELECT id, member_id, refresh_token, expires_at AS expiration
+        FROM issued_refresh_token
+        WHERE refresh_token = #{refreshToken}
+    </select>
+
+    <update id="updateRefreshToken">
+        UPDATE issued_refresh_token
+        <set>
+            member_id = #{memberId},
+            refresh_token = #{refreshToken},
+            expires_at = #{expiration}
+        </set>
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,9 +1,10 @@
 package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.MyProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
+import net.likelion.bebc25.projectpatory.domain.MemberProfile;
+import net.likelion.bebc25.projectpatory.domain.MyProfile;
+import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -24,7 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceImplTest {
@@ -155,22 +158,22 @@ class MemberServiceImplTest {
         given(memberMapper.countFollowings(1L)).willReturn(5L);
 
         // when
-        ProfileResponse result = memberService.getMyProfile(member, 1L);
+        Profile result = memberService.getMyProfile(member, 1L);
 
         // then
-        assertThat(result).isInstanceOf(MyProfileResponse.class);
-        MyProfileResponse profile = (MyProfileResponse) result;
-        assertThat(profile.id()).isEqualTo(1L);
-        assertThat(profile.email()).isEqualTo("me@petory.com");
-        assertThat(profile.nickname()).isEqualTo("뭉치");
-        assertThat(profile.species()).isEqualTo("개");
-        assertThat(profile.sex()).isEqualTo("수");
-        assertThat(profile.birthDate()).isEqualTo(LocalDate.of(2020, 5, 1));
-        assertThat(profile.address()).isEqualTo("서울시 강남구");
-        assertThat(profile.infoProvideAgreement()).isEqualTo(agreementAt);
-        assertThat(profile.postsCount()).isEqualTo(10L);
-        assertThat(profile.followers()).isEqualTo(3L);
-        assertThat(profile.followings()).isEqualTo(5L);
+        assertThat(result).isInstanceOf(MyProfile.class);
+        MyProfile profile = (MyProfile) result;
+        assertThat(profile.getId()).isEqualTo(1L);
+        assertThat(profile.getEmail()).isEqualTo("me@petory.com");
+        assertThat(profile.getNickname()).isEqualTo("뭉치");
+        assertThat(profile.getSpecies()).isEqualTo("개");
+        assertThat(profile.getSex()).isEqualTo("수");
+        assertThat(profile.getBirthDate()).isEqualTo(LocalDate.of(2020, 5, 1));
+        assertThat(profile.getAddress()).isEqualTo("서울시 강남구");
+        assertThat(profile.getInfoProvideAgreement()).isEqualTo(agreementAt);
+        assertThat(profile.getPostsCount()).isEqualTo(10L);
+        assertThat(profile.getFollowers()).isEqualTo(3L);
+        assertThat(profile.getFollowings()).isEqualTo(5L);
 
         verify(postMapper).countMyPosts(1L);
         verify(memberMapper).countFollowers(1L);
@@ -203,25 +206,121 @@ class MemberServiceImplTest {
         given(memberMapper.countFollowings(2L)).willReturn(2L);
 
         // when: 로그인 사용자는 1L, 조회 대상은 2L
-        ProfileResponse result = memberService.getMyProfile(other, 1L);
+        Profile result = memberService.getMyProfile(other, 1L);
 
         // then
-        assertThat(result).isInstanceOf(MemberProfileResponse.class);
-        MemberProfileResponse profile = (MemberProfileResponse) result;
-        assertThat(profile.id()).isEqualTo(2L);
-        assertThat(profile.nickname()).isEqualTo("별이");
-        assertThat(profile.intro()).isEqualTo("안녕");
-        assertThat(profile.profileImage()).isEqualTo("other.png");
-        assertThat(profile.status()).isEqualTo("ACTIVE");
-        assertThat(profile.role()).isEqualTo("ROLE_USER");
-        assertThat(profile.createdAt()).isEqualTo(createdAt);
-        assertThat(profile.postsCount()).isEqualTo(4L);
-        assertThat(profile.followers()).isEqualTo(1L);
-        assertThat(profile.followings()).isEqualTo(2L);
+        assertThat(result).isInstanceOf(MemberProfile.class);
+        MemberProfile profile = (MemberProfile) result;
+        assertThat(profile.getId()).isEqualTo(2L);
+        assertThat(profile.getNickname()).isEqualTo("별이");
+        assertThat(profile.getIntro()).isEqualTo("안녕");
+        assertThat(profile.getProfileImage()).isEqualTo("other.png");
+        assertThat(profile.getStatus()).isEqualTo("ACTIVE");
+        assertThat(profile.getRole()).isEqualTo("ROLE_USER");
+        assertThat(profile.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(profile.getPostsCount()).isEqualTo(4L);
+        assertThat(profile.getFollowers()).isEqualTo(1L);
+        assertThat(profile.getFollowings()).isEqualTo(2L);
 
-        // record 컴포넌트에 email/address 등이 없음을 타입으로 보장
-        assertThat(profile.getClass().getRecordComponents())
-                .extracting(rc -> rc.getName())
+        assertThat(profile.getClass().getDeclaredFields())
+                .extracting(field -> field.getName())
                 .doesNotContain("email", "address", "species", "sex", "birthDate", "infoProvideAgreement");
+    }
+
+    @Test
+    @DisplayName("본인 프로필 수정 시 매퍼에 수정 요청을 전달한다")
+    void editMyProfile_whenOwnProfile_callsMapper() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .nickname("수정뭉치")
+                .species("개")
+                .sex("수")
+                .birthDate(LocalDate.of(2020, 5, 1))
+                .intro("소개를 바꿨어요")
+                .profileImage("edited.png")
+                .address("서울시 마포구")
+                .build();
+        given(memberMapper.findById(1L)).willReturn(Member.builder().id(1L).build());
+
+        // when
+        memberService.editMyProfile(request, 1L, 1L);
+
+        // then
+        verify(memberMapper).findById(1L);
+        verify(memberMapper).editMyProfile(request, 1L);
+    }
+
+    @Test
+    @DisplayName("본인 프로필이지만 회원이 없으면 NoSuchElementException을 던진다")
+    void editMyProfile_whenOwnProfileMissing_throwsException() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .nickname("수정뭉치")
+                .build();
+        given(memberMapper.findById(1L)).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L, 1L))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessage("존재하지 않는 회원입니다.");
+
+        verify(memberMapper).findById(1L);
+        verify(memberMapper, never()).editMyProfile(request, 1L);
+    }
+
+    @Test
+    @DisplayName("타인 프로필 수정 시 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
+    void editMyProfile_whenOtherMember_throwsException() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .nickname("별이")
+                .build();
+
+        // when & then
+        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("비정상적인 접근입니다.");
+
+        verifyNoInteractions(memberMapper);
+    }
+
+    @Test
+    @DisplayName("본인 프로필 삭제 시 매퍼에 삭제를 요청한다")
+    void deleteMyProfile_whenOwnProfile_callsMapper() {
+        // given
+        given(memberMapper.findById(1L)).willReturn(Member.builder().id(1L).build());
+
+        // when
+        memberService.deleteMyProfile(1L, 1L);
+
+        // then
+        verify(memberMapper).findById(1L);
+        verify(memberMapper).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("본인 프로필이지만 회원이 없으면 NoSuchElementException을 던지고 삭제하지 않는다")
+    void deleteMyProfile_whenOwnProfileMissing_throwsException() {
+        // given
+        given(memberMapper.findById(1L)).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.deleteMyProfile(1L, 1L))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessage("존재하지 않는 회원입니다.");
+
+        verify(memberMapper).findById(1L);
+        verify(memberMapper, never()).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("타인 프로필 삭제 시 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
+    void deleteMyProfile_whenOtherMember_throwsException() {
+        // when & then
+        assertThatThrownBy(() -> memberService.deleteMyProfile(1L, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("비정상적인 접근입니다.");
+
+        verifyNoInteractions(memberMapper);
     }
 }

@@ -1,6 +1,7 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -136,6 +137,50 @@ class MemberMapperTest {
                     assertThat(member.getNickname()).isNotNull();
                     assertThat(member.getRole()).isNotNull();
                 });
+    }
+
+    @Test
+    @DisplayName("내 프로필을 수정하면 프로필 컬럼만 변경된다")
+    void editMyProfileTest() {
+        // given
+        Member before = memberMapper.findByEmail("mapper-test@petory.com");
+        assertThat(before).isNotNull();
+
+        Member other = memberMapper.findById(1L);
+        assertThat(other).isNotNull();
+        assertThat(other.getId()).isNotEqualTo(before.getId());
+
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .nickname("수정멍치")
+                .species("고양이")
+                .sex("여")
+                .birthDate(LocalDate.of(2021, 8, 20))
+                .intro("프로필을 수정했어요")
+                .profileImage("https://example.com/profile/edited.png")
+                .address("서울시 마포구")
+                .build();
+
+        // when
+        memberMapper.editMyProfile(request, before.getId());
+
+        // then
+        Member after = memberMapper.findById(before.getId());
+        assertThat(after.getNickname()).isEqualTo("수정멍치");
+        assertThat(after.getSpecies()).isEqualTo("고양이");
+        assertThat(after.getSex()).isEqualTo("여");
+        assertThat(after.getBirthDate()).isEqualTo(LocalDate.of(2021, 8, 20));
+        assertThat(after.getIntro()).isEqualTo("프로필을 수정했어요");
+        assertThat(after.getProfileImage()).isEqualTo("https://example.com/profile/edited.png");
+        assertThat(after.getAddress()).isEqualTo("서울시 마포구");
+        assertThat(after.getEmail()).isEqualTo(before.getEmail());
+        assertThat(after.getPassword()).isEqualTo(before.getPassword());
+        assertThat(after.getRole()).isEqualTo(before.getRole());
+        assertThat(after.getStatus()).isEqualTo(before.getStatus());
+
+        Member unchanged = memberMapper.findById(other.getId());
+        assertThat(unchanged.getNickname()).isEqualTo(other.getNickname());
+        assertThat(unchanged.getSpecies()).isEqualTo(other.getSpecies());
+        assertThat(unchanged.getAddress()).isEqualTo(other.getAddress());
     }
 
     @Test

@@ -36,6 +36,7 @@ erDiagram
     post_main ||--o{ comment : "달림 (1:N)"
     post_main ||--o{ post_interaction : "받음 (1:N)"
 
+    payment ||--o{ cancel_payment : "취소됨 (1:N)"
     subscription_plan ||--o{ subscription : "적용됨 (1:N)"
     missing_pet_post ||--o{ missing_pet_report : "제보받음 (1:N)"
     chat_room ||--o{ chat_message : "포함함 (1:N)"
@@ -103,16 +104,40 @@ erDiagram
 
     payment {
         BIGINT id PK "결제 내역 식별자"
-        BIGINT member_id FK "결제 회원 ID"
-        BIGINT target_member_id FK "후원 대상 동물 유저 ID"
-        VARCHAR imp_uid "결제 승인 고유 번호"
-        VARCHAR merchant_uid "자체 생성 주문 식별자"
-        INT amount "결제 금액"
-        VARCHAR category "결제 상품"
-        VARCHAR status "결제 상태"
-        VARCHAR pay_type "결제 수단"
+        BIGINT member_id FK "결제 회원(동물 유저) ID"
+        BIGINT target_member_id FK "후원 대상 동물 유저"
+        VARCHAR payment_id "결제 승인 고유 번호"
+        VARCHAR order_name "자체 생성 주문 식별자"
+        VARCHAR currency "결제 통화 단위"
+        INT total_amount "결제 금액"
+        INT paid_amount "결제 금액"
+        VARCHAR pay_method "결제 상품 (간식 쏘기, 펫 클럽 구독)"
+        VARCHAR status "결제 상태 (READY, PAID, FAILED, CANCELLED)"
+        VARCHAR transaction_id "거래 ID"
+        VARCHAR pg_tx_id "PG 거래 ID"
+        VARCHAR receipt_url "결제 내역 영수증 URL"
+        VARCHAR fail_code "결제 실패 코드"
+        VARCHAR fail_message "결제 실패 사유"
+        INT cancel_amount "환불된 금액"
+        VARCHAR cancel_reason "환불 사유"
         DATETIME created_at "결제 요청 시각"
-        DATETIME completed_at "결제 완료 시각"
+        DATETIME paid_at "결제 완료 시각"
+        DATETIME cancelled_at "결제 취소 시각"
+    }
+
+    cancel_payment {
+        BIGINT id PK "결제 취소 내역 식별자"
+        BIGINT payment_id FK "결제 승인 내역 식별자"
+        VARCHAR cancellation_id UK "포트원 취소 내역 ID, 웹훅 및 재조회 시 같은 취소를 구분"
+        VARCHAR pg_cancellation_id "PG사 취소 거래 ID"
+        VARCHAR status "REQUESTED, SUCCEEDED, FAILED"
+        INT cancel_amount "이번 취소 금액 (누적x)"
+        VARCHAR reason "취소 사유"
+        VARCHAR receipt_url "취소 영수증"
+        VARCHAR fail_code "실패 시 PG사에서 전달한 실패 코드"
+        VARCHAR fail_message "실패 시 PG사에서 전달한 실패 사유"
+        DATETIME requested_at "취소 요청 시각"
+        DATETIME cancelled_at "취소 완료 시각 (SUCCEEDED 일 때만)"
     }
 
     subscription_plan {
@@ -129,12 +154,12 @@ erDiagram
         BIGINT member_id FK "구독 회원 식별자"
         BIGINT target_member_id FK "구독 대상 회원 식별자"
         BIGINT plan_id FK "구독 플랜 식별자"
-        VARCHAR customer_uid "정기 결제 카드 빌링키"
-        VARCHAR status "구독 상태"
+        VARCHAR billing_key "정기 결제 카드 빌링키"
         DATETIME started_at "시작일"
         DATETIME ended_at "만료일"
         DATETIME next_billing_at "다음 자동 결제 예정일"
-        TINYINT(1) agreement "자동결제 동의여부"
+        VARCHAR status "구독 상태 (ACTIVE, CANCELLED)"
+        TINYINT(1) agreement "자동결제 동의여부 (0: 비동의, 1: 동의)"
     }
 
     follow {
@@ -300,8 +325,8 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | paid_amount      | INT          | NULL                                       | 결제 금액                                  |
 | pay_method       | VARCHAR(30)  | NOT NULL                                   | 결제 상품 (간식 쏘기, 펫 클럽 구독)                 | 
 | status           | VARCHAR(20)  | NOT NULL, DEFAULT 'READY'                  | 결제 상태 (READY, PAID, FAILED, CANCELLED) |
-| transaction_id   | VARCHAR(100) | NULL                                       |                                        |
-| pg_tx_id         | VARCHAR(100) | NULL                                       |                                        |
+| transaction_id   | VARCHAR(100) | NULL                                       | 포트원에서 발급한 거래번호                         |
+| pg_tx_id         | VARCHAR(100) | NULL                                       | PG사가 발급한 거래번호                          |
 | receipt_url      | VARCHAR(500) | NULL                                       | 결제 내역 영수증 URL                          |
 | fail_code        | VARCHAR(100) | NULL                                       | 결제 실패 코드                               |
 | fail_message     | VARCHAR(500) | NULL                                       | 결제 실패 사유                               |
@@ -318,8 +343,8 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | 컬럼명                | 데이터 타입       | 제약 조건                              | 설명                                 |
 |:-------------------|:-------------|:-----------------------------------|:-----------------------------------|
 | id                 | BIGINT       | PK, AUTO_INCREMENT                 | 결제 취소 내역 식별자                       |
-| payment_id         | BIGINT       | NOT NULL                           | 결제 승인 고유 번호                        |
-| cancellation_id    | VARCHAR(100) | NULL                               | 포트원 취소 내역 ID, 웹훅 및 재조회 시 같은 취소를 구분 |
+| payment_id         | BIGINT       | NOT NULL, FK                       | 결제 승인 내역 식별자                       |
+| cancellation_id    | VARCHAR(100) | NULL, UNIQUE                       | 포트원 취소 내역 ID, 웹훅 및 재조회 시 같은 취소를 구분 |
 | pg_cancellation_id | VARCHAR(100) | NULL                               | PG사 취소 거래 ID                       |
 | status             | VARCHAR(30)  | NOT NULL                           | REQUESTED, SUCCEEDED, FAILED       |
 | cancel_amount      | INT          | NOT NULL                           | 이번 취소 금액 (누적x)                     |
@@ -330,7 +355,9 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | requested_at       | DATETIME     | NOT NULL DEFAULT CURRENT_TIMESTAMP | 취소 요청 시각                           |
 | cancelled_at       | DATETIME     | NULL                               | 취소 완료 시각 (SUCCEEDED 일 떄만)          |
 
-### 1.2.7 subscription_plan (정기 후원 플랜)
+- payment_id기준으로 정렬된 인덱스 생성: KEY idx_payment_cancel_payment_id (payment_id)
+
+### 1.2.8 subscription_plan (정기 후원 플랜)
 
 | 컬럼명         | 데이터 타입      | 제약 조건                                      | 설명                                         |
 |:------------|:------------|:-------------------------------------------|:-------------------------------------------|
@@ -343,7 +370,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 
 고유 제약조건: UNIQUE KEY `uk_member_plan_name` (`member_id`, `plan_name`)
 
-### 1.2.8 subscription (펫클럽 정기 후원)
+### 1.2.9 subscription (펫클럽 정기 후원)
 
 | 컬럼명              | 데이터 타입       | 제약 조건                                                 | 설명                        |
 |:-----------------|:-------------|:------------------------------------------------------|:--------------------------|
@@ -358,7 +385,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | status           | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                            | 구독 상태 (ACTIVE, CANCELLED) |
 | agreement        | TINYINT(1)   | NOT NULL, DEFAULT 1                                   | 자동결제 동의여부 (0: 비동의, 1: 동의) |
 
-### 1.2.9 follow (팔로우)
+### 1.2.10 follow (팔로우)
 
 | 컬럼명          | 데이터 타입   | 제약 조건                                      | 설명           |
 |:-------------|:---------|:-------------------------------------------|:-------------|
@@ -369,7 +396,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 
 UNIQUE KEY uk_follower_following (follower_id, following_id)
 
-### 1.2.10 notification(알림)
+### 1.2.11 notification(알림)
 
 | 컬럼명               | 데이터 타입       | 제약 조건                                      | 설명                                                           |
 |:------------------|:-------------|:-------------------------------------------|:-------------------------------------------------------------|
@@ -381,7 +408,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | is_checked        | TINYINT(1)   | NOT NULL, DEFAULT 0                        | 알림 확인 여부 (0: 안읽음, 1: 읽음)                                     |
 | created_at        | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 알림 발생 시각                                                     |
 
-### 1.2.11 chat_room(1:1 채팅방)
+### 1.2.12 chat_room(1:1 채팅방)
 
 | 컬럼명            | 데이터 타입     | 제약 조건                                      | 설명                           |
 |:---------------|:-----------|:-------------------------------------------|:-----------------------------|
@@ -395,7 +422,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 - 고유 제약조건: UNIQUE KEY `uk_member_chat` (`member1_id`, `member2_id`)
 -
 
-### 1.2.12 chat_message(채팅 메시지 이력)
+### 1.2.13 chat_message(채팅 메시지 이력)
 
 | 컬럼명        | 데이터 타입   | 제약 조건                                         | 설명        |
 |:-----------|:---------|:----------------------------------------------|:----------|
@@ -405,7 +432,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | message    | TEXT     | NOT NULL                                      | 메시지 본문    |
 | created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                     | 매시지 전송 시각 |
 
-### 1.2.13 missing_pet_post(실종 신고 게시글)
+### 1.2.14 missing_pet_post(실종 신고 게시글)
 
 | 컬럼명             | 데이터 타입        | 제약 조건                                      | 설명                            |
 |:----------------|:--------------|:-------------------------------------------|:------------------------------|
@@ -421,7 +448,7 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 작성 시각                         |
 | updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 게시글 수정 일시                     |
 
-### 1.2.14 missing_pet_report(실종 동물 목격 제보)
+### 1.2.15 missing_pet_report(실종 동물 목격 제보)
 
 | 컬럼명                 | 데이터 타입        | 제약 조건                                                 | 설명                   |
 |:--------------------|:--------------|:------------------------------------------------------|:---------------------|

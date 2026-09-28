@@ -24,7 +24,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @Operation(summary = "댓글 작성", description = "게시글에 댓글을 등록합니다. JWT 인증이 필요합니다.")
+    @Operation(summary = "댓글 작성", description = "게시글에 댓글을 등록합니다.")
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(
             @Parameter(description = "대상 게시글 ID", example = "1")

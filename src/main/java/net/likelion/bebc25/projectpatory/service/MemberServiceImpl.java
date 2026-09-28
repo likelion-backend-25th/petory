@@ -1,9 +1,10 @@
 package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.MyProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
+import net.likelion.bebc25.projectpatory.domain.MemberProfile;
+import net.likelion.bebc25.projectpatory.domain.MyProfile;
+import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -49,15 +50,54 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public ProfileResponse getMyProfile(Member member, Long loginMemberId) {
+    public Profile getMyProfile(Member member, Long loginMemberId) {
         Long memberId = member.getId();
         long postCount = postMapper.countMyPosts(memberId);
         long followerCount = memberMapper.countFollowers(memberId);
         long followingCount = memberMapper.countFollowings(memberId);
 
         if (memberId.equals(loginMemberId)) {
-            return MyProfileResponse.from(member, postCount, followerCount, followingCount);
+            return MyProfile.builder()
+                    .id(member.getId())
+                    .email(member.getEmail())
+                    .nickname(member.getNickname())
+                    .species(member.getSpecies())
+                    .sex(member.getSex())
+                    .birthDate(member.getBirthDate())
+                    .intro(member.getIntro())
+                    .profileImage(member.getProfileImage())
+                    .address(member.getAddress())
+                    .status(member.getStatus())
+                    .role(member.getRole())
+                    .createdAt(member.getCreatedAt())
+                    .infoProvideAgreement(member.getInfoProvideAgreement())
+                    .postsCount(postCount)
+                    .followers(followerCount)
+                    .followings(followingCount)
+                    .build();
         }
-        return MemberProfileResponse.from(member, postCount, followerCount, followingCount);
+        return MemberProfile.builder()
+                .id(member.getId())
+                .nickname(member.getNickname())
+                .intro(member.getIntro())
+                .profileImage(member.getProfileImage())
+                .status(member.getStatus())
+                .role(member.getRole())
+                .createdAt(member.getCreatedAt())
+                .postsCount(postCount)
+                .followers(followerCount)
+                .followings(followingCount)
+                .build();
+    }
+
+    @Override
+    public void editMyProfile(MemberProfileEditRequest request, Long loginMemberId, Long memberId) {
+        if (loginMemberId == null || !loginMemberId.equals(memberId)) {
+            throw new IllegalStateException("비정상적인 접근입니다.");
+        }
+        if (memberMapper.findById(memberId) == null) {
+            throw new NoSuchElementException("존재하지 않는 회원입니다.");
+        }
+        memberMapper.editMyProfile(request, memberId);
     }
 }

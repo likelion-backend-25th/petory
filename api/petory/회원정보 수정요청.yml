@@ -1,0 +1,30 @@
+info:
+  name: 회원정보 수정요청
+  type: http
+  seq: 12
+
+http:
+  method: POST
+  url: "{{baseUrl}}/profile/7/edit"
+  body:
+    type: json
+    data: |-
+      {
+        "nickname":"라임",
+        "species":"고양이",
+        "sex":"암컷",
+        "birthDate":"2025-02-17",
+        "intro":"뒹굴거리는거 좋아하는 냥이",
+        "profileImage":"http://example.png",
+        "address":"서울시 노원구"
+      }
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjciLCJlbWFpbCI6InF1ZGdoMDIxN0BleGFtcGxlLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3OTA1Njk1NjksImV4cCI6MTc5MDU3MzE2OX0.UZ9FRPT6ElMvbERAbBG3gs1b7KhuL5bLdjL17Ti5OnXSEMCvXBQ1tPh9wVGC0wMC
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

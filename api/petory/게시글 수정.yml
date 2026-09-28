@@ -1,0 +1,27 @@
+info:
+  name: 게시글 수정
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/posts/1
+  body:
+    type: json
+    data: |-
+      {
+        "content": "수정된 게시글 내용입니다.",
+        "bgmUrl": "https://example.com/new-bgm.mp3",
+        "isSubscriberOnly": 1,
+        "hashtags": "#수정 #테스트"
+      }
+  auth:
+    type: bearer
+    token: eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjEiLCJlbWFpbCI6ImFkbWluQHBldG9yeS5jb20iLCJyb2xlcyI6WyJST0xFX0FETUlOIl0sImlhdCI6MTc5MDE0ODQxOCwiZXhwIjoxNzkwMTUyMDE4fQ
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

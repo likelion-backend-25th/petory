@@ -57,6 +57,22 @@ public class PostServiceImpl implements PostService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public void updatePost(Long postId, Long memberId, PostUpdateRequest request) {
+        int updatedRows = postMapper.updatePost(postId, memberId, request);
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("게시글을 찾을 수 없거나 수정 권한이 없습니다. (postId: " + postId + ")");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deletePost(Long postId, Long memberId) {
+        int deletedRows = postMapper.deletePost(postId, memberId);
+        if (deletedRows == 0) {
+            throw new IllegalArgumentException("게시글을 찾을 수 없거나 삭제 권한이 없습니다. (postId: " + postId + ")");
+        }
     // 이 아래로 3개는 마이페이지에서 내가 작성한 메인피드, QnA, 내가 북마크 게시글을 불러오는 서비스임
     // 상대 프로필 정보를 볼 때도 활용 가능
     // 다만 상대프로필에서 메인포스트 목록 조회시 구독자 전용 게시글의 경우 대표이미지를 블러처리하기 위한 로직을 구현해 주어야함

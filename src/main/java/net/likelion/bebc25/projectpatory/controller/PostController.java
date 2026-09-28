@@ -56,4 +56,24 @@ public class PostController {
         PostCreateResponse response = postService.createPost(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+    // 게시글 수정
+    @PutMapping("/{postId}")
+    public ResponseEntity<Void> updatePost(
+            @PathVariable Long postId,
+            @RequestParam Long memberId, // 임시: 토큰 적용 전 memberId 검증용
+            @RequestBody PostUpdateRequest request
+    ) {
+        postService.updatePost(postId, memberId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    // 게시글 삭제
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable Long postId,
+            @RequestParam Long memberId // 임시: 토큰 적용 전 memberId 검증용
+    ) {
+        postService.deletePost(postId, memberId);
+        return ResponseEntity.noContent().build();
+    }
 }

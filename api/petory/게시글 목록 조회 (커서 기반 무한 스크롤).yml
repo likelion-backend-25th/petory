@@ -1,0 +1,26 @@
+info:
+  name: 게시글 목록 조회 (커서 기반 무한 스크롤)
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: http://localhost:8080/api/v1/posts?size=10
+  params:
+    - name: size
+      value: "10"
+      type: query
+      description: 한번에 가져올 게시글 개수
+    - name: lastPostId
+      value: ""
+      type: query
+      description: 다음 페이지 조회시 응답받은 마지막 postId입력
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

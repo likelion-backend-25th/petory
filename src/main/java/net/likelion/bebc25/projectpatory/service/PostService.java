@@ -17,6 +17,11 @@ public interface PostService {
 
     PostCreateResponse createPost(PostCreateRequest request);
 
+    /**
+     * 게시글 삭제
+     */
+    void updatePost(Long postId, Long memberId, PostUpdateRequest request);
+    void deletePost(Long postId, Long memberId);
 
     List<MyPagePostResponse> getMyQnAPosts(Long memberId);
 

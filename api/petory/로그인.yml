@@ -13,7 +13,10 @@ http:
         "email":"qudgh0217@example.com",
         "password":"password123"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: mungchi@petory.com
+    password: password123
 
 runtime:
   actions:

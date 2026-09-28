@@ -5,12 +5,11 @@
 
 <mapper namespace="net.likelion.bebc25.projectpatory.mapper.MemberMapper">
 
-    <insert id="createMember" parameterType="net.likelion.bebc25.projectpatory.domain.Member" useGeneratedKeys="true"
-            keyProperty="id">
-        INSERT INTO member (email, password, nickname, species, sex, birth_date, intro, address, info_provide_agreement)
+    <insert id="createMember">
+        INSERT INTO member (email, password, nickname, species, sex, birth_date, intro, profile_image, address,
+        info_provide_agreement)
         VALUES (#{member.email}, #{member.password}, #{member.nickname}, #{member.species}, #{member.sex},
-        #{member.birthDate}, #{member.intro}, #{member.address},
-        #{member.infoProvideAgreement})
+        #{member.birthDate}, #{member.intro}, #{member.profileImage}, #{member.address}, #{infoProvideAgreement})
     </insert>
 
     <select id="findByEmail" parameterType="string" resultType="net.likelion.bebc25.projectpatory.domain.Member">

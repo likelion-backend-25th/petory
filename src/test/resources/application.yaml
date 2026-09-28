@@ -5,8 +5,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/petory-db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
-    username: ${SPRING_DATASOURCE_USERNAME:petoryuser}
-    password: ${SPRING_DATASOURCE_PASSWORD:petoryuser123!}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
   # 데이터베이스 초기화 설정 (schema.sql 및 data.sql 자동 실행)
   sql:
@@ -25,7 +25,7 @@ mybatis:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:default_jwt_secret_key_for_local_development_environment}
+  secret: ${JWT_SECRET}
   access-token-expiration: 3600000      # 1시간 (밀리초)
   refresh-token-expiration: 604800000   # 7일 (밀리초)
 

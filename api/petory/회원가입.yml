@@ -1,0 +1,28 @@
+info:
+  name: 회원가입
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/signup"
+  body:
+    type: json
+    data: |-
+      {
+        "email":"qudgh0217@example.com",
+        "password":"password123",
+        "nickname":"슬라임",
+        "species":"고양이",
+        "sex":"수컷",
+        "birthDate":"2025-07-24",
+        "isAgreed":"true"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

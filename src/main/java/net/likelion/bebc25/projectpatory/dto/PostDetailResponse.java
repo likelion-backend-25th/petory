@@ -5,8 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -44,4 +46,8 @@ public class PostDetailResponse {
 
     @Schema(description = "게시글 수정 일시", example = "2026-09-23T13:35:00")
     private LocalDateTime updatedAt;
+
+    @Setter
+    @Schema(description = "댓글 목록")
+    private List<CommentResponse> comments;
 }

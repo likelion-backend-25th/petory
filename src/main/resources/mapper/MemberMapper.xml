@@ -34,6 +34,14 @@
         ORDER BY id DESC
     </select>
 
+    <select id="countFollowings" resultType="long">
+        SELECT COUNT(*) FROM follow WHERE follower_id = #{memberId}
+    </select>
+
+    <select id="countFollowers" resultType="long">
+        SELECT COUNT(*) FROM follow WHERE following_id = #{memberId}
+    </select>
+
     <update id="updateStatusToBlocked">
         UPDATE member
         SET status = 'BLOCKED'

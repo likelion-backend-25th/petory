@@ -25,7 +25,4 @@ public record PostResponse(
 
         @Schema(description = "게시글 최종 수정 일시", example = "2026-08-07T10:30:00")
         LocalDateTime updatedAt
-) {
-        // 신규 게시글 등록 요청 DTO로 부터 게시글 응답 DTD를 생성하는 팩토리 메서드
-
-        }
+) {}

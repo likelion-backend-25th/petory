@@ -39,7 +39,7 @@ class CommentServiceIntegrationTest {
         assertThat(created.getContent()).isEqualTo("좋은 글 잘 읽었습니다!");
         assertThat(created.getCreatedAt()).isNotNull();
 
-        PostDetailResponse detail = postService.getPostDetail(1L);
+        PostDetailResponse detail = postService.getPostDetail(1L, null);
         assertThat(detail.getComments()).hasSize(3);
         assertThat(detail.getComments())
                 .extracting(CommentResponse::getContent)

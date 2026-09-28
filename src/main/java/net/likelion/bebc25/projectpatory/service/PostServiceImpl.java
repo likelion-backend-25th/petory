@@ -3,6 +3,7 @@ package net.likelion.bebc25.projectpatory.service;
 import lombok.RequiredArgsConstructor;
 import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.mapper.CommentMapper;
+import net.likelion.bebc25.projectpatory.mapper.PostInteractionMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ public class PostServiceImpl implements PostService {
 
     private final PostMapper postMapper;
     private final CommentMapper commentMapper;
+    private final PostInteractionMapper postInteractionMapper;
 
     @Override
     public SliceResponse<PostListResponse> getPostListCursor(Long lastPostId, int size) {
@@ -34,8 +36,10 @@ public class PostServiceImpl implements PostService {
         return new SliceResponse<>(posts, hasNext, nextCursorId);
     }
 
+    @Transactional
     @Override
-    public PostDetailResponse getPostDetail(Long postId) {
+    // 고유 조회수 처리를 위해 멤버 정보를 받아와야해서 memberId를 인자로 추가
+    public PostDetailResponse getPostDetail(Long postId, Long memberId) {
         // MyBatis Mapper를 통해 게시글 단건 및 member 조인 데이터 조회
         PostDetailResponse postDetail = postMapper.selectPostDetail(postId);
 
@@ -46,6 +50,13 @@ public class PostServiceImpl implements PostService {
 
         // 해당 게시글 댓글 조회
         postDetail.setComments(commentMapper.findByPostId(postId));
+
+        // 고유 조회수 (비회원은 집계 x)
+        if (memberId != null) {
+            postInteractionMapper.insertViewIgnore(postId, memberId);
+        }
+        postDetail.setViewCount(postInteractionMapper.countViews(postId));
+
         return postDetail;
     }
 

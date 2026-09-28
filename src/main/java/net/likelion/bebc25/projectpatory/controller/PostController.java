@@ -46,9 +46,11 @@ public class PostController {
     @GetMapping("/{postId}")
     public ResponseEntity<PostDetailResponse> getPostDetail(
             @Parameter(description = "조회할 게시글 ID", example = "3")
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        PostDetailResponse response = postService.getPostDetail(postId);
+        Long memberId = userDetails == null ? null : userDetails.getId();
+        PostDetailResponse response = postService.getPostDetail(postId, memberId);
         return ResponseEntity.ok(response);
     }
 

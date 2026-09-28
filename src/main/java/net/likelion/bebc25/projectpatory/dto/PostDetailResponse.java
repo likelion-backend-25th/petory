@@ -50,4 +50,8 @@ public class PostDetailResponse {
     @Setter
     @Schema(description = "댓글 목록")
     private List<CommentResponse> comments;
+
+    @Setter
+    @Schema(description = "조회수")
+    private Long viewCount;
 }

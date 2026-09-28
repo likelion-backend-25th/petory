@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.PostInteractionMapper">
+
+    <!-- 좋아요 여부 확인 -->
+    <select id="existsLike" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM post_interaction
+            WHERE post_id = #{postId}
+              AND member_id = #{memberId}
+              AND interaction_type = 'LIKE'
+        )
+    </select>
+
+    <!-- 좋아요 증가 -->
+    <insert id="insertLike">
+        INSERT INTO post_interaction (
+            member_id,
+            post_id,
+            interaction_type,
+            created_at
+        ) VALUES (
+            #{memberId},
+            #{postId},
+            'LIKE',
+            NOW()
+        )
+    </insert>
+
+    <!-- 좋아요 취소 -->
+    <delete id="deleteLike">
+        DELETE FROM post_interaction
+        WHERE post_id = #{postId}
+          AND member_id = #{memberId}
+          AND interaction_type = 'LIKE'
+    </delete>
+
+    <!-- 좋아요 개수 집계 -->
+    <select id="countLikes" resultType="long">
+        SELECT COUNT(*)
+        FROM post_interaction
+        WHERE post_id = #{postId}
+          AND interaction_type = 'LIKE'
+    </select>
+
+    <!-- 고유 조회수 처리(글 최초열람시에만 조회수 증가) -->
+    <insert id="insertViewIgnore">
+        INSERT IGNORE INTO post_interaction (
+            member_id,
+            post_id,
+            interaction_type,
+            created_at
+        ) VALUES (
+            #{memberId},
+            #{postId},
+            'VIEW',
+            NOW()
+        )
+    </insert>
+
+    <!-- 조회수 집계 -->
+    <select id="countViews" resultType="long">
+        SELECT COUNT(*)
+        FROM post_interaction
+        WHERE post_id = #{postId}
+          AND interaction_type = 'VIEW'
+    </select>
+
+</mapper>

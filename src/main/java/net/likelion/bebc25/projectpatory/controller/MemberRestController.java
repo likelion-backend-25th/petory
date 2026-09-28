@@ -10,11 +10,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.domain.MemberProfile;
+import net.likelion.bebc25.projectpatory.domain.MyProfile;
+import net.likelion.bebc25.projectpatory.domain.Profile;
 import net.likelion.bebc25.projectpatory.dto.ApiErrorResponse;
-import net.likelion.bebc25.projectpatory.dto.MemberProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
-import net.likelion.bebc25.projectpatory.dto.MyProfileResponse;
-import net.likelion.bebc25.projectpatory.dto.ProfileResponse;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
@@ -58,7 +58,7 @@ public class MemberRestController {
             @ApiResponse(
                     responseCode = "200",
                     description = "프로필 조회 성공",
-                    content = @Content(schema = @Schema(oneOf = {MyProfileResponse.class, MemberProfileResponse.class}))
+                    content = @Content(schema = @Schema(oneOf = {MyProfile.class, MemberProfile.class}))
             ),
             @ApiResponse(
                     responseCode = "401",
@@ -71,7 +71,7 @@ public class MemberRestController {
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
             )
     })
-    public ResponseEntity<ProfileResponse> getMyProfile(
+    public ResponseEntity<Profile> getMyProfile(
             @Parameter(description = "조회할 회원 ID", example = "1")
             @PathVariable Long memberId,
             @AuthenticationPrincipal CustomUserDetails userDetails

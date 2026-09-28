@@ -42,6 +42,20 @@
         SELECT COUNT(*) FROM follow WHERE following_id = #{memberId}
     </select>
 
+    <update id="editMyProfile">
+        UPDATE member
+        <set>
+            nickname = #{profile.nickname},
+            species = #{profile.species},
+            sex = #{profile.sex},
+            birth_date = #{profile.birthDate},
+            intro = #{profile.intro},
+            profile_image = #{profile.profileImage},
+            address = #{profile.address}
+        </set>
+        WHERE id = #{memberId}
+    </update>
+
     <update id="updateStatusToBlocked">
         UPDATE member
         SET status = 'BLOCKED'

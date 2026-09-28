@@ -11,7 +11,7 @@ public class MemberProfileEditRequest {
     String nickname;
     String species;
     String sex;
-    String birthday;
+    String birthDate;
     String intro;
     String profileImage;
     String address;

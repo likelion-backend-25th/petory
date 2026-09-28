@@ -16,4 +16,6 @@ public interface MemberService {
     Profile getMyProfile(Member member, Long loginMemberId);
 
     void editMyProfile(MemberProfileEditRequest request, Long loginMemberId, Long memberId);
+
+    void deleteMyProfile(Long loginMemberId, Long memberId);
 }

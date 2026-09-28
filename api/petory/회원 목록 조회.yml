@@ -1,0 +1,18 @@
+info:
+  name: 회원 목록 조회
+  type: http
+  seq: 15
+
+http:
+  method: GET
+  url: http://localhost:8080/api/v1/admin/members
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjEiLCJlbWFpbCI6ImFkbWluQHBldG9yeS5jb20iLCJyb2xlcyI6WyJST0xFX0FETUlOIl0sImlhdCI6MTc5MDU3MDA3MiwiZXhwIjoxNzkwNTczNjcyfQ.qS9l0G7GL0VdYpmmJUquWA5gzo4QBJXJN9APhs7kBmM
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.CommentMapper">
+
+    <!-- 해당 게시글의 모든 댓글 정보 select -->
+    <select id="findByPostId" resultType="net.likelion.bebc25.projectpatory.dto.CommentResponse">
+        SELECT
+            c.id,
+            c.member_id AS commenterId,
+            m.nickname AS commenterNickname,
+            c.content,
+            c.created_at AS createdAt
+        FROM comment c
+        INNER JOIN member m ON c.member_id = m.id
+        WHERE c.post_id = #{postId}
+        ORDER BY c.id ASC
+    </select>
+
+    <!-- 멤버 테이블과 조인하여 모든 댓글 정보 select -->
+    <select id="findById" resultType="net.likelion.bebc25.projectpatory.dto.CommentResponse">
+        SELECT
+            c.id,
+            c.member_id AS commenterId,
+            m.nickname AS commenterNickname,
+            c.content,
+            c.created_at AS createdAt
+        FROM comment c
+        INNER JOIN member m ON c.member_id = m.id
+        WHERE c.id = #{id}
+    </select>
+
+    <!-- 작성한 댓글 insert -->
+    <insert id="insert"
+            parameterType="net.likelion.bebc25.projectpatory.dto.CommentCreateRequest"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO comment (
+            post_id,
+            member_id,
+            content,
+            created_at
+        ) VALUES (
+            #{postId},
+            #{memberId},
+            #{content},
+            NOW()
+        )
+    </insert>
+
+</mapper>

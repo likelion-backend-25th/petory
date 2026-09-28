@@ -1,0 +1,24 @@
+info:
+  name: 댓글작성
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts/1/comments"
+  body:
+    type: json
+    data: |-
+      {
+        "content": "좋은 글 잘 읽었습니다! 가독성이 확실히 좋아 보이네요."
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

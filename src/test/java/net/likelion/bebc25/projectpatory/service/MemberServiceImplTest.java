@@ -4,6 +4,7 @@ import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.MemberProfile;
 import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceImplTest {
@@ -222,5 +224,59 @@ class MemberServiceImplTest {
         assertThat(profile.getClass().getDeclaredFields())
                 .extracting(field -> field.getName())
                 .doesNotContain("email", "address", "species", "sex", "birthDate", "infoProvideAgreement");
+    }
+
+    @Test
+    @DisplayName("본인 프로필 수정 시 매퍼에 수정 요청을 전달한다")
+    void editMyProfile_whenOwnProfile_callsMapper() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .memberId(1L)
+                .nickname("수정뭉치")
+                .species("개")
+                .sex("수")
+                .birthDate("2020-05-01")
+                .intro("소개를 바꿨어요")
+                .profileImage("edited.png")
+                .address("서울시 마포구")
+                .build();
+
+        // when
+        memberService.editMyProfile(request, 1L);
+
+        // then
+        verify(memberMapper).editMyProfile(request, 1L);
+    }
+
+    @Test
+    @DisplayName("타인 프로필 수정 시 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
+    void editMyProfile_whenOtherMember_throwsException() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .memberId(2L)
+                .nickname("별이")
+                .build();
+
+        // when & then
+        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L))
+                .isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(memberMapper);
+    }
+
+    @Test
+    @DisplayName("로그인 정보가 없으면 IllegalStateException을 던지고 매퍼를 호출하지 않는다")
+    void editMyProfile_whenLoginMemberIdIsNull_throwsException() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .memberId(1L)
+                .nickname("수정뭉치")
+                .build();
+
+        // when & then
+        assertThatThrownBy(() -> memberService.editMyProfile(request, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        verifyNoInteractions(memberMapper);
     }
 }

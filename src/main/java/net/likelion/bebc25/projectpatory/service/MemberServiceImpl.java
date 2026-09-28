@@ -4,6 +4,7 @@ import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.MemberProfile;
 import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
@@ -89,5 +90,11 @@ public class MemberServiceImpl implements MemberService {
                 .build();
     }
 
-
+    @Override
+    public void editMyProfile(MemberProfileEditRequest request, Long loginMemberId) {
+        if (loginMemberId == null || !loginMemberId.equals(request.getMemberId())) {
+            throw new IllegalStateException();
+        }
+        memberMapper.editMyProfile(request, request.getMemberId());
+    }
 }

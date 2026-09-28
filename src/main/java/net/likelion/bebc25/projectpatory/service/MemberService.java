@@ -3,6 +3,7 @@ package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.Profile;
+import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 
 public interface MemberService {
@@ -13,4 +14,6 @@ public interface MemberService {
     Member findMemberById(Long id);
 
     Profile getMyProfile(Member member, Long loginMemberId);
+
+    void editMyProfile(MemberProfileEditRequest request, Long loginMemberId);
 }

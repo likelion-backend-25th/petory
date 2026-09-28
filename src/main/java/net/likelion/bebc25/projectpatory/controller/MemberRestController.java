@@ -157,9 +157,32 @@ public class MemberRestController {
     }
 
     @PostMapping("/profile/{memberId}/edit")
+    @Operation(
+            summary = "내 프로필 수정",
+            description = "로그인한 본인의 프로필을 수정한다. 경로의 회원 ID는 로그인 회원 ID와 동일해야 한다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "타인 프로필 수정 시도",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "존재하지 않는 회원",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     public ResponseEntity<Void> editMyProfile(
             @RequestBody MemberProfileEditRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "수정할 회원 ID (로그인 회원 ID와 동일해야 함)", example = "1")
             @PathVariable Long memberId
     ) {
         memberService.editMyProfile(request, userDetails.getId(), memberId);

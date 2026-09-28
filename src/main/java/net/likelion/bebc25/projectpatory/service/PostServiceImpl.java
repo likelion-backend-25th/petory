@@ -2,6 +2,7 @@ package net.likelion.bebc25.projectpatory.service;
 
 import lombok.RequiredArgsConstructor;
 import net.likelion.bebc25.projectpatory.dto.*;
+import net.likelion.bebc25.projectpatory.mapper.CommentMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.util.NoSuchElementException;
 public class PostServiceImpl implements PostService {
 
     private final PostMapper postMapper;
+    private final CommentMapper commentMapper;
 
     @Override
     public SliceResponse<PostListResponse> getPostListCursor(Long lastPostId, int size) {
@@ -42,6 +44,8 @@ public class PostServiceImpl implements PostService {
             throw new NoSuchElementException("해당 ID의 게시글을 찾을 수 없습니다. id=" + postId);
         }
 
+        // 해당 게시글 댓글 조회
+        postDetail.setComments(commentMapper.findByPostId(postId));
         return postDetail;
     }
 

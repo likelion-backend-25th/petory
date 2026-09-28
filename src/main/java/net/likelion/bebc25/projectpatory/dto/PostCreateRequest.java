@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Builder
@@ -15,7 +16,9 @@ public class PostCreateRequest {
     @Schema(description = "게시글 ID (INSERT 후 자동 생성됨)", hidden = true)
     private Long id;
 
-    @Schema(description = "작성자 회원 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
+    // 변경: 클라이언트 입력 대신 컨트롤러에서 JWT 인증 사용자 ID로 세팅 (Swagger 숨김 + setter 추가)
+    @Schema(description = "작성자 회원 ID (JWT 인증 사용자로 자동 세팅)", hidden = true)
+    @Setter
     private Long memberId;
 
     @Schema(description = "게시글 본문 내용", example = "오늘 새로운 산책 코스를 발견했어요!", requiredMode = Schema.RequiredMode.REQUIRED)

@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS missing_pet_post;
 DROP TABLE IF EXISTS chat_room;
 DROP TABLE IF EXISTS subscription_plan;
 DROP TABLE IF EXISTS post_main;
+DROP TABLE IF EXISTS issued_refresh_token;
 DROP TABLE IF EXISTS linked_account;
 DROP TABLE IF EXISTS member;
 
@@ -50,6 +51,20 @@ CREATE TABLE IF NOT EXISTS linked_account
     UNIQUE KEY uk_member_linked_account (member_id, provider),
     UNIQUE KEY uk_member_linked_account_info (provider, provider_user_id),
     CONSTRAINT fk_linked_account_member
+        FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+);
+
+-- 2-1. issued_refresh_token
+CREATE TABLE IF NOT EXISTS issued_refresh_token
+(
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    member_id     BIGINT       NOT NULL,
+    refresh_token VARCHAR(500) NOT NULL,
+    expires_at    DATETIME     NOT NULL,
+    created_at    DATETIME              DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_issued_refresh_token (refresh_token),
+    CONSTRAINT fk_issued_refresh_token_member
         FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 

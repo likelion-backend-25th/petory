@@ -15,6 +15,7 @@
 ```mermaid
 erDiagram
     member ||--o{ linked_account : "연동함 (1:N)"
+    member ||--o{ issued_refresh_token : "발급받음 (1:N)"
     member ||--o{ post_main : "작성함 (1:N)"
     member ||--o{ comment : "작성함 (1:N)"
     member ||--o{ post_interaction : "인터랙션함 (1:N)"
@@ -65,6 +66,14 @@ erDiagram
         VARCHAR provider_user_id "제공자 회원 ID"
         VARCHAR provider_email "제공자 회원 email"
         DATETIME created_at "계정 생성 일시"
+    }
+
+    issued_refresh_token {
+        BIGINT id PK "refresh 토큰 식별자"
+        BIGINT member_id FK "refresh 토큰을 발급받는 회원 고유 식별자"
+        VARCHAR refresh_token UK "발급된 토큰 문자열"
+        DATETIME expires_at "저장된 토큰의 만료 시각 (7일)"
+        DATETIME created_at "토큰 발급 시각"
     }
 
     post_main {
@@ -261,6 +270,16 @@ erDiagram
 
 - 고유 제약조건: UNIQUE KEY `uk_member_linked_account` (`member_id`, `provider`), UNIQUE KEY `uk_member_linked_account_info` (
   `provider`, `provider_user_id`),
+
+### 1.2.1 - 2 issued_refresh_token
+
+| 컬럼명           | 데이터 타입       | 제약 조건                                      | 설명                         |
+|:--------------|:-------------|:-------------------------------------------|:---------------------------|
+| id            | BIGINT       | PK, AUTO_INCREMENT                         | refresh 토큰 식별자             |
+| member_id     | BIGINT       | FK, NOT NULL (member.id ON DELETE CASCADE) | refresh 토큰을 발급받는 회원 고유 식별자 |
+| refresh_token | VARCHAR(500) | NOT NULL, UNIQUE                           | 발급된 토큰 문자열                 |
+| expires_at    | DATETIME     | NOT NULL                                   | 저장된 토큰의 만료 시각. (7일)        |
+| created_at    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 토큰 발급 시각                   |
 
 ### 1.2.2 post_main (피드 게시글)
 

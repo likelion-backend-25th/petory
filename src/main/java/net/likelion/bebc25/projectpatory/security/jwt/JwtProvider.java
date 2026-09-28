@@ -38,7 +38,7 @@ public class JwtProvider {
         Date validity = new Date(now.getTime() + accessTokenExpiration);    // 토큰 만료 시점
 
         return Jwts.builder()
-                .issuer("mybatis-sns")                  // 발행 주체
+                .issuer("petory")                  // 발행 주체
                 .subject(String.valueOf(memberId))      // 토큰 소유자 식별 정보
                 .claim("email", email)
                 .claim("roles", List.of(role))
@@ -54,7 +54,7 @@ public class JwtProvider {
         Date validity = new Date(now.getTime() + refreshTokenExpiration);
 
         return Jwts.builder()
-                .issuer("mybatis-sns")
+                .issuer("petory")
                 .subject(String.valueOf(memberId))
                 .issuedAt(now)
                 .expiration(validity)

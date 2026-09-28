@@ -8,7 +8,6 @@ import lombok.*;
 @Setter
 @Builder
 public class MemberProfileEditRequest {
-    Long memberId;
     String nickname;
     String species;
     String sex;

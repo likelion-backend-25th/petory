@@ -13,10 +13,7 @@ import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.MemberProfile;
 import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
-import net.likelion.bebc25.projectpatory.dto.ApiErrorResponse;
-import net.likelion.bebc25.projectpatory.dto.MyPagePostResponse;
-import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
-import net.likelion.bebc25.projectpatory.dto.SignUpResponse;
+import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
 import net.likelion.bebc25.projectpatory.service.MemberService;
 import net.likelion.bebc25.projectpatory.service.PostService;
@@ -158,6 +155,17 @@ public class MemberRestController {
     ) {
         return ResponseEntity.ok(postService.getMyBookmarks(memberId, userDetails.getId()));
     }
+
+    @PostMapping("/profile/{memberId}/edit")
+    public ResponseEntity<Void> editMyProfile(
+            @RequestBody MemberProfileEditRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long memberId
+    ) {
+        memberService.editMyProfile(request, userDetails.getId(), memberId);
+        return ResponseEntity.ok().build();
+    }
+
 
     // 서비스용 기능x / 학습 or 디버깅용
     @Hidden

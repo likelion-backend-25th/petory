@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -231,7 +232,6 @@ class MemberServiceImplTest {
     void editMyProfile_whenOwnProfile_callsMapper() {
         // given
         MemberProfileEditRequest request = MemberProfileEditRequest.builder()
-                .memberId(1L)
                 .nickname("수정뭉치")
                 .species("개")
                 .sex("수")
@@ -240,12 +240,32 @@ class MemberServiceImplTest {
                 .profileImage("edited.png")
                 .address("서울시 마포구")
                 .build();
+        given(memberMapper.findById(1L)).willReturn(Member.builder().id(1L).build());
 
         // when
-        memberService.editMyProfile(request, 1L);
+        memberService.editMyProfile(request, 1L, 1L);
 
         // then
+        verify(memberMapper).findById(1L);
         verify(memberMapper).editMyProfile(request, 1L);
+    }
+
+    @Test
+    @DisplayName("본인 프로필이지만 회원이 없으면 NoSuchElementException을 던진다")
+    void editMyProfile_whenOwnProfileMissing_throwsException() {
+        // given
+        MemberProfileEditRequest request = MemberProfileEditRequest.builder()
+                .nickname("수정뭉치")
+                .build();
+        given(memberMapper.findById(1L)).willReturn(null);
+
+        // when & then
+        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L, 1L))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessage("존재하지 않는 회원입니다.");
+
+        verify(memberMapper).findById(1L);
+        verify(memberMapper, never()).editMyProfile(request, 1L);
     }
 
     @Test
@@ -253,13 +273,13 @@ class MemberServiceImplTest {
     void editMyProfile_whenOtherMember_throwsException() {
         // given
         MemberProfileEditRequest request = MemberProfileEditRequest.builder()
-                .memberId(2L)
                 .nickname("별이")
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> memberService.editMyProfile(request, 1L, 2L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("비정상적인 접근입니다.");
 
         verifyNoInteractions(memberMapper);
     }
@@ -269,13 +289,13 @@ class MemberServiceImplTest {
     void editMyProfile_whenLoginMemberIdIsNull_throwsException() {
         // given
         MemberProfileEditRequest request = MemberProfileEditRequest.builder()
-                .memberId(1L)
                 .nickname("수정뭉치")
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> memberService.editMyProfile(request, null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> memberService.editMyProfile(request, null, 1L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("비정상적인 접근입니다.");
 
         verifyNoInteractions(memberMapper);
     }

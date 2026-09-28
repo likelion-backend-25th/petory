@@ -189,6 +189,15 @@ public class MemberRestController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/profile/{memberId}/delete")
+    public ResponseEntity<Void> deleteMyProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long memberId
+    ) {
+        memberService.deleteMyProfile(userDetails.getId(), memberId);
+        return ResponseEntity.ok().build();
+    }
+
 
     // 서비스용 기능x / 학습 or 디버깅용
     @Hidden

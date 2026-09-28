@@ -5,11 +5,10 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/profile/6"
+  url: "{{baseUrl}}/profile/7"
   auth:
-    type: basic
-    username: qudgh0217@example.com
-    password: password123
+    type: bearer
+    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjciLCJlbWFpbCI6InF1ZGdoMDIxN0BleGFtcGxlLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3OTA1Njk1MDcsImV4cCI6MTc5MDU3MzEwN30.o7NfHIoe29GmXHxnDmA6PTF_e5mCe-Inu5gpaCgth6pEaxynP6Aa8VR22F8JvI4r
 
 settings:
   encodeUrl: true

@@ -3,6 +3,8 @@ package net.likelion.bebc25.projectpatory.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Schema(description = "내 프로필 수정 요청")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +22,7 @@ public class MemberProfileEditRequest {
     String sex;
 
     @Schema(description = "반려동물 생일", example = "2020-05-01")
-    String birthDate;
+    LocalDate birthDate;
 
     @Schema(description = "자기소개", example = "안녕하세요")
     String intro;

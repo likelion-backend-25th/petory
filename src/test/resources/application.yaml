@@ -43,3 +43,9 @@ cloud:
       bucket: ${AWS_S3_BUCKET_NAME:test-bucket}
     region:
       static: ap-northeast-2
+
+# 변경: PaymentServiceImpl의 @Value("${portone.api.secret}")를 위해 추가 (값은 .env에서 읽음)
+portone:
+  api:
+    store-id: ${PORTONE_STORE_ID}
+    secret: ${PORTONE_API_SECRET}

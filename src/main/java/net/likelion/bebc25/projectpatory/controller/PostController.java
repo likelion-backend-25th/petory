@@ -3,10 +3,12 @@ package net.likelion.bebc25.projectpatory.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import net.likelion.bebc25.projectpatory.dto.*;
+import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
 import net.likelion.bebc25.projectpatory.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -52,7 +54,11 @@ public class PostController {
 
     @Operation(summary = "게시글 작성", description = "새로운 게시글을 등록합니다.")
     @PostMapping
-    public ResponseEntity<PostCreateResponse> createPost(@RequestBody PostCreateRequest request) {
+    public ResponseEntity<PostCreateResponse> createPost(
+            @AuthenticationPrincipal CustomUserDetails userDetails, // 변경: 작성자 ID를 요청 Body 대신 JWT 인증 사용자에서 가져옴
+            @RequestBody PostCreateRequest request
+    ) {
+        request.setMemberId(userDetails.getId());
         PostCreateResponse response = postService.createPost(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -60,10 +66,10 @@ public class PostController {
     @PutMapping("/{postId}")
     public ResponseEntity<Void> updatePost(
             @PathVariable Long postId,
-            @RequestParam Long memberId, // 임시: 토큰 적용 전 memberId 검증용
+            @AuthenticationPrincipal CustomUserDetails userDetails, // 변경: @RequestParam memberId -> JWT 인증 사용자
             @RequestBody PostUpdateRequest request
     ) {
-        postService.updatePost(postId, memberId, request);
+        postService.updatePost(postId, userDetails.getId(), request);
         return ResponseEntity.ok().build();
     }
 
@@ -71,9 +77,9 @@ public class PostController {
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
             @PathVariable Long postId,
-            @RequestParam Long memberId // 임시: 토큰 적용 전 memberId 검증용
+            @AuthenticationPrincipal CustomUserDetails userDetails // 변경: @RequestParam memberId -> JWT 인증 사용자
     ) {
-        postService.deletePost(postId, memberId);
+        postService.deletePost(postId, userDetails.getId());
         return ResponseEntity.noContent().build();
     }
 }

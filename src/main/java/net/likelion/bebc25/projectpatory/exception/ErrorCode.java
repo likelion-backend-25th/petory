@@ -9,6 +9,8 @@ public enum ErrorCode {
     BUSINESS_RULE_VIOLATION("BUSINESS_RULE_VIOLATION", "비즈니스 업무 규칙을 위반했습니다.", HttpStatus.BAD_REQUEST),
     FORBIDDEN_OPERATION("FORBIDDEN_OPERATION", "해당 작업을 수행할 권한이 없습니다.", HttpStatus.FORBIDDEN),
     RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", "요청한 자원을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    // 변경: PortOne 등 외부 결제 API 통신 실패용 (502 Bad Gateway)
+    PAYMENT_GATEWAY_ERROR("PAYMENT_GATEWAY_ERROR", "결제 대행사 통신 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     INTERNAL_SERVER_ERROR("INTERNAL_SERVER_ERROR", "서버 내부 처리 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final String code;

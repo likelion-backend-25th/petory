@@ -292,11 +292,11 @@ CREATE TABLE IF NOT EXISTS missing_pet_post
     missing_address VARCHAR(255)   NOT NULL,
     detail          TEXT           NULL,
     image_url       VARCHAR(255)   NULL,
-    status          VARCHAR(20)    NOT NULL,
+    status          VARCHAR(20)    NOT NULL DEFAULT 'MISSING',
     latitude        DECIMAL(10, 7) NULL,
     longitude       DECIMAL(10, 7) NULL,
-    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at      DATETIME                DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME                DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT fk_missing_pet_post_member
         FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
@@ -314,8 +314,8 @@ CREATE TABLE IF NOT EXISTS missing_pet_report
     sight_at            DATETIME       NOT NULL,
     latitude            DECIMAL(10, 7) NULL,
     longitude           DECIMAL(10, 7) NULL,
-    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at          DATETIME                DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME                DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT fk_missing_pet_report_post
         FOREIGN KEY (missing_pet_post_id) REFERENCES missing_pet_post (id) ON DELETE CASCADE,

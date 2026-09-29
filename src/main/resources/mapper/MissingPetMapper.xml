@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.MissingPetMapper">
+
+    <select id="findByCursor"
+            resultType="net.likelion.bebc25.projectpatory.dto.MissingPetListResponse">
+
+        SELECT
+        mpp.id,
+        mpp.image_url AS imageUrl
+        FROM missing_pet_post mpp
+
+        <where>
+            <if test="cursor != null">
+                mpp.id &lt; #{cursor}
+            </if>
+        </where>
+
+        ORDER BY mpp.id DESC
+        LIMIT #{limit}
+
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM missing_pet_post
+    </select>
+
+</mapper>

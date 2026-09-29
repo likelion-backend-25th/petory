@@ -2,6 +2,7 @@ package net.likelion.bebc25.projectpatory.mapper;
 
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.domain.SocialAccount;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +15,8 @@ import java.util.List;
 public interface MemberMapper {
     // 회원가입
     void createMember(@Param("member") SignUpRequest member, @Param("infoProvideAgreement") LocalDateTime infoProvideAgreement);
+
+    void registerSocialAccount(@Param("socialAccount") SocialAccount socialAccount);
 
     // 이메일 기반 회원 정보 조회
     Member findByEmail(@Param("email") String email);

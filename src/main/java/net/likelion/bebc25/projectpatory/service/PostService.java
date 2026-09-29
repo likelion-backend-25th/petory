@@ -11,6 +11,11 @@ public interface PostService {
     SliceResponse<PostListResponse> getPostListCursor(Long lastPostId, int size);
 
     /**
+     * 해시태그 검색 (커서 기반 무한 스크롤)
+     */
+    SliceResponse<PostListResponse> searchPostsByHashtag(String hashtag, Long lastPostId, int size);
+
+    /**
      * 게시글 상세 조회 (단건 조회)
      * + 고유 조회수 처리를 위해 멤버 정보를 받아와야해서 memberId를 인자로 추가
      */

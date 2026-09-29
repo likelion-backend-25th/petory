@@ -24,6 +24,19 @@ public interface PostMapper {
             @Param("limit") int limit
     );
 
+    /**
+     * 해시태그 검색 (커서 기반 무한 스크롤 - 일반 피드 p.type = 1 전용)
+     *
+     * @param hashtag    '#' 을 뺀 검색어 (예: 강아지)
+     * @param lastPostId 직전 목록의 마지막 게시글 ID (처음 요청 시 null)
+     * @param limit      가져올 게시글 개수 (size + 1)
+     */
+    List<PostListResponse> selectPostListByHashtag(
+            @Param("hashtag") String hashtag,
+            @Param("lastPostId") Long lastPostId,
+            @Param("limit") int limit
+    );
+
     PostDetailResponse selectPostDetail(Long postId);
 
     long countMyPosts(Long memberId);

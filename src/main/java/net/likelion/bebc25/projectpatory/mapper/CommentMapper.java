@@ -18,4 +18,19 @@ public interface CommentMapper {
 
     // 댓글 정보 저장
     void insert(CommentCreateRequest request);
+
+    // 본인 댓글 수정 (성공 시 수정된 행 수 반환)
+    int updateComment(
+            @Param("commentId") Long commentId,
+            @Param("postId") Long postId,
+            @Param("memberId") Long memberId,
+            @Param("content") String content
+    );
+
+    // 본인 댓글 삭제 (성공 시 삭제된 행 수 반환)
+    int deleteComment(
+            @Param("commentId") Long commentId,
+            @Param("postId") Long postId,
+            @Param("memberId") Long memberId
+    );
 }

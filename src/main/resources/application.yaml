@@ -64,5 +64,5 @@ cloud:
 
 portone:
   api:
-    store-id: ${PORTONE_STORE_ID}
-    secret: ${PORTONE_API_SECRET}
+    store-id: ${PORTONE_STORE_ID:dummy-store-id}
+    secret: ${PORTONE_API_SECRET:dummy-api-secret}

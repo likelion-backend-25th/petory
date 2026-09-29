@@ -143,6 +143,15 @@
         )
     </insert>
 
+    <!-- 게시글 첨부 이미지 insert (리스트 순서 = sort_order) -->
+    <insert id="insertPostImages">
+        INSERT INTO post_image (post_id, image_url, sort_order)
+        VALUES
+        <foreach collection="imageUrls" item="imageUrl" index="sortOrder" separator=",">
+            (#{postId}, #{imageUrl}, #{sortOrder})
+        </foreach>
+    </insert>
+
     <!-- 게시글 수정 -->
     <update id="updatePost">
         UPDATE post_main
@@ -159,5 +168,12 @@
         DELETE FROM post_main
         WHERE id = #{postId} AND member_id = #{memberId}
     </delete>
+
+    <!-- 게시글 삭제시 같이 삭제되어야할 이미지 url select -->
+    <select id="selectImageUrlsByPostId" resultType="string">
+        SELECT image_url FROM post_image
+        WHERE post_id = #{postId}
+        ORDER BY sort_order ASC
+    </select>
 
 </mapper>

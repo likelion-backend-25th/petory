@@ -88,6 +88,9 @@ public class SecurityConfig {
                         // 게시글 GET 공개
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/**").permitAll()
 
+                        // PortOne 웹훅 (PortOne 서버가 호출하므로 JWT가 없다)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+
                         // Swagger UI 및 API 문서
                         .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs"

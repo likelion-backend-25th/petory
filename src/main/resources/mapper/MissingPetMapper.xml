@@ -5,6 +5,7 @@
 
 <mapper namespace="net.likelion.bebc25.projectpatory.mapper.MissingPetMapper">
 
+<!--   게시글 목록 조회-->
     <select id="findByCursor"
             resultType="net.likelion.bebc25.projectpatory.dto.MissingPetListResponse">
 
@@ -23,10 +24,73 @@
         LIMIT #{limit}
 
     </select>
-
+<!-- 전체 게시글 개수-->
     <select id="countAll" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM missing_pet_post
     </select>
 
+<!--   상세 게시글-->
+    <select id="findDetailById"
+            resultType="net.likelion.bebc25.projectpatory.dto.MissingPetDetailRow">
+
+        SELECT
+        mpp.id,
+
+        m.id AS authorId,
+        m.nickname AS authorNickname,
+        m.profile_image AS authorProfileImage,
+
+        mpp.missing_date AS missingDate,
+        mpp.missing_address AS missingAddress,
+        mpp.detail,
+        mpp.image_url AS imageUrl,
+        mpp.status,
+
+        mpp.latitude,
+        mpp.longitude,
+
+        mpp.created_at AS createdAt,
+        mpp.updated_at AS updatedAt
+
+        FROM missing_pet_post mpp
+
+        JOIN member m
+        ON mpp.member_id = m.id
+
+        WHERE mpp.id = #{id}
+    </select>
+
+    <!-- 상세 게시글 목격 제보 목록 -->
+    <select id="findReportsByPostId"
+            resultType="net.likelion.bebc25.projectpatory.dto.MissingPetReportRow">
+
+        SELECT
+        mpr.id,
+
+        m.id AS reporterId,
+        m.nickname AS reporterNickname,
+        m.profile_image AS reporterProfileImage,
+
+        mpr.address,
+        mpr.detail,
+        mpr.image_url AS imageUrl,
+
+        mpr.sight_at AS sightAt,
+
+        mpr.latitude,
+        mpr.longitude,
+
+        mpr.created_at AS createdAt
+
+        FROM missing_pet_report mpr
+
+        JOIN member m
+        ON mpr.member_id = m.id
+
+        WHERE mpr.missing_pet_post_id = #{missingPetPostId}
+
+        ORDER BY mpr.created_at DESC
+
+    </select>
 </mapper>

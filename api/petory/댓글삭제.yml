@@ -1,0 +1,18 @@
+info:
+  name: 댓글삭제
+  type: http
+  seq: 14
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/posts/1/comments/{{commentId}}"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

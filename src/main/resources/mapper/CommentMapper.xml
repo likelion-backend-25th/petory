@@ -49,4 +49,21 @@
         )
     </insert>
 
+    <!-- 본인 댓글 수정 -->
+    <update id="updateComment">
+        UPDATE comment
+        SET content = #{content}
+        WHERE id = #{commentId}
+          AND post_id = #{postId}
+          AND member_id = #{memberId}
+    </update>
+
+    <!-- 본인 댓글 삭제 -->
+    <delete id="deleteComment">
+        DELETE FROM comment
+        WHERE id = #{commentId}
+          AND post_id = #{postId}
+          AND member_id = #{memberId}
+    </delete>
+
 </mapper>

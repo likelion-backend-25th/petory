@@ -3,6 +3,7 @@ package net.likelion.bebc25.projectpatory.service;
 import lombok.RequiredArgsConstructor;
 import net.likelion.bebc25.projectpatory.dto.CommentCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.CommentResponse;
+import net.likelion.bebc25.projectpatory.dto.CommentUpdateRequest;
 import net.likelion.bebc25.projectpatory.mapper.CommentMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.springframework.stereotype.Service;
@@ -33,5 +34,26 @@ public class CommentServiceImpl implements CommentService {
 
         // 나머지 CommentCreateResponse dto 값 멤버와 조인하여 설정
         return commentMapper.findById(request.getId());
+    }
+
+    @Transactional
+    @Override
+    public CommentResponse updateComment(Long postId, Long commentId, Long memberId, CommentUpdateRequest request) {
+        int updatedRows = commentMapper.updateComment(commentId, postId, memberId, request.getContent());
+        // 댓글이 없는 상태에서 수정시 예외처리
+        if (updatedRows == 0) {
+            throw new IllegalArgumentException("댓글을 찾을 수 없거나 수정 권한이 없습니다. commentId: " + commentId);
+        }
+        return commentMapper.findById(commentId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteComment(Long postId, Long commentId, Long memberId) {
+        int deletedRows = commentMapper.deleteComment(commentId, postId, memberId);
+        // 댓글이 없는 상태에서 삭제시 예외처리
+        if (deletedRows == 0) {
+            throw new IllegalArgumentException("댓글을 찾을 수 없거나 삭제 권한이 없습니다. commentId: " + commentId);
+        }
     }
 }

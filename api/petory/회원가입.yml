@@ -1,7 +1,7 @@
 info:
   name: 회원가입
   type: http
-  seq: 3
+  seq: 5
 
 http:
   method: POST

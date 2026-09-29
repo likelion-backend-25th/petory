@@ -1,7 +1,7 @@
 info:
   name: 게시글 수정
   type: http
-  seq: 6
+  seq: 10
 
 http:
   method: PUT

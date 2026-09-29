@@ -1,7 +1,7 @@
 info:
   name: 게시글 삭제
   type: http
-  seq: 7
+  seq: 11
 
 http:
   method: PUT

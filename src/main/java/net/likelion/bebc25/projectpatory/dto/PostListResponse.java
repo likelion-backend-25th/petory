@@ -35,4 +35,5 @@ public class PostListResponse {
     // 4. 반응/소셜 수치 (집계)
     private Long likeCount;           // 좋아요 수
     private Long commentCount;        // 댓글 수
+    private Long viewCount;           // 조회수
 }

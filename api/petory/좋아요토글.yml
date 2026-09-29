@@ -1,11 +1,11 @@
 info:
-  name: 게시글 상세조회
+  name: 좋아요토글
   type: http
-  seq: 6
+  seq: 10
 
 http:
-  method: GET
-  url: "{{baseUrl}}/posts/1"
+  method: POST
+  url: "{{baseUrl}}/posts/1/likes"
   auth:
     type: bearer
     token: "{{accessToken}}"

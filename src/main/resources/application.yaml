@@ -12,6 +12,9 @@ spring:
     init:
       mode: always
 
+  config:
+    import: optional:application-oauth.yaml
+
 
 # MyBatis 설정
 mybatis:

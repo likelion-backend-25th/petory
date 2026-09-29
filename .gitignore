@@ -58,3 +58,6 @@ out/
 # 3. 설정 파일 (만약 키를 직접 적어둔 yml/properties 파일이 있다면)
 application-secret.yml
 application-local.yml
+
+# OAuth Secret #
+application-oauth.yaml

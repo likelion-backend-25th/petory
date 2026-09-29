@@ -29,7 +29,7 @@ mybatis:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET:ZGVmYXVsdC1qd3Qtc2VjcmV0LWtleS1mb3ItbG9jYWwtdGVzdC1lbnZpcm9ubWVudA==}
+  secret: ${JWT_SECRET}
   access-token-expiration: 3600000      # 1시간 (밀리초)
   refresh-token-expiration: 604800000   # 7일 (밀리초)
 
@@ -47,5 +47,5 @@ cloud:
 # 변경: PaymentServiceImpl의 @Value("${portone.api.secret}")를 위해 추가 (값은 .env에서 읽음)
 portone:
   api:
-    store-id: ${PORTONE_STORE_ID:test-store}
-    secret: ${PORTONE_API_SECRET:test-secret}
+    store-id: ${PORTONE_STORE_ID}
+    secret: ${PORTONE_API_SECRET}

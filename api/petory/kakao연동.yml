@@ -1,0 +1,16 @@
+info:
+  name: kakao연동
+  type: http
+  seq: 21
+
+http:
+  method: GET
+  url: http://localhost:8080/oauth2/authorization/kakao
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -314,4 +314,89 @@ class PaymentServiceImplTest {
 
         verify(paymentMapper, never()).updatePaymentFail(any(), any(), any(), any(), any(), any());
     }
+
+    // =====================================================
+    // 웹훅: handleWebhook 테스트
+    // =====================================================
+
+    private PortOneWebhookRequest createWebhook(String type, String paymentId) {
+        return new PortOneWebhookRequest(type, "2026-09-28T04:00:00Z",
+                new PortOneWebhookRequest.Data(paymentId, "store-test", "tx_portone_001"));
+    }
+
+    @Test
+    @DisplayName("웹훅 Transaction.Paid - PortOne 조회 결과 금액이 같으면 PAID로 저장한다")
+    void webhook_Paid() {
+        // given
+        given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(createReadyPayment(5000));
+        givenPortOneReturns(createPortOnePaidResponse(5000));
+
+        // when
+        paymentService.handleWebhook(createWebhook("Transaction.Paid", PAYMENT_ID));
+
+        // then
+        LocalDateTime expectedPaidAt = LocalDateTime.of(2026, 9, 28, 13, 0, 0);
+        verify(paymentMapper).updatePaymentSuccess(PAYMENT_ID, "tx_portone_001", "pg_tx_001",
+                "https://receipt.portone.io/001", 5000, expectedPaidAt);
+    }
+
+    @Test
+    @DisplayName("웹훅 - /complete가 먼저 처리해서 이미 PAID면 PortOne을 다시 호출하지 않는다")
+    void webhook_AlreadyPaid() {
+        // given
+        PaymentResponseDto paidPayment = PaymentResponseDto.builder()
+                .id(100L)
+                .memberId(MEMBER_ID)
+                .paymentId(PAYMENT_ID)
+                .totalAmount(5000)
+                .paidAmount(5000)
+                .status("PAID")
+                .build();
+        given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(paidPayment);
+
+        // when
+        paymentService.handleWebhook(createWebhook("Transaction.Paid", PAYMENT_ID));
+
+        // then
+        verifyNoInteractions(restTemplate);
+        verify(paymentMapper, never()).updatePaymentSuccess(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("웹훅 - 처리하지 않는 이벤트(Transaction.Ready)는 DB도 PortOne도 건드리지 않는다")
+    void webhook_IgnoredType() {
+        // when
+        paymentService.handleWebhook(createWebhook("Transaction.Ready", PAYMENT_ID));
+
+        // then
+        verifyNoInteractions(paymentMapper);
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    @DisplayName("웹훅 - DB에 없는 주문번호면 예외 없이 무시한다 (PortOne 재전송 방지)")
+    void webhook_PaymentNotFound() {
+        // given
+        given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(null);
+
+        // when
+        paymentService.handleWebhook(createWebhook("Transaction.Paid", PAYMENT_ID));
+
+        // then
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    @DisplayName("웹훅 - PortOne 서버 오류면 PaymentGatewayException (502 응답 -> PortOne이 재전송)")
+    void webhook_PortOneServerError() {
+        // given
+        given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(createReadyPayment(5000));
+        given(restTemplate.exchange(eq(PORTONE_URL + PAYMENT_ID), eq(HttpMethod.GET),
+                any(HttpEntity.class), eq(PortOnePaymentResponse.class)))
+                .willThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // when & then
+        assertThatThrownBy(() -> paymentService.handleWebhook(createWebhook("Transaction.Paid", PAYMENT_ID)))
+                .isInstanceOf(PaymentGatewayException.class);
+    }
 }

@@ -102,30 +102,78 @@ public class PaymentServiceImpl implements PaymentService {
             throw new IllegalArgumentException("존재하지 않는 주문 번호입니다: " + paymentId);
         }
 
-        // 3. 이미 처리된 결제(PAID, FAILED, CANCELLED)면 PortOne에 다시 묻지 않고 현재 상태를 돌려준다
+        // 3. PortOne과 비교해서 DB 상태를 확정한다 (웹훅과 같은 로직을 쓴다)
+        return syncWithPortOne(payment);
+    }
+
+    // =================================================================
+    // PortOne 웹훅 처리
+    // 웹훅 URL은 누구나 호출할 수 있으므로 본문 내용은 믿지 않는다
+    // 본문에서 주문번호만 꺼내고, 실제 상태는 PortOne API로 다시 조회해서 판단한다
+    // =================================================================
+    @Override
+    @Transactional
+    public void handleWebhook(PortOneWebhookRequest webhook) {
+        String type = webhook.getType();
+
+        // 1. 결제 승인/실패 이벤트만 처리한다 (그 외 이벤트는 무시하라고 PortOne 문서에 안내되어 있다)
+        if (!"Transaction.Paid".equals(type) && !"Transaction.Failed".equals(type)) {
+            log.info("[웹훅 무시] 처리하지 않는 이벤트: {}", type);
+            return;
+        }
+
+        if (webhook.getData() == null || webhook.getData().getPaymentId() == null) {
+            log.warn("[웹훅 무시] 주문번호가 없는 웹훅: {}", type);
+            return;
+        }
+        String paymentId = webhook.getData().getPaymentId();
+
+        // 2. DB에서 결제 정보를 잠가서 조회한다 (/complete와 동시에 와도 한 번만 처리된다)
+        PaymentResponseDto payment = paymentMapper.findByPaymentIdForUpdate(paymentId);
+
+        // 3. 우리 DB에 없는 주문이면 무시한다
+        //    예외를 던지면 PortOne이 같은 웹훅을 계속 재전송하므로 조용히 끝낸다
+        if (payment == null) {
+            log.warn("[웹훅 무시] DB에 없는 주문번호: {}", paymentId);
+            return;
+        }
+
+        // 4. PortOne과 비교해서 DB 상태를 확정한다
+        PaymentCompleteResponseDto result = syncWithPortOne(payment);
+        log.info("[웹훅 처리 완료] 이벤트: {}, 주문번호: {}, 결과: {}", type, paymentId, result.getStatus());
+    }
+
+    // =================================================================
+    // /complete와 웹훅이 함께 쓰는 공통 로직
+    // PortOne에서 실제 결제 내역을 조회하고, DB 금액과 비교해서 PAID/FAILED/CANCELLED로 확정한다
+    // =================================================================
+    private PaymentCompleteResponseDto syncWithPortOne(PaymentResponseDto payment) {
+        String paymentId = payment.getPaymentId();
+
+        // 1. 이미 처리된 결제(PAID, FAILED, CANCELLED)면 PortOne에 다시 묻지 않고 현재 상태를 돌려준다
         if (!payment.getStatus().equals("READY")) {
             log.info("[이미 처리된 결제] 주문번호: {}, 상태: {}", paymentId, payment.getStatus());
             return new PaymentCompleteResponseDto(paymentId, payment.getStatus(), payment.getPaidAmount(),
                     "이미 처리된 결제입니다.");
         }
 
-        // 4. PortOne 서버에 실제 결제 내역을 물어본다
+        // 2. PortOne 서버에 실제 결제 내역을 물어본다
         PortOnePaymentResponse portOnePayment = getPortOnePayment(paymentId);
         String portOneStatus = portOnePayment.getStatus();
 
-        // 5. 결제가 실패했으면 FAILED로 저장한다
+        // 3. 결제가 실패했으면 FAILED로 저장한다
         if (portOneStatus.equals("FAILED")) {
             return handleFailedPayment(paymentId, portOnePayment);
         }
 
-        // 6. 아직 결제가 끝나지 않았으면 DB는 그대로 두고 READY를 돌려준다
+        // 4. 아직 결제가 끝나지 않았으면 DB는 그대로 두고 READY를 돌려준다
         if (!portOneStatus.equals("PAID")) {
             log.info("[결제 미완료] 주문번호: {}, PortOne 상태: {}", paymentId, portOneStatus);
             return new PaymentCompleteResponseDto(paymentId, "READY", null,
                     "결제가 아직 완료되지 않았습니다. (PortOne 상태: " + portOneStatus + ")");
         }
 
-        // 7. 금액을 비교한다 (DB에 저장한 예정 금액 vs PortOne에서 실제 결제된 금액)
+        // 5. 금액을 비교한다 (DB에 저장한 예정 금액 vs PortOne에서 실제 결제된 금액)
         Integer expectedAmount = payment.getTotalAmount();
         Integer actualPaidAmount = portOnePayment.getAmount().getTotal();
 
@@ -134,7 +182,7 @@ public class PaymentServiceImpl implements PaymentService {
             return handleAmountMismatch(payment, actualPaidAmount);
         }
 
-        // 8. 모든 검사를 통과하면 PAID로 저장한다
+        // 6. 모든 검사를 통과하면 PAID로 저장한다
         LocalDateTime paidAt = toKoreanTime(portOnePayment.getPaidAt());
         paymentMapper.updatePaymentSuccess(
                 paymentId,

@@ -4,6 +4,7 @@ import net.likelion.bebc25.projectpatory.dto.PaymentCompleteRequestDto;
 import net.likelion.bebc25.projectpatory.dto.PaymentCompleteResponseDto;
 import net.likelion.bebc25.projectpatory.dto.PaymentPrepareRequestDto;
 import net.likelion.bebc25.projectpatory.dto.PaymentRequestDto;
+import net.likelion.bebc25.projectpatory.dto.PortOneWebhookRequest;
 
 public interface PaymentService {
 
@@ -17,4 +18,7 @@ public interface PaymentService {
     // 본인 결제 확인을 위해 로그인 사용자 ID(currentMemberId) 파라미터 추가
     // 반환 타입 boolean -> PaymentCompleteResponseDto (결제 상태/금액/메시지를 JSON으로 응답)
     PaymentCompleteResponseDto verifyAndCompletePayment(Long currentMemberId, PaymentCompleteRequestDto requestDto);
+
+    // PortOne 웹훅 처리: 웹훅 내용은 믿지 않고 PortOne API로 다시 조회해서 DB를 맞춘다
+    void handleWebhook(PortOneWebhookRequest webhook);
 }

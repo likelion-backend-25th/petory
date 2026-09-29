@@ -5,8 +5,14 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/missing-pets
-  auth: inherit
+  url: http://localhost:8080/api/missing-pets?size=3
+  params:
+    - name: size
+      value: "3"
+      type: query
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA2NzI3ODgsImV4cCI6MTc5MDY3NjM4OH0.DtOT2gGj4JKC5QNWK-MaRUYvGCcbCiWFXJgyfMaLPKg
 
 settings:
   encodeUrl: true

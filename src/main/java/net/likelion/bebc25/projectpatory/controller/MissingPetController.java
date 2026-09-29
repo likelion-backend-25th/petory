@@ -1,12 +1,10 @@
 package net.likelion.bebc25.projectpatory.controller;
 
 import lombok.RequiredArgsConstructor;
+import net.likelion.bebc25.projectpatory.dto.MissingPetDetailResponse;
 import net.likelion.bebc25.projectpatory.dto.MissingPetListPageResponse;
 import net.likelion.bebc25.projectpatory.service.MissingPetService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -15,6 +13,7 @@ public class MissingPetController {
 
     private final MissingPetService missingPetService;
 
+    // 분실동물 목록 조회
     @GetMapping
     public MissingPetListPageResponse getMissingPetList(
             @RequestParam(required = false) Long cursor,
@@ -24,5 +23,14 @@ public class MissingPetController {
                 cursor,
                 size
         );
+    }
+
+    // 분실동물 상세 조회
+    @GetMapping("/{id}")
+    public MissingPetDetailResponse getMissingPetDetail(
+            @PathVariable Long id
+    ) {
+
+        return missingPetService.getMissingPetDetail(id);
     }
 }

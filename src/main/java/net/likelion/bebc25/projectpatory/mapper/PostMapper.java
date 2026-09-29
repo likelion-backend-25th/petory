@@ -41,4 +41,10 @@ public interface PostMapper {
 
     // 게시글 삭제 (성공 시 삭제된 행 수 반환)
     int deletePost(@Param("postId") Long postId, @Param("memberId") Long memberId);
+
+    // 게시글 이미지 첨부
+    void insertPostImages(@Param("postId") Long postId, @Param("imageUrls") List<String> imageUrls);
+
+    // 게시글 삭제시 같이 삭제되어야할 이미지 url select
+    List<String> selectImageUrlsByPostId(@Param("postId") Long postId);
 }

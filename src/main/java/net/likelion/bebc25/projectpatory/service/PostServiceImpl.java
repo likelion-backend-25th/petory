@@ -19,6 +19,7 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final CommentMapper commentMapper;
     private final PostInteractionMapper postInteractionMapper;
+    private final S3Service s3Service;
 
     @Override
     public SliceResponse<PostListResponse> getPostListCursor(Long lastPostId, int size) {
@@ -66,7 +67,13 @@ public class PostServiceImpl implements PostService {
         // 1. 게시글 데이터 INSERT (useGeneratedKeys 설정으로 request.getId()에 자동 세팅됨)
         postMapper.insertPost(request);
 
-        // 2. 생성된 ID를 담아 응답 DTO 반환
+        // 2. 첨부 이미지가 있으면 post_image에 insert
+        List<String> imageUrls = request.getImageUrls();
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            postMapper.insertPostImages(request.getId(), imageUrls);
+        }
+
+        // 3. 생성된 ID를 담아 응답 DTO 반환
         return PostCreateResponse.builder()
                 .id(request.getId())
                 .build();
@@ -84,10 +91,16 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public void deletePost(Long postId, Long memberId) {
+        // CASCADE로 url 삭제되기전 저장
+        List<String> imageUrls = postMapper.selectImageUrlsByPostId(postId);
+
         int deletedRows = postMapper.deletePost(postId, memberId);
         if (deletedRows == 0) {
             throw new IllegalArgumentException("게시글을 찾을 수 없거나 삭제 권한이 없습니다. (postId: " + postId + ")");
         }
+
+        // 권한 확인후 삭제
+        s3Service.deleteObjectsByFileUrls(imageUrls);
     }
 
     // 이 아래로 3개는 마이페이지에서 내가 작성한 메인피드, QnA, 내가 북마크 게시글을 불러오는 서비스임

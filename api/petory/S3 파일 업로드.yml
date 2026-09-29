@@ -1,0 +1,31 @@
+info:
+  name: S3 파일 업로드
+  type: http
+  seq: 21
+  docs: |-
+    S3 E2E 3단계. Presign 발급 후 실행.
+    Body에서 로컬 이미지 파일을 선택하고 Content-Type 을 Presign 요청과 동일하게 맞춘다
+    (예: image/jpeg).
+    uploadUrl 이 비어 있으면 먼저 S3 Presign 발급.yml 을 실행한다.
+    성공(200) 후 브라우저에서 {{fileUrl}} 을 열어 이미지를 확인한다.
+    Bruno에서 binary PUT 이 어려우면 curl 사용:
+    curl -X PUT -H "Content-Type: image/jpeg" --data-binary "@경로/dog.jpg" "{{uploadUrl}}"
+
+http:
+  method: PUT
+  url: "{{uploadUrl}}"
+  headers:
+    - name: Content-Type
+      value: image/jpeg
+  body:
+    type: binary
+    data: ""
+  auth:
+    type: none
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

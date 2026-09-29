@@ -1,0 +1,21 @@
+info:
+  name: S3 게시글 삭제
+  type: http
+  seq: 24
+  docs: |-
+    S3 E2E 6단계. S3 게시글 작성 후 저장된 postId 로 삭제한다.
+    삭제 후 브라우저에서 {{fileUrl}} 을 다시 열어 이미지가 안 보이면 S3 정리 성공.
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/posts/{{postId}}"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

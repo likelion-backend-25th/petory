@@ -13,7 +13,7 @@ spring:
       mode: always
 
   config:
-    import: optional:application-oauth.yaml
+    import: optional:file:.env[.properties], optional:application-oauth.yaml
 
 
 # MyBatis 설정

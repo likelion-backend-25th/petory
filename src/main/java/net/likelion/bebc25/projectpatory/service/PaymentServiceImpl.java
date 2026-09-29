@@ -3,6 +3,7 @@ package net.likelion.bebc25.projectpatory.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.domain.Payment;
 import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.exception.PaymentGatewayException;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
@@ -45,8 +46,8 @@ public class PaymentServiceImpl implements PaymentService {
     // =================================================================
     @Override
     @Transactional
-    public PaymentRequestDto preparePayment(Long currentMemberId, PaymentPrepareRequestDto requestDto) {
-        Long targetMemberId = requestDto.getTargetMemberId();
+    public PaymentPrepareResponse preparePayment(Long currentMemberId, PaymentPrepareRequest requestDto) {
+        Long targetMemberId = requestDto.targetMemberId();
 
         // 1. 본인에게는 후원할 수 없다
         if (currentMemberId.equals(targetMemberId)) {
@@ -64,34 +65,35 @@ public class PaymentServiceImpl implements PaymentService {
         String paymentId = "ORD_" + System.currentTimeMillis() + "_" + randomText;
 
         // 4. DB에 READY 상태로 저장한다 (결제 예정 금액을 서버에 기록해 두는 것이 핵심)
-        PaymentRequestDto paymentRequest = PaymentRequestDto.builder()
+        Payment payment = Payment.builder()
                 .memberId(currentMemberId)
                 .targetMemberId(targetMemberId)
                 .paymentId(paymentId)
-                .orderName(requestDto.getOrderName())
+                .orderName(requestDto.orderName())
                 .currency("KRW")
-                .totalAmount(requestDto.getTotalAmount())
-                .payMethod(requestDto.getPayMethod())
+                .totalAmount(requestDto.totalAmount())
+                .payMethod(requestDto.payMethod())
+                .status("READY")
                 .build();
-        paymentMapper.savePayment(paymentRequest);
+        paymentMapper.savePayment(payment);
 
         log.info("[결제 준비 완료] 주문번호: {}, 결제자: {}, 예정금액: {}원",
-                paymentId, currentMemberId, requestDto.getTotalAmount());
-        return paymentRequest;
+                paymentId, currentMemberId, requestDto.totalAmount());
+        return PaymentPrepareResponse.from(payment);
     }
 
     // =================================================================
     // 3단계: 결제 사후 검증
-    // boolean 대신 결과 DTO(PaymentCompleteResponseDto)를 반환
+    // boolean 대신 결과 DTO(PaymentCompleteResponse)를 반환
     // =================================================================
     @Override
     @Transactional
-    public PaymentCompleteResponseDto verifyAndCompletePayment(Long currentMemberId, PaymentCompleteRequestDto requestDto) {
-        String paymentId = requestDto.getPaymentId();
+    public PaymentCompleteResponse verifyAndCompletePayment(Long currentMemberId, PaymentCompleteRequest requestDto) {
+        String paymentId = requestDto.paymentId();
 
         // 1. DB에서 결제 정보를 조회한다
         //    FOR UPDATE로 이 행을 잠가서, 같은 결제로 요청이 동시에 두 번 와도 한 번씩 차례대로 처리되게 한다
-        PaymentResponseDto payment = paymentMapper.findByPaymentIdForUpdate(paymentId);
+        Payment payment = paymentMapper.findByPaymentIdForUpdate(paymentId);
 
         // 2. 주문이 없거나 내 주문이 아니면 거절한다
         if (payment == null) {
@@ -114,7 +116,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public void handleWebhook(PortOneWebhookRequest webhook) {
-        String type = webhook.getType();
+        String type = webhook.type();
 
         // 1. 결제 승인/실패 이벤트만 처리한다 (그 외 이벤트는 무시하라고 PortOne 문서에 안내되어 있다)
         if (!"Transaction.Paid".equals(type) && !"Transaction.Failed".equals(type)) {
@@ -122,14 +124,14 @@ public class PaymentServiceImpl implements PaymentService {
             return;
         }
 
-        if (webhook.getData() == null || webhook.getData().getPaymentId() == null) {
+        if (webhook.data() == null || webhook.data().paymentId() == null) {
             log.warn("[웹훅 무시] 주문번호가 없는 웹훅: {}", type);
             return;
         }
-        String paymentId = webhook.getData().getPaymentId();
+        String paymentId = webhook.data().paymentId();
 
         // 2. DB에서 결제 정보를 잠가서 조회한다 (/complete와 동시에 와도 한 번만 처리된다)
-        PaymentResponseDto payment = paymentMapper.findByPaymentIdForUpdate(paymentId);
+        Payment payment = paymentMapper.findByPaymentIdForUpdate(paymentId);
 
         // 3. 우리 DB에 없는 주문이면 무시한다
         //    예외를 던지면 PortOne이 같은 웹훅을 계속 재전송하므로 조용히 끝낸다
@@ -139,27 +141,27 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 4. PortOne과 비교해서 DB 상태를 확정한다
-        PaymentCompleteResponseDto result = syncWithPortOne(payment);
-        log.info("[웹훅 처리 완료] 이벤트: {}, 주문번호: {}, 결과: {}", type, paymentId, result.getStatus());
+        PaymentCompleteResponse result = syncWithPortOne(payment);
+        log.info("[웹훅 처리 완료] 이벤트: {}, 주문번호: {}, 결과: {}", type, paymentId, result.status());
     }
 
     // =================================================================
     // /complete와 웹훅이 함께 쓰는 공통 로직
     // PortOne에서 실제 결제 내역을 조회하고, DB 금액과 비교해서 PAID/FAILED/CANCELLED로 확정한다
     // =================================================================
-    private PaymentCompleteResponseDto syncWithPortOne(PaymentResponseDto payment) {
+    private PaymentCompleteResponse syncWithPortOne(Payment payment) {
         String paymentId = payment.getPaymentId();
 
         // 1. 이미 처리된 결제(PAID, FAILED, CANCELLED)면 PortOne에 다시 묻지 않고 현재 상태를 돌려준다
-        if (!payment.getStatus().equals("READY")) {
+        if (!payment.isReady()) {
             log.info("[이미 처리된 결제] 주문번호: {}, 상태: {}", paymentId, payment.getStatus());
-            return new PaymentCompleteResponseDto(paymentId, payment.getStatus(), payment.getPaidAmount(),
+            return new PaymentCompleteResponse(paymentId, payment.getStatus(), payment.getPaidAmount(),
                     "이미 처리된 결제입니다.");
         }
 
         // 2. PortOne 서버에 실제 결제 내역을 물어본다
         PortOnePaymentResponse portOnePayment = getPortOnePayment(paymentId);
-        String portOneStatus = portOnePayment.getStatus();
+        String portOneStatus = portOnePayment.status();
 
         // 3. 결제가 실패했으면 FAILED로 저장한다
         if (portOneStatus.equals("FAILED")) {
@@ -169,13 +171,13 @@ public class PaymentServiceImpl implements PaymentService {
         // 4. 아직 결제가 끝나지 않았으면 DB는 그대로 두고 READY를 돌려준다
         if (!portOneStatus.equals("PAID")) {
             log.info("[결제 미완료] 주문번호: {}, PortOne 상태: {}", paymentId, portOneStatus);
-            return new PaymentCompleteResponseDto(paymentId, "READY", null,
+            return new PaymentCompleteResponse(paymentId, "READY", null,
                     "결제가 아직 완료되지 않았습니다. (PortOne 상태: " + portOneStatus + ")");
         }
 
         // 5. 금액을 비교한다 (DB에 저장한 예정 금액 vs PortOne에서 실제 결제된 금액)
         Integer expectedAmount = payment.getTotalAmount();
-        Integer actualPaidAmount = portOnePayment.getAmount().getTotal();
+        Integer actualPaidAmount = portOnePayment.amount().total();
 
         if (!expectedAmount.equals(actualPaidAmount)) {
             // 금액이 다르면 위변조로 보고 자동 취소한다
@@ -183,29 +185,29 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // 6. 모든 검사를 통과하면 PAID로 저장한다
-        LocalDateTime paidAt = toKoreanTime(portOnePayment.getPaidAt());
+        LocalDateTime paidAt = toKoreanTime(portOnePayment.paidAt());
         paymentMapper.updatePaymentSuccess(
                 paymentId,
-                portOnePayment.getTransactionId(),
-                portOnePayment.getPgTxId(),
-                portOnePayment.getReceiptUrl(),
+                portOnePayment.transactionId(),
+                portOnePayment.pgTxId(),
+                portOnePayment.receiptUrl(),
                 actualPaidAmount,
                 paidAt
         );
 
         log.info("[결제 검증 성공] 주문번호: {}, 결제금액: {}원", paymentId, actualPaidAmount);
-        return new PaymentCompleteResponseDto(paymentId, "PAID", actualPaidAmount, "결제 성공 및 검증이 완료되었습니다.");
+        return new PaymentCompleteResponse(paymentId, "PAID", actualPaidAmount, "결제 성공 및 검증이 완료되었습니다.");
     }
 
     // 결제 실패 처리: FAILED와 PG사 실패 사유를 저장한다
-    private PaymentCompleteResponseDto handleFailedPayment(String paymentId, PortOnePaymentResponse portOnePayment) {
+    private PaymentCompleteResponse handleFailedPayment(String paymentId, PortOnePaymentResponse portOnePayment) {
         String failCode = null;
         String failMessage = null;
 
-        PortOnePaymentResponse.Failure failure = portOnePayment.getFailure();
+        PortOnePaymentResponse.Failure failure = portOnePayment.failure();
         if (failure != null) {
-            failCode = failure.getPgCode();
-            failMessage = failure.getPgMessage();
+            failCode = failure.pgCode();
+            failMessage = failure.pgMessage();
         }
 
         paymentMapper.updatePaymentFail(paymentId, "FAILED", failCode, failMessage, null, null);
@@ -215,11 +217,11 @@ public class PaymentServiceImpl implements PaymentService {
         if (failMessage != null) {
             message = failMessage;
         }
-        return new PaymentCompleteResponseDto(paymentId, "FAILED", null, message);
+        return new PaymentCompleteResponse(paymentId, "FAILED", null, message);
     }
 
     // 금액 위변조 처리: PortOne 취소 요청 -> payment를 CANCELLED로 변경 -> cancel_payment에 이력 저장
-    private PaymentCompleteResponseDto handleAmountMismatch(PaymentResponseDto payment, Integer actualPaidAmount) {
+    private PaymentCompleteResponse handleAmountMismatch(Payment payment, Integer actualPaidAmount) {
         String paymentId = payment.getPaymentId();
         log.error("[위변조 감지] 주문번호: {}, DB 예정금액: {}원, 실제 결제금액: {}원 -> 자동 취소",
                 paymentId, payment.getTotalAmount(), actualPaidAmount);
@@ -241,17 +243,17 @@ public class PaymentServiceImpl implements PaymentService {
         LocalDateTime cancelledAt = LocalDateTime.now();
 
         if (cancellation != null) {
-            cancellationId = cancellation.getId();
-            pgCancellationId = cancellation.getPgCancellationId();
-            receiptUrl = cancellation.getReceiptUrl();
-            if (cancellation.getStatus() != null) {
-                cancelStatus = cancellation.getStatus();
+            cancellationId = cancellation.id();
+            pgCancellationId = cancellation.pgCancellationId();
+            receiptUrl = cancellation.receiptUrl();
+            if (cancellation.status() != null) {
+                cancelStatus = cancellation.status();
             }
-            if (cancellation.getTotalAmount() != null) {
-                cancelAmount = cancellation.getTotalAmount();
+            if (cancellation.totalAmount() != null) {
+                cancelAmount = cancellation.totalAmount();
             }
-            if (cancellation.getCancelledAt() != null) {
-                cancelledAt = toKoreanTime(cancellation.getCancelledAt());
+            if (cancellation.cancelledAt() != null) {
+                cancelledAt = toKoreanTime(cancellation.cancelledAt());
             }
         }
 
@@ -259,7 +261,7 @@ public class PaymentServiceImpl implements PaymentService {
         paymentMapper.insertCancelPayment(payment.getId(), cancellationId, pgCancellationId,
                 cancelStatus, cancelAmount, AMOUNT_MISMATCH_REASON, receiptUrl, cancelledAt);
 
-        return new PaymentCompleteResponseDto(paymentId, "CANCELLED", null,
+        return new PaymentCompleteResponse(paymentId, "CANCELLED", null,
                 "결제 금액 위변조 시도가 감지되어 결제가 취소되었습니다.");
     }
 
@@ -288,7 +290,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         // 응답 내용이 비어 있으면 검증을 할 수 없으므로 실패로 본다
         PortOnePaymentResponse body = response.getBody();
-        if (body == null || body.getStatus() == null || body.getAmount() == null) {
+        if (body == null || body.status() == null || body.amount() == null) {
             throw new PaymentGatewayException("PortOne 결제 조회 응답이 올바르지 않습니다.");
         }
         return body;
@@ -312,7 +314,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (response == null) {
             return null;
         }
-        return response.getCancellation();
+        return response.cancellation();
     }
 
     // PortOne V2 인증 헤더: "Authorization: PortOne {API Secret}"

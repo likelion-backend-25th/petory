@@ -1,7 +1,6 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
-import net.likelion.bebc25.projectpatory.dto.PaymentRequestDto;
-import net.likelion.bebc25.projectpatory.dto.PaymentResponseDto;
+import net.likelion.bebc25.projectpatory.domain.Payment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,8 @@ class PaymentMapperTest {
     private JdbcTemplate jdbcTemplate; // cancel_payment 행 개수 확인용
 
     // 테스트용 READY 결제 1건 저장 (data.sql 기준: 3번 나비가 2번 멍치에게 후원)
-    private PaymentRequestDto saveReadyPayment(String paymentId, int totalAmount) {
-        PaymentRequestDto request = PaymentRequestDto.builder()
+    private Payment saveReadyPayment(String paymentId, int totalAmount) {
+        Payment request = Payment.builder()
                 .memberId(3L)
                 .targetMemberId(2L)
                 .paymentId(paymentId)
@@ -49,12 +48,12 @@ class PaymentMapperTest {
         @DisplayName("성공 - READY 상태로 저장되고 생성된 PK(id)를 가져온다")
         void savePayment_Success() {
             // when
-            PaymentRequestDto saved = saveReadyPayment("ORD_TEST_SAVE", 5000);
+            Payment saved = saveReadyPayment("ORD_TEST_SAVE", 5000);
 
             // then
             assertThat(saved.getId()).isNotNull(); // useGeneratedKeys로 id 세팅 확인
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_SAVE");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_SAVE");
             assertThat(found).isNotNull();
             assertThat(found.getMemberId()).isEqualTo(3L);
             assertThat(found.getTargetMemberId()).isEqualTo(2L);
@@ -66,7 +65,7 @@ class PaymentMapperTest {
         @Test
         @DisplayName("실패 - 존재하지 않는 주문번호면 null을 반환한다")
         void findByPaymentId_NotFound() {
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_NOT_EXIST");
+            Payment found = paymentMapper.findByPaymentId("ORD_NOT_EXIST");
 
             assertThat(found).isNull();
         }
@@ -78,7 +77,7 @@ class PaymentMapperTest {
             saveReadyPayment("ORD_TEST_LOCK", 3000);
 
             // when
-            PaymentResponseDto found = paymentMapper.findByPaymentIdForUpdate("ORD_TEST_LOCK");
+            Payment found = paymentMapper.findByPaymentIdForUpdate("ORD_TEST_LOCK");
 
             // then
             assertThat(found.getMemberId()).isEqualTo(3L);
@@ -106,7 +105,7 @@ class PaymentMapperTest {
             // then
             assertThat(updatedRows).isEqualTo(1);
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_PAID");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_PAID");
             assertThat(found.getStatus()).isEqualTo("PAID");
             assertThat(found.getTransactionId()).isEqualTo("tx_test");
             assertThat(found.getPgTxId()).isEqualTo("pg_test");
@@ -127,7 +126,7 @@ class PaymentMapperTest {
             // then
             assertThat(updatedRows).isEqualTo(0);
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_TWICE");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_TWICE");
             assertThat(found.getTransactionId()).isEqualTo("tx_first"); // 처음 값이 그대로 남아 있다
         }
     }
@@ -150,7 +149,7 @@ class PaymentMapperTest {
             // then
             assertThat(updatedRows).isEqualTo(1);
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_FAILED");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_FAILED");
             assertThat(found.getStatus()).isEqualTo("FAILED");
             assertThat(found.getFailCode()).isEqualTo("PAY_PROCESS_FAILED");
             assertThat(found.getFailMessage()).isEqualTo("잔액 부족");
@@ -170,7 +169,7 @@ class PaymentMapperTest {
             // then
             assertThat(updatedRows).isEqualTo(1);
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_CANCEL");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_CANCEL");
             assertThat(found.getStatus()).isEqualTo("CANCELLED");
             assertThat(found.getCancelAmount()).isEqualTo(1000);
             assertThat(found.getCancelReason()).isEqualTo("위변조 자동 취소");
@@ -191,7 +190,7 @@ class PaymentMapperTest {
             // then
             assertThat(updatedRows).isEqualTo(0);
 
-            PaymentResponseDto found = paymentMapper.findByPaymentId("ORD_TEST_PAID_CANCEL");
+            Payment found = paymentMapper.findByPaymentId("ORD_TEST_PAID_CANCEL");
             assertThat(found.getStatus()).isEqualTo("PAID");
         }
     }
@@ -201,7 +200,7 @@ class PaymentMapperTest {
     @DisplayName("insertCancelPayment - payment.id(PK)를 참조하는 취소 이력이 저장된다")
     void insertCancelPayment_Success() {
         // given
-        PaymentRequestDto saved = saveReadyPayment("ORD_TEST_HISTORY", 5000);
+        Payment saved = saveReadyPayment("ORD_TEST_HISTORY", 5000);
         LocalDateTime cancelledAt = LocalDateTime.of(2026, 9, 28, 13, 5, 0);
 
         // when

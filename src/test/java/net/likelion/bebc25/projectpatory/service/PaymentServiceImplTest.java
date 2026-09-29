@@ -1,6 +1,7 @@
 package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.domain.Payment;
 import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.exception.PaymentGatewayException;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
@@ -8,6 +9,7 @@ import net.likelion.bebc25.projectpatory.mapper.PaymentMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -57,8 +59,8 @@ class PaymentServiceImplTest {
     // ---------- 테스트용 데이터를 만드는 도우미 메서드 ----------
 
     // DB에 저장된 READY 상태 결제
-    private PaymentResponseDto createReadyPayment(int totalAmount) {
-        return PaymentResponseDto.builder()
+    private Payment createReadyPayment(int totalAmount) {
+        return Payment.builder()
                 .id(100L)
                 .memberId(MEMBER_ID)
                 .paymentId(PAYMENT_ID)
@@ -95,26 +97,32 @@ class PaymentServiceImplTest {
     @DisplayName("결제 준비 성공 - 주문번호를 만들고 READY 결제를 저장한다")
     void preparePayment_Success() {
         // given
-        PaymentPrepareRequestDto request = new PaymentPrepareRequestDto(TARGET_MEMBER_ID, "간식 쏘기", 5000, "간식 쏘기");
+        PaymentPrepareRequest request = new PaymentPrepareRequest(TARGET_MEMBER_ID, "간식 쏘기", 5000, "간식 쏘기");
         given(memberMapper.findById(TARGET_MEMBER_ID)).willReturn(new Member());
 
         // when
-        PaymentRequestDto result = paymentService.preparePayment(MEMBER_ID, request);
+        PaymentPrepareResponse result = paymentService.preparePayment(MEMBER_ID, request);
 
-        // then
-        assertThat(result.getPaymentId()).startsWith("ORD_");
-        assertThat(result.getMemberId()).isEqualTo(MEMBER_ID);
-        assertThat(result.getTargetMemberId()).isEqualTo(TARGET_MEMBER_ID);
-        assertThat(result.getTotalAmount()).isEqualTo(5000);
-        assertThat(result.getCurrency()).isEqualTo("KRW");
-        verify(paymentMapper).savePayment(result);
+        // then (응답에는 결제창에 필요한 값만 담긴다)
+        assertThat(result.paymentId()).startsWith("ORD_");
+        assertThat(result.totalAmount()).isEqualTo(5000);
+        assertThat(result.currency()).isEqualTo("KRW");
+
+        // then (DB에는 결제자/대상/READY 상태까지 저장된다)
+        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentMapper).savePayment(captor.capture());
+        Payment saved = captor.getValue();
+        assertThat(saved.getPaymentId()).isEqualTo(result.paymentId());
+        assertThat(saved.getMemberId()).isEqualTo(MEMBER_ID);
+        assertThat(saved.getTargetMemberId()).isEqualTo(TARGET_MEMBER_ID);
+        assertThat(saved.getStatus()).isEqualTo("READY");
     }
 
     @Test
     @DisplayName("결제 준비 실패 - 본인에게 결제하면 IllegalArgumentException")
     void preparePayment_Self() {
         // given (결제자와 후원 대상이 같음)
-        PaymentPrepareRequestDto request = new PaymentPrepareRequestDto(MEMBER_ID, "간식 쏘기", 5000, "간식 쏘기");
+        PaymentPrepareRequest request = new PaymentPrepareRequest(MEMBER_ID, "간식 쏘기", 5000, "간식 쏘기");
 
         // when & then
         assertThatThrownBy(() -> paymentService.preparePayment(MEMBER_ID, request))
@@ -128,7 +136,7 @@ class PaymentServiceImplTest {
     @DisplayName("결제 준비 실패 - 후원 대상 회원이 없으면 NoSuchElementException")
     void preparePayment_TargetNotFound() {
         // given
-        PaymentPrepareRequestDto request = new PaymentPrepareRequestDto(999L, "간식 쏘기", 5000, "간식 쏘기");
+        PaymentPrepareRequest request = new PaymentPrepareRequest(999L, "간식 쏘기", 5000, "간식 쏘기");
         given(memberMapper.findById(999L)).willReturn(null);
 
         // when & then
@@ -150,11 +158,11 @@ class PaymentServiceImplTest {
         givenPortOneReturns(createPortOnePaidResponse(5000));
 
         // when
-        PaymentCompleteResponseDto result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID));
+        PaymentCompleteResponse result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID));
 
         // then
-        assertThat(result.getStatus()).isEqualTo("PAID");
-        assertThat(result.getPaidAmount()).isEqualTo(5000);
+        assertThat(result.status()).isEqualTo("PAID");
+        assertThat(result.paidAmount()).isEqualTo(5000);
 
         // PortOne 시각 04:00(UTC)이 한국 시간 13:00으로 바뀌어 저장되는지 확인
         LocalDateTime expectedPaidAt = LocalDateTime.of(2026, 9, 28, 13, 0, 0);
@@ -177,10 +185,10 @@ class PaymentServiceImplTest {
                 .willReturn(new PortOneCancelResponse(cancellation));
 
         // when
-        PaymentCompleteResponseDto result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID));
+        PaymentCompleteResponse result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID));
 
         // then
-        assertThat(result.getStatus()).isEqualTo("CANCELLED");
+        assertThat(result.status()).isEqualTo("CANCELLED");
 
         // payment 테이블이 CANCELLED로 바뀌었는지
         verify(paymentMapper).updatePaymentFail(eq(PAYMENT_ID), eq("CANCELLED"), eq("AMOUNT_MISMATCH"),
@@ -210,11 +218,11 @@ class PaymentServiceImplTest {
         givenPortOneReturns(failedResponse);
 
         // when
-        PaymentCompleteResponseDto result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID));
+        PaymentCompleteResponse result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID));
 
         // then
-        assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getMessage()).isEqualTo("잔액이 부족합니다.");
+        assertThat(result.status()).isEqualTo("FAILED");
+        assertThat(result.message()).isEqualTo("잔액이 부족합니다.");
         verify(paymentMapper).updatePaymentFail(PAYMENT_ID, "FAILED", "PG_001", "잔액이 부족합니다.", null, null);
     }
 
@@ -232,10 +240,10 @@ class PaymentServiceImplTest {
         givenPortOneReturns(readyResponse);
 
         // when
-        PaymentCompleteResponseDto result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID));
+        PaymentCompleteResponse result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID));
 
         // then
-        assertThat(result.getStatus()).isEqualTo("READY");
+        assertThat(result.status()).isEqualTo("READY");
         verify(paymentMapper, never()).updatePaymentSuccess(any(), any(), any(), any(), any(), any());
         verify(paymentMapper, never()).updatePaymentFail(any(), any(), any(), any(), any(), any());
     }
@@ -244,7 +252,7 @@ class PaymentServiceImplTest {
     @DisplayName("중복 요청 - 이미 PAID인 결제는 PortOne을 다시 호출하지 않는다")
     void complete_AlreadyPaid() {
         // given
-        PaymentResponseDto paidPayment = PaymentResponseDto.builder()
+        Payment paidPayment = Payment.builder()
                 .id(100L)
                 .memberId(MEMBER_ID)
                 .paymentId(PAYMENT_ID)
@@ -255,11 +263,11 @@ class PaymentServiceImplTest {
         given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(paidPayment);
 
         // when
-        PaymentCompleteResponseDto result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID));
+        PaymentCompleteResponse result = paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID));
 
         // then
-        assertThat(result.getStatus()).isEqualTo("PAID");
-        assertThat(result.getPaidAmount()).isEqualTo(5000);
+        assertThat(result.status()).isEqualTo("PAID");
+        assertThat(result.paidAmount()).isEqualTo(5000);
         verifyNoInteractions(restTemplate); // PortOne 호출이 한 번도 없어야 한다
     }
 
@@ -270,7 +278,7 @@ class PaymentServiceImplTest {
         given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(null);
 
         // when & then
-        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID)))
+        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -281,7 +289,7 @@ class PaymentServiceImplTest {
         given(paymentMapper.findByPaymentIdForUpdate(PAYMENT_ID)).willReturn(createReadyPayment(5000));
 
         // when & then
-        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(999L, new PaymentCompleteRequestDto(PAYMENT_ID)))
+        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(999L, new PaymentCompleteRequest(PAYMENT_ID)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -295,7 +303,7 @@ class PaymentServiceImplTest {
                 .willThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID)))
+        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID)))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
@@ -309,7 +317,7 @@ class PaymentServiceImplTest {
                 .willThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // when & then
-        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequestDto(PAYMENT_ID)))
+        assertThatThrownBy(() -> paymentService.verifyAndCompletePayment(MEMBER_ID, new PaymentCompleteRequest(PAYMENT_ID)))
                 .isInstanceOf(PaymentGatewayException.class);
 
         verify(paymentMapper, never()).updatePaymentFail(any(), any(), any(), any(), any(), any());
@@ -344,7 +352,7 @@ class PaymentServiceImplTest {
     @DisplayName("웹훅 - /complete가 먼저 처리해서 이미 PAID면 PortOne을 다시 호출하지 않는다")
     void webhook_AlreadyPaid() {
         // given
-        PaymentResponseDto paidPayment = PaymentResponseDto.builder()
+        Payment paidPayment = Payment.builder()
                 .id(100L)
                 .memberId(MEMBER_ID)
                 .paymentId(PAYMENT_ID)

@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.security.jwt.JwtProvider;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
+import net.likelion.bebc25.projectpatory.security.service.RefreshTokenService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -16,9 +17,12 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtProvider jwtProvider;
+    private final RefreshTokenService refreshTokenService;
 
-    public OAuth2SuccessHandler(JwtProvider jwtProvider) {
+
+    public OAuth2SuccessHandler(JwtProvider jwtProvider, RefreshTokenService refreshTokenService) {
         this.jwtProvider = jwtProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -32,10 +36,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // 2. 백엔드 서비스 전용 자체 JWT 액세스 토큰 생성
         String accessToken = jwtProvider.createAccessToken(member.getId(), member.getEmail(), member.getRole());
+        String refreshToken = jwtProvider.createRefreshToken(member.getId());
+        refreshTokenService.saveRefreshToken(member.getId(), refreshToken);
 
-        // 3. 정적 콜백 페이지 URI 구성 (쿼리 파라미터로 액세스 토큰 전달)
+        // 3. 정적 콜백 페이지 URI 구성 (쿼리 파라미터로 액세스/리프레시 토큰 전달)
         String targetUrl = UriComponentsBuilder.fromPath("/oauth/callback.html")
                 .queryParam("accessToken", accessToken)
+                .queryParam("refreshToken", refreshToken)
                 .build().toUriString();
 
 

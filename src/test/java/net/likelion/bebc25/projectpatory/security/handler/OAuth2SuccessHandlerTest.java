@@ -55,6 +55,6 @@ class OAuth2SuccessHandlerTest {
 
         verify(refreshTokenService).saveRefreshToken(10L, "test-refresh-token");
         assertThat(response.getRedirectedUrl())
-                .isEqualTo("/oauth/callback.html?accessToken=test-access-token&refreshToken=test-refresh-token");
+                .isEqualTo("https:/petory.likelion.shop?accessToken=test-access-token&refreshToken=test-refresh-token");
     }
 }

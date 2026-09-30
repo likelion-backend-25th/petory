@@ -6,6 +6,7 @@ import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
+import net.likelion.bebc25.projectpatory.mapper.FollowMapper;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -37,6 +38,9 @@ class MemberServiceImplTest {
 
     @Mock
     private PostMapper postMapper;
+
+    @Mock
+    private FollowMapper followMapper;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -204,6 +208,7 @@ class MemberServiceImplTest {
         given(postMapper.countMyPosts(2L)).willReturn(4L);
         given(memberMapper.countFollowers(2L)).willReturn(1L);
         given(memberMapper.countFollowings(2L)).willReturn(2L);
+        given(followMapper.existsFollow(1L, 2L)).willReturn(true);
 
         // when: 로그인 사용자는 1L, 조회 대상은 2L
         Profile result = memberService.getMyProfile(other, 1L);
@@ -221,10 +226,13 @@ class MemberServiceImplTest {
         assertThat(profile.getPostsCount()).isEqualTo(4L);
         assertThat(profile.getFollowers()).isEqualTo(1L);
         assertThat(profile.getFollowings()).isEqualTo(2L);
+        assertThat(profile.isFollowing()).isTrue();
 
         assertThat(profile.getClass().getDeclaredFields())
                 .extracting(field -> field.getName())
                 .doesNotContain("email", "address", "species", "sex", "birthDate", "infoProvideAgreement");
+
+        verify(followMapper).existsFollow(1L, 2L);
     }
 
     @Test

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.FollowMapper">
+
+    <!-- 팔로우 여부 확인 -->
+    <select id="existsFollow" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM follow
+        WHERE follower_id = #{followerId}
+        AND following_id = #{followingId}
+        )
+    </select>
+
+    <!-- 팔로우 등록 -->
+    <insert id="insertFollow">
+        INSERT IGNORE INTO follow (follower_id, following_id, created_at)
+        VALUES (#{followerId}, #{followingId}, NOW())
+    </insert>
+
+    <!-- 팔로우 취소 -->
+    <delete id="deleteFollow">
+        DELETE FROM follow
+        WHERE follower_id = #{followerId}
+        AND following_id = #{followingId}
+    </delete>
+
+    <!-- 팔로워 수 -->
+    <select id="countFollowers" resultType="long">
+        SELECT COUNT(*) FROM follow WHERE following_id = #{memberId}
+    </select>
+
+    <!-- 팔로잉 수 -->
+    <select id="countFollowings" resultType="long">
+        SELECT COUNT(*) FROM follow WHERE follower_id = #{memberId}
+    </select>
+
+    <!-- 팔로워 목록 select -->
+    <select id="selectFollowers" resultType="FollowMemberResponse">
+        SELECT
+        f.id AS followId,
+        m.id AS memberId,
+        m.nickname AS nickname,
+        m.profile_image AS profileImage,
+        EXISTS(
+        SELECT 1 FROM follow me
+        WHERE me.follower_id = #{loginMemberId}
+        AND me.following_id = m.id
+        ) AS isFollowing
+        FROM follow f
+        JOIN member m ON m.id = f.follower_id
+        WHERE f.following_id = #{memberId}
+        <if test="lastFollowId != null">
+            AND f.id &lt; #{lastFollowId}
+        </if>
+        ORDER BY f.id DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 팔로잉 목록 select -->
+    <select id="selectFollowings" resultType="FollowMemberResponse">
+        SELECT
+        f.id AS followId,
+        m.id AS memberId,
+        m.nickname AS nickname,
+        m.profile_image AS profileImage,
+        EXISTS(
+        SELECT 1 FROM follow me
+        WHERE me.follower_id = #{loginMemberId}
+        AND me.following_id = m.id
+        ) AS isFollowing
+        FROM follow f
+        JOIN member m ON m.id = f.following_id
+        WHERE f.follower_id = #{memberId}
+        <if test="lastFollowId != null">
+            AND f.id &lt; #{lastFollowId}
+        </if>
+        ORDER BY f.id DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

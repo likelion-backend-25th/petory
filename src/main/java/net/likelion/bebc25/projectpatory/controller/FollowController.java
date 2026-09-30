@@ -27,6 +27,15 @@ public class FollowController {
         return ResponseEntity.ok(followService.toggleFollow(memberId, userDetails.getId()));
     }
 
+    @Operation(summary = "팔로우 취소 (토글과 동일 동작)")
+    @DeleteMapping("/follow")
+    public ResponseEntity<FollowToggleResponse> unfollow(
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return ResponseEntity.ok(followService.toggleFollow(memberId, userDetails.getId()));
+    }
+
     @Operation(summary = "팔로워 목록")
     @GetMapping("/followers")
     public ResponseEntity<SliceResponse<FollowMemberResponse>> getFollowers(

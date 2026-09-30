@@ -96,7 +96,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yml, nginx/petory.conf"
           target: "/home/ec2-user"
 
       - name: SSH를 통한 EC2 원격 접속 및 Docker Compose 배포 실행
@@ -129,7 +129,7 @@ jobs:
             
             echo ">>> 2. 최신 Docker 이미지 다운로드"
             docker compose pull
-  
+            
             echo ">>> 3. 컨테이너 갱신 및 백그라운드 구동"
             docker compose up -d
 

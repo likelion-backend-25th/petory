@@ -40,7 +40,7 @@ class SubscriptionServiceImplTest {
                 .description("월간 전용 피드")
                 .build();
 
-        subscriptionService.createSubscriptionPlan(request, 2L);
+        subscriptionService.createSubscriptionPlan(request, 2L, 2L);
 
         verify(subscriptionMapper).createSubscription(request);
     }
@@ -55,7 +55,7 @@ class SubscriptionServiceImplTest {
                 .description("월간 전용 피드")
                 .build();
 
-        assertThatThrownBy(() -> subscriptionService.createSubscriptionPlan(request, 2L))
+        assertThatThrownBy(() -> subscriptionService.createSubscriptionPlan(request, 2L, 2L))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("비정상적인 접근입니다.");
 
@@ -98,13 +98,14 @@ class SubscriptionServiceImplTest {
     void updateSubscriptionPlan() {
         SubscriptionUpdateRequest request = SubscriptionUpdateRequest.builder()
                 .id(1L)
+                .memberId(2L)
                 .planName("프리미엄")
                 .description("수정 설명")
                 .status("ACTIVE")
                 .build();
         given(subscriptionMapper.getSubscriptionById(1L)).willReturn(ownedPlan());
 
-        subscriptionService.updateSubscriptionPlan(request, 2L);
+        subscriptionService.updateSubscriptionPlan(request, 2L, 2L);
 
         verify(subscriptionMapper).updateSubscription(request);
     }
@@ -120,7 +121,7 @@ class SubscriptionServiceImplTest {
                 .build();
         given(subscriptionMapper.getSubscriptionById(99L)).willReturn(null);
 
-        assertThatThrownBy(() -> subscriptionService.updateSubscriptionPlan(request, 2L))
+        assertThatThrownBy(() -> subscriptionService.updateSubscriptionPlan(request, 2L, 2L))
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessage("더이상 존재하지 않는 구독플랜입니다.");
 
@@ -137,9 +138,18 @@ class SubscriptionServiceImplTest {
                 .description("수정 설명")
                 .status("ACTIVE")
                 .build();
-        given(subscriptionMapper.getSubscriptionById(1L)).willReturn(ownedPlan());
+        given(subscriptionMapper.getSubscriptionById(1L)).willReturn(
+                Subscription.builder()
+                        .id(1L)
+                        .memberId(5L)
+                        .planName("초코 팬클럽")
+                        .price(3900)
+                        .description("타인 플랜")
+                        .status("ACTIVE")
+                        .build()
+        );
 
-        assertThatThrownBy(() -> subscriptionService.updateSubscriptionPlan(request, 3L))
+        assertThatThrownBy(() -> subscriptionService.updateSubscriptionPlan(request, 2L, 2L))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("비정상적인 접근입니다.");
 
@@ -151,7 +161,7 @@ class SubscriptionServiceImplTest {
     void deleteSubscriptionById() {
         given(subscriptionMapper.getSubscriptionById(1L)).willReturn(ownedPlan());
 
-        subscriptionService.deleteSubscriptionById(1L, 2L);
+        subscriptionService.deleteSubscriptionById(1L, 2L, 2L);
 
         verify(subscriptionMapper).deleteSubscriptionById(1L);
     }
@@ -161,7 +171,7 @@ class SubscriptionServiceImplTest {
     void deleteSubscriptionById_whenMissing_throwsNoSuchElement() {
         given(subscriptionMapper.getSubscriptionById(99L)).willReturn(null);
 
-        assertThatThrownBy(() -> subscriptionService.deleteSubscriptionById(99L, 2L))
+        assertThatThrownBy(() -> subscriptionService.deleteSubscriptionById(99L, 2L, 2L))
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessage("더이상 존재하지 않는 구독플랜입니다.");
 
@@ -171,9 +181,18 @@ class SubscriptionServiceImplTest {
     @Test
     @DisplayName("타인 구독 플랜을 삭제하면 AccessDeniedException")
     void deleteSubscriptionById_whenOtherOwner_throwsAccessDenied() {
-        given(subscriptionMapper.getSubscriptionById(1L)).willReturn(ownedPlan());
+        given(subscriptionMapper.getSubscriptionById(1L)).willReturn(
+                Subscription.builder()
+                        .id(1L)
+                        .memberId(5L)
+                        .planName("초코 팬클럽")
+                        .price(3900)
+                        .description("타인 플랜")
+                        .status("ACTIVE")
+                        .build()
+        );
 
-        assertThatThrownBy(() -> subscriptionService.deleteSubscriptionById(1L, 3L))
+        assertThatThrownBy(() -> subscriptionService.deleteSubscriptionById(1L, 2L, 2L))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("비정상적인 접근입니다.");
 

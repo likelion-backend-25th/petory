@@ -121,6 +121,10 @@ jobs:
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
             PORTONE_STORE_ID=${{ secrets.PORTONE_STORE_ID }}
             PORTONE_API_SECRET=${{ secrets.PORTONE_API_SECRET }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
+            KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
             EOF
             
             echo ">>> 2. 최신 Docker 이미지 다운로드"

@@ -27,14 +27,14 @@ INSERT INTO post_main (id, member_id, type, content, bgm_url, is_subscriber_only
 
 -- 4. post_image
 INSERT INTO post_image (id, post_id, image_url, sort_order) VALUES
-(1, 1, 'https://s3.example.com/post/1_1.jpg', 0),
-(2, 1, 'https://s3.example.com/post/1_2.jpg', 1),
-(3, 1, 'https://s3.example.com/post/1_3.jpg', 2),
-(4, 2, 'https://s3.example.com/post/2_1.jpg', 0),
-(5, 3, 'https://s3.example.com/post/3_1.jpg', 0),
-(6, 3, 'https://s3.example.com/post/3_2.jpg', 1),
-(7, 5, 'https://s3.example.com/post/5_1.jpg', 0),
-(8, 6, 'https://s3.example.com/post/6_1.jpg', 0);
+(1, 1, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_6502.JPEG', 0),
+(2, 1, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_0278.JPEG', 1),
+(3, 1, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_7245.JPEG', 2),
+(4, 2, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_8933.JPEG', 0),
+(5, 3, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_0357.JPEG', 0),
+(6, 3, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_0352.JPEG', 1),
+(7, 5, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_0612.JPEG', 0),
+(8, 6, 'https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/posts/IMG_9062.JPEG', 0);
 
 -- 5. comment
 INSERT INTO comment (id, post_id, member_id, content, created_at) VALUES

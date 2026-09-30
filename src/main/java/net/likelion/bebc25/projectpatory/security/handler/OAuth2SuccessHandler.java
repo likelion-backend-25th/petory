@@ -40,7 +40,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         refreshTokenService.saveRefreshToken(member.getId(), refreshToken);
 
         // 3. 정적 콜백 페이지 URI 구성 (쿼리 파라미터로 액세스/리프레시 토큰 전달)
-        String targetUrl = UriComponentsBuilder.fromPath("/oauth/callback.html")
+        String targetUrl = UriComponentsBuilder.fromPath("https://petory.likelion.shop")
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .build().toUriString();

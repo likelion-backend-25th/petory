@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +32,9 @@ class PostServiceTest {
 
     @Mock
     private PostMapper postMapper;
+
+    @Mock
+    private S3Service s3Service;
 
     @InjectMocks
     private PostServiceImpl postService;
@@ -125,7 +129,10 @@ class PostServiceTest {
             // given
             Long postId = 7L;
             Long memberId = 1L;
+            List<String> imageUrls = List.of("https://s3.example.com/1.jpg", "https://s3.example.com/2.jpg");
 
+            given(postMapper.selectImageUrlsByPostId(postId))
+                    .willReturn(imageUrls);
             given(postMapper.deletePost(eq(postId), eq(memberId)))
                     .willReturn(1);
 
@@ -134,6 +141,7 @@ class PostServiceTest {
 
             // then
             verify(postMapper).deletePost(eq(postId), eq(memberId));
+            verify(s3Service).deleteObjectsByFileUrls(imageUrls);
         }
 
         @Test
@@ -150,6 +158,9 @@ class PostServiceTest {
             assertThatThrownBy(() -> postService.deletePost(postId, memberId))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("게시글을 찾을 수 없거나 삭제 권한이 없습니다.");
+
+            // 권한이 없으면 S3 이미지는 지우면 안 된다
+            verify(s3Service, never()).deleteObjectsByFileUrls(any());
         }
     }
 

@@ -1,5 +1,7 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
+import net.likelion.bebc25.projectpatory.domain.MissingPetPost;
+import net.likelion.bebc25.projectpatory.domain.MissingPetStatus;
 import net.likelion.bebc25.projectpatory.dto.MissingPetDetailRow;
 import net.likelion.bebc25.projectpatory.dto.MissingPetListResponse;
 import net.likelion.bebc25.projectpatory.dto.MissingPetReportRow;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -199,5 +202,237 @@ class MissingPetMapperTest {
 
         assertThat(report.reporterProfileImage())
                 .isEqualTo("https://s3.example.com/profile/mungchi.jpg");
+    }
+
+    @Test
+    @DisplayName("실종 신고 게시글을 등록한다.")
+    void insertMissingPet() {
+
+        // given
+        MissingPetPost missingPetPost =
+                MissingPetPost.builder()
+                        .memberId(103L)
+                        .missingDate(LocalDate.of(2026, 9, 30))
+                        .missingAddress("경기도 성남시 수정구 태평동")
+                        .detail("갈색 푸들이고 빨간 목줄을 착용하고 있습니다.")
+                        .imageUrl("https://s3.example.com/missing/test-dog.jpg")
+                        .status(MissingPetStatus.MISSING)
+                        .latitude(new BigDecimal("37.4501234"))
+                        .longitude(new BigDecimal("127.1405678"))
+                        .build();
+
+
+        // when
+        int result =
+                missingPetMapper.insertMissingPet(missingPetPost);
+
+
+        // then
+        assertThat(result).isEqualTo(1);
+
+        // useGeneratedKeys 동작 확인
+        assertThat(missingPetPost.getId())
+                .isNotNull();
+    }
+
+
+    @Test
+    @DisplayName("등록한 실종 신고 게시글의 내용이 정상적으로 저장된다.")
+    void insertAndFindMissingPet() {
+
+        // given
+        MissingPetPost missingPetPost =
+                MissingPetPost.builder()
+                        .memberId(103L)
+                        .missingDate(LocalDate.of(2026, 9, 30))
+                        .missingAddress("경기도 성남시 수정구 태평동")
+                        .detail("갈색 푸들이고 빨간 목줄을 착용하고 있습니다.")
+                        .imageUrl("https://s3.example.com/missing/test-dog.jpg")
+                        .status(MissingPetStatus.MISSING)
+                        .latitude(new BigDecimal("37.4501234"))
+                        .longitude(new BigDecimal("127.1405678"))
+                        .build();
+
+
+        // when
+        missingPetMapper.insertMissingPet(missingPetPost);
+
+        MissingPetDetailRow result =
+                missingPetMapper.findDetailById(
+                        missingPetPost.getId()
+                );
+
+
+        // then
+        assertThat(result).isNotNull();
+
+        assertThat(result.id())
+                .isEqualTo(missingPetPost.getId());
+
+        assertThat(result.authorId())
+                .isEqualTo(103L);
+
+        assertThat(result.authorNickname())
+                .isEqualTo("코코");
+
+        assertThat(result.missingDate())
+                .isEqualTo(LocalDate.of(2026, 9, 30));
+
+        assertThat(result.missingAddress())
+                .isEqualTo("경기도 성남시 수정구 태평동");
+
+        assertThat(result.detail())
+                .isEqualTo("갈색 푸들이고 빨간 목줄을 착용하고 있습니다.");
+
+        assertThat(result.imageUrl())
+                .isEqualTo("https://s3.example.com/missing/test-dog.jpg");
+
+        assertThat(result.status())
+                .isEqualTo("MISSING");
+
+        assertThat(result.latitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("37.4501234")
+                );
+
+        assertThat(result.longitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("127.1405678")
+                );
+    }
+
+    @Test
+    @DisplayName("실종 신고 게시글을 수정한다.")
+    void updateMissingPet() {
+
+        // given
+        MissingPetPost missingPetPost =
+                MissingPetPost.builder()
+                        .id(100L)
+                        .memberId(103L)
+                        .missingDate(LocalDate.of(2026, 9, 30))
+                        .missingAddress("경기도 성남시 수정구 태평동")
+                        .detail("수정된 특이사항입니다.")
+                        .imageUrl("https://s3.example.com/missing/updated.jpg")
+                        .latitude(new BigDecimal("37.4501234"))
+                        .longitude(new BigDecimal("127.1405678"))
+                        .build();
+
+
+        // when
+        int updatedCount =
+                missingPetMapper.updateMissingPet(missingPetPost);
+
+
+        // then
+        assertThat(updatedCount)
+                .isEqualTo(1);
+
+        MissingPetDetailRow result =
+                missingPetMapper.findDetailById(100L);
+
+        assertThat(result.missingDate())
+                .isEqualTo(LocalDate.of(2026, 9, 30));
+
+        assertThat(result.missingAddress())
+                .isEqualTo("경기도 성남시 수정구 태평동");
+
+        assertThat(result.detail())
+                .isEqualTo("수정된 특이사항입니다.");
+
+        assertThat(result.imageUrl())
+                .isEqualTo("https://s3.example.com/missing/updated.jpg");
+
+        assertThat(result.latitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("37.4501234")
+                );
+
+        assertThat(result.longitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("127.1405678")
+                );
+
+        // 일반 수정에서는 status가 변경되지 않아야 함
+        assertThat(result.status())
+                .isEqualTo("MISSING");
+    }
+
+
+    @Test
+    @DisplayName("실종 신고 게시글의 작성자 회원 ID를 조회한다.")
+    void findMemberIdByPostId() {
+
+        // when
+        Long memberId =
+                missingPetMapper.findMemberIdByPostId(100L);
+
+
+        // then
+        assertThat(memberId)
+                .isEqualTo(103L);
+    }
+
+
+    @Test
+    @DisplayName("실종 신고 게시글의 현재 상태를 조회한다.")
+    void findStatusByPostId() {
+
+        // when
+        String status =
+                missingPetMapper.findStatusByPostId(100L);
+
+
+        // then
+        assertThat(status)
+                .isEqualTo("MISSING");
+    }
+
+
+    @Test
+    @DisplayName("실종 신고 상태를 FOUND로 변경한다.")
+    void updateMissingPetStatus_found() {
+
+        // when
+        int updatedCount =
+                missingPetMapper.updateMissingPetStatus(
+                        100L,
+                        MissingPetStatus.FOUND
+                );
+
+
+        // then
+        assertThat(updatedCount)
+                .isEqualTo(1);
+
+        String status =
+                missingPetMapper.findStatusByPostId(100L);
+
+        assertThat(status)
+                .isEqualTo("FOUND");
+    }
+
+
+    @Test
+    @DisplayName("실종 신고 상태를 CANCELLED로 변경한다.")
+    void updateMissingPetStatus_cancelled() {
+
+        // when
+        int updatedCount =
+                missingPetMapper.updateMissingPetStatus(
+                        100L,
+                        MissingPetStatus.CANCELLED
+                );
+
+
+        // then
+        assertThat(updatedCount)
+                .isEqualTo(1);
+
+        String status =
+                missingPetMapper.findStatusByPostId(100L);
+
+        assertThat(status)
+                .isEqualTo("CANCELLED");
     }
 }

@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/missing-pets/1
+  url: http://localhost:8080/api/missing-pets/4
   auth:
     type: bearer
-    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA2ODQyMjgsImV4cCI6MTc5MDY4NzgyOH0.HVKYuvtTvYwby-UK7sc97uFSH9fnVZVYuox4f_W9mWA
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA3Mjk1NDAsImV4cCI6MTc5MDczMzE0MH0.SLA222H-MPdSYFT3wVcvsa8MqL_LP_2nZakxRyH3Zwc
 
 settings:
   encodeUrl: true

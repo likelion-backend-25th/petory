@@ -1,5 +1,6 @@
 package net.likelion.bebc25.projectpatory.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
@@ -7,6 +8,7 @@ import net.likelion.bebc25.projectpatory.service.MissingPetService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Missing Pet", description = "실종 동물 신고 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/missing-pets")

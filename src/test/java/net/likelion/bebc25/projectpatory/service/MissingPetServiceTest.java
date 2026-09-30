@@ -1,9 +1,7 @@
 package net.likelion.bebc25.projectpatory.service;
 
-import net.likelion.bebc25.projectpatory.dto.MissingPetDetailResponse;
-import net.likelion.bebc25.projectpatory.dto.MissingPetListPageResponse;
-import net.likelion.bebc25.projectpatory.dto.MissingPetListResponse;
-import net.likelion.bebc25.projectpatory.dto.MissingPetReportResponse;
+import net.likelion.bebc25.projectpatory.domain.MissingPetStatus;
+import net.likelion.bebc25.projectpatory.dto.*;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -213,5 +212,317 @@ class MissingPetServiceTest {
         )
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("존재하지 않는 실종 신고 게시글입니다.");
+    }
+
+    @Test
+    @DisplayName("로그인한 회원이 실종 신고 게시글을 등록한다.")
+    void createMissingPet() {
+
+        // given
+        Long memberId = 103L;
+
+        MissingPetCreateRequest request =
+                new MissingPetCreateRequest(
+                        LocalDate.of(2026, 9, 30),
+                        "경기도 성남시 수정구 태평동",
+                        "갈색 푸들이고 빨간 목줄을 착용하고 있습니다.",
+                        "https://s3.example.com/missing/test-dog.jpg",
+                        new BigDecimal("37.4501234"),
+                        new BigDecimal("127.1405678")
+                );
+
+
+        // when
+        Long postId =
+                missingPetService.createMissingPet(
+                        memberId,
+                        request
+                );
+
+
+        // then
+        assertThat(postId)
+                .isNotNull();
+    }
+
+
+    @Test
+    @DisplayName("실종 신고 등록 시 입력값과 기본 상태 MISSING이 정상적으로 저장된다.")
+    void createMissingPetAndFindDetail() {
+
+        // given
+        Long memberId = 103L;
+
+        MissingPetCreateRequest request =
+                new MissingPetCreateRequest(
+                        LocalDate.of(2026, 9, 30),
+                        "경기도 성남시 수정구 태평동",
+                        "갈색 푸들이고 빨간 목줄을 착용하고 있습니다.",
+                        "https://s3.example.com/missing/test-dog.jpg",
+                        new BigDecimal("37.4501234"),
+                        new BigDecimal("127.1405678")
+                );
+
+
+        // when
+        Long postId =
+                missingPetService.createMissingPet(
+                        memberId,
+                        request
+                );
+
+        MissingPetDetailResponse response =
+                missingPetService.getMissingPetDetail(postId);
+
+
+        // then
+        assertThat(response.id())
+                .isEqualTo(postId);
+
+        assertThat(response.author().id())
+                .isEqualTo(103L);
+
+        assertThat(response.author().nickname())
+                .isEqualTo("코코");
+
+        assertThat(response.missingDate())
+                .isEqualTo(LocalDate.of(2026, 9, 30));
+
+        assertThat(response.missingAddress())
+                .isEqualTo("경기도 성남시 수정구 태평동");
+
+        assertThat(response.detail())
+                .isEqualTo("갈색 푸들이고 빨간 목줄을 착용하고 있습니다.");
+
+        assertThat(response.imageUrl())
+                .isEqualTo("https://s3.example.com/missing/test-dog.jpg");
+
+        assertThat(response.status())
+                .isEqualTo("MISSING");
+
+        assertThat(response.latitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("37.4501234")
+                );
+
+        assertThat(response.longitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("127.1405678")
+                );
+
+        assertThat(response.reports())
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("작성자는 자신의 실종 신고 게시글을 수정할 수 있다.")
+    void updateMissingPet() {
+
+        // given
+        Long memberId = 103L;
+        Long postId = 100L;
+
+        MissingPetUpdateRequest request =
+                new MissingPetUpdateRequest(
+                        LocalDate.of(2026, 9, 30),
+                        "경기도 성남시 수정구 태평동",
+                        "수정된 특이사항입니다.",
+                        "https://s3.example.com/missing/updated.jpg",
+                        new BigDecimal("37.4501234"),
+                        new BigDecimal("127.1405678")
+                );
+
+
+        // when
+        missingPetService.updateMissingPet(
+                memberId,
+                postId,
+                request
+        );
+
+
+        // then
+        MissingPetDetailResponse response =
+                missingPetService.getMissingPetDetail(postId);
+
+        assertThat(response.id())
+                .isEqualTo(100L);
+
+        assertThat(response.author().id())
+                .isEqualTo(103L);
+
+        assertThat(response.missingDate())
+                .isEqualTo(LocalDate.of(2026, 9, 30));
+
+        assertThat(response.missingAddress())
+                .isEqualTo("경기도 성남시 수정구 태평동");
+
+        assertThat(response.detail())
+                .isEqualTo("수정된 특이사항입니다.");
+
+        assertThat(response.imageUrl())
+                .isEqualTo("https://s3.example.com/missing/updated.jpg");
+
+        assertThat(response.latitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("37.4501234")
+                );
+
+        assertThat(response.longitude())
+                .isEqualByComparingTo(
+                        new BigDecimal("127.1405678")
+                );
+
+        // 일반 수정으로 status가 바뀌면 안 됨
+        assertThat(response.status())
+                .isEqualTo("MISSING");
+    }
+
+
+    @Test
+    @DisplayName("작성자가 아닌 회원은 실종 신고 게시글을 수정할 수 없다.")
+    void updateMissingPet_notAuthor() {
+
+        // given
+        Long memberId = 104L;
+        Long postId = 100L;
+
+        MissingPetUpdateRequest request =
+                new MissingPetUpdateRequest(
+                        LocalDate.of(2026, 9, 30),
+                        "수정 주소",
+                        "수정 내용",
+                        "updated.jpg",
+                        new BigDecimal("37.4500000"),
+                        new BigDecimal("127.1400000")
+                );
+
+
+        // when & then
+        assertThatThrownBy(() ->
+                missingPetService.updateMissingPet(
+                        memberId,
+                        postId,
+                        request
+                )
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("실종 신고 게시글을 수정할 권한이 없습니다.");
+    }
+
+
+    @Test
+    @DisplayName("작성자는 MISSING 상태를 FOUND로 변경할 수 있다.")
+    void updateMissingPetStatus_found() {
+
+        // given
+        Long memberId = 103L;
+        Long postId = 100L;
+
+        MissingPetStatusUpdateRequest request =
+                new MissingPetStatusUpdateRequest(
+                        MissingPetStatus.FOUND
+                );
+
+
+        // when
+        missingPetService.updateMissingPetStatus(
+                memberId,
+                postId,
+                request
+        );
+
+
+        // then
+        MissingPetDetailResponse response =
+                missingPetService.getMissingPetDetail(postId);
+
+        assertThat(response.status())
+                .isEqualTo("FOUND");
+    }
+
+
+    @Test
+    @DisplayName("작성자는 MISSING 상태를 CANCELLED로 변경할 수 있다.")
+    void updateMissingPetStatus_cancelled() {
+
+        // given
+        Long memberId = 103L;
+        Long postId = 100L;
+
+        MissingPetStatusUpdateRequest request =
+                new MissingPetStatusUpdateRequest(
+                        MissingPetStatus.CANCELLED
+                );
+
+
+        // when
+        missingPetService.updateMissingPetStatus(
+                memberId,
+                postId,
+                request
+        );
+
+
+        // then
+        MissingPetDetailResponse response =
+                missingPetService.getMissingPetDetail(postId);
+
+        assertThat(response.status())
+                .isEqualTo("CANCELLED");
+    }
+
+
+    @Test
+    @DisplayName("작성자가 아닌 회원은 실종 신고 상태를 변경할 수 없다.")
+    void updateMissingPetStatus_notAuthor() {
+
+        // given
+        Long memberId = 104L;
+        Long postId = 100L;
+
+        MissingPetStatusUpdateRequest request =
+                new MissingPetStatusUpdateRequest(
+                        MissingPetStatus.FOUND
+                );
+
+
+        // when & then
+        assertThatThrownBy(() ->
+                missingPetService.updateMissingPetStatus(
+                        memberId,
+                        postId,
+                        request
+                )
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("실종 신고 상태를 변경할 권한이 없습니다.");
+    }
+
+
+    @Test
+    @DisplayName("이미 FOUND 상태인 게시글은 다시 상태를 변경할 수 없다.")
+    void updateMissingPetStatus_alreadyFound() {
+
+        // given
+        Long memberId = 105L;
+        Long postId = 101L;
+
+        MissingPetStatusUpdateRequest request =
+                new MissingPetStatusUpdateRequest(
+                        MissingPetStatus.CANCELLED
+                );
+
+
+        // when & then
+        assertThatThrownBy(() ->
+                missingPetService.updateMissingPetStatus(
+                        memberId,
+                        postId,
+                        request
+                )
+        )
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("실종중인 게시글만 상태를 변경할 수 있습니다.");
     }
 }

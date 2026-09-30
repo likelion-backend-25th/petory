@@ -93,4 +93,85 @@
         ORDER BY mpr.created_at DESC
 
     </select>
+
+    <!-- 실종 신고 등록 -->
+    <insert id="insertMissingPet"
+            parameterType="net.likelion.bebc25.projectpatory.domain.MissingPetPost"
+            useGeneratedKeys="true"
+            keyProperty="id">
+
+        INSERT INTO missing_pet_post (
+        member_id,
+        missing_date,
+        missing_address,
+        detail,
+        image_url,
+        status,
+        latitude,
+        longitude
+        )
+
+        VALUES (
+        #{memberId},
+        #{missingDate},
+        #{missingAddress},
+        #{detail},
+        #{imageUrl},
+        #{status},
+        #{latitude},
+        #{longitude}
+        )
+
+    </insert>
+
+    <!-- 실종 신고 게시글 작성자 조회 -->
+    <select id="findMemberIdByPostId"
+            resultType="java.lang.Long">
+
+        SELECT member_id
+        FROM missing_pet_post
+        WHERE id = #{id}
+
+    </select>
+
+    <!-- 실종 신고 게시글 수정 -->
+    <update id="updateMissingPet"
+            parameterType="net.likelion.bebc25.projectpatory.domain.MissingPetPost">
+
+        UPDATE missing_pet_post
+
+        SET
+        missing_date = #{missingDate},
+        missing_address = #{missingAddress},
+        detail = #{detail},
+        image_url = #{imageUrl},
+        latitude = #{latitude},
+        longitude = #{longitude},
+        updated_at = CURRENT_TIMESTAMP
+
+        WHERE id = #{id}
+    </update>
+
+    <!-- 실종 신고 현재 상태 조회 -->
+    <select id="findStatusByPostId"
+            resultType="java.lang.String">
+
+        SELECT status
+        FROM missing_pet_post
+        WHERE id = #{id}
+
+    </select>
+
+    <!-- 실종 신고 상태 변경 -->
+    <update id="updateMissingPetStatus">
+
+        UPDATE missing_pet_post
+
+        SET
+        status = #{status},
+        updated_at = CURRENT_TIMESTAMP
+
+        WHERE id = #{id}
+
+    </update>
 </mapper>

@@ -6,6 +6,7 @@ import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
 import net.likelion.bebc25.projectpatory.dto.MemberProfileEditRequest;
 import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
+import net.likelion.bebc25.projectpatory.mapper.FollowMapper;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,11 +19,14 @@ import java.util.NoSuchElementException;
 public class MemberServiceImpl implements MemberService {
     private final MemberMapper memberMapper;
     private final PostMapper postMapper;
+    private final FollowMapper followMapper;
     private final PasswordEncoder passwordEncoder;
 
-    public MemberServiceImpl(MemberMapper memberMapper, PasswordEncoder passwordEncoder, PostMapper postMapper) {
+    public MemberServiceImpl(MemberMapper memberMapper, PasswordEncoder passwordEncoder,
+                             PostMapper postMapper, FollowMapper followMapper) {
         this.memberMapper = memberMapper;
         this.postMapper = postMapper;
+        this.followMapper = followMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -76,6 +80,7 @@ public class MemberServiceImpl implements MemberService {
                     .followings(followingCount)
                     .build();
         }
+        boolean isFollowing = followMapper.existsFollow(loginMemberId, memberId);
         return MemberProfile.builder()
                 .id(member.getId())
                 .nickname(member.getNickname())
@@ -87,6 +92,7 @@ public class MemberServiceImpl implements MemberService {
                 .postsCount(postCount)
                 .followers(followerCount)
                 .followings(followingCount)
+                .isFollowing(isFollowing)
                 .build();
     }
 

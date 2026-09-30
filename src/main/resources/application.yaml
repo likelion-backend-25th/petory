@@ -27,7 +27,7 @@ spring:
             scope:
               - profile
               - email
-            redirect-uri: ${OAUTH_REDIRECT_BASE}/login/oauth2/code/{registrationId}
+            redirect-uri: https://petory-api.likelion.shop/login/oauth2/code/{registrationId}
           kakao:
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
@@ -36,7 +36,7 @@ spring:
             scope:
               - profile_nickname
               - profile_image
-            redirect-uri: ${OAUTH_REDIRECT_BASE}/login/oauth2/code/{registrationId}
+            redirect-uri: https://petory-api.likelion.shop/login/oauth2/code/{registrationId}
             client-name: Kakao
         provider:
           kakao:

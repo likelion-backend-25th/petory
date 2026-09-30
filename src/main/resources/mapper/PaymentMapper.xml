@@ -4,10 +4,10 @@
 
 <mapper namespace="net.likelion.bebc25.projectpatory.mapper.PaymentMapper">
 
-    <!-- payment 테이블에 새 줄을 하나 추가 결제자, 대상, 주문번호, 주문명, 통화, 금액, 결제수단은 paymentRequestdto에서 꺼
+    <!-- payment 테이블에 새 줄을 하나 추가 결제자, 대상, 주문번호, 주문명, 통화, 금액, 결제수단은 Payment에서 꺼
      넣고 상태는 무조건 ready 생성 시각은 지금-->
 
-    <insert id="savePayment" parameterType="net.likelion.bebc25.projectpatory.dto.PaymentRequestDto" useGeneratedKeys="true" keyProperty="id">
+    <insert id="savePayment" parameterType="net.likelion.bebc25.projectpatory.domain.Payment" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO payment (
             member_id,
             target_member_id,
@@ -32,9 +32,9 @@
     </insert>
 
     <!-- 3단계: 주문번호 조회 -->
-    <!-- payment 테이블에서 주문번호가 parameterType="string"인 줄을 찾아서, 모든 칸을 자바 이름으로 바꿔 DTO ④에 담는다 -->
+    <!-- payment 테이블에서 주문번호가 parameterType="string"인 줄을 찾아서, 모든 칸을 자바 이름으로 바꿔 Payment에 담는다 -->
 
-    <select id="findByPaymentId" parameterType="string" resultType="net.likelion.bebc25.projectpatory.dto.PaymentResponseDto">
+    <select id="findByPaymentId" parameterType="string" resultType="net.likelion.bebc25.projectpatory.domain.Payment">
         SELECT
             id,
             member_id AS memberId,
@@ -63,7 +63,7 @@
     <!--3단계 검증용 행 잠금 조회 (동시 검증 요청 직렬화, 트랜잭션 안에서만 사용) -->
     <!--주문번호가 이것인 줄을 찾아서 검증에 필요한 6칸만 가져온다. 그리고 내 작업이 끝날 때까지 다른 요청은 이 줄을 건드리지 못하게 잠근다. -->
 
-    <select id="findByPaymentIdForUpdate" parameterType="string" resultType="net.likelion.bebc25.projectpatory.dto.PaymentResponseDto">
+    <select id="findByPaymentIdForUpdate" parameterType="string" resultType="net.likelion.bebc25.projectpatory.domain.Payment">
         SELECT
             id,
             member_id AS memberId,

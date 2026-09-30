@@ -1,6 +1,7 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
 import net.likelion.bebc25.projectpatory.dto.PostCreateRequest;
+import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import net.likelion.bebc25.projectpatory.dto.PostUpdateRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -131,6 +134,81 @@ class PostMapperTest {
 
             // then
             assertThat(deletedRows).isEqualTo(0);
+        }
+    }
+
+    // 4. 해시태그 검색 Mapper 테스트
+    @Nested
+    @DisplayName("selectPostListByHashtag 테스트")
+    class SelectPostListByHashtagTest {
+
+        private Long savePost(String hashtags) {
+            PostCreateRequest request = PostCreateRequest.builder()
+                    .memberId(1L)
+                    .content("해시태그 검색 테스트")
+                    .hashtags(hashtags)
+                    .build();
+            postMapper.insertPost(request);
+            return request.getId();
+        }
+
+        @Test
+        @DisplayName("성공 - 태그가 정확히 일치하는 게시글만 조회되고, 비슷한 태그는 제외된다")
+        void searchByHashtag_ExactMatchOnly() {
+            // given
+            Long firstTag = savePost("#검색테스트 #산책");
+            Long lastTag = savePost("#산책 #검색테스트");
+            Long longerTag = savePost("#검색테스트간식");
+            Long prefixTag = savePost("#큰검색테스트");
+
+            // when
+            List<PostListResponse> result = postMapper.selectPostListByHashtag("검색테스트", null, 10);
+
+            // then
+            List<Long> ids = result.stream().map(PostListResponse::getId).toList();
+            assertThat(ids).contains(firstTag, lastTag);
+            assertThat(ids).doesNotContain(longerTag, prefixTag);
+        }
+
+        @Test
+        @DisplayName("성공 - 최신순으로 정렬되고 lastPostId 보다 작은 게시글만 조회된다")
+        void searchByHashtag_Cursor() {
+            // given
+            Long oldPost = savePost("#커서테스트");
+            Long middlePost = savePost("#커서테스트");
+            Long newPost = savePost("#커서테스트");
+
+            // when (가장 최신 글을 커서로 넘기면 그보다 오래된 글만 나와야 한다)
+            List<PostListResponse> result = postMapper.selectPostListByHashtag("커서테스트", newPost, 10);
+
+            // then
+            List<Long> ids = result.stream().map(PostListResponse::getId).toList();
+            assertThat(ids).containsExactly(middlePost, oldPost);
+        }
+
+        @Test
+        @DisplayName("성공 - limit 개수만큼만 조회된다")
+        void searchByHashtag_Limit() {
+            // given
+            savePost("#리밋테스트");
+            savePost("#리밋테스트");
+            savePost("#리밋테스트");
+
+            // when
+            List<PostListResponse> result = postMapper.selectPostListByHashtag("리밋테스트", null, 2);
+
+            // then
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("성공 - 일치하는 게시글이 없으면 빈 리스트를 반환한다")
+        void searchByHashtag_NoResult() {
+            // when
+            List<PostListResponse> result = postMapper.selectPostListByHashtag("존재하지않는태그", null, 10);
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 }

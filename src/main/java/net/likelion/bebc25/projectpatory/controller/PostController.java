@@ -36,6 +36,27 @@ public class PostController {
     }
 
     /**
+     * 해시태그 검색 (커서 기반 무한 스크롤)
+     *
+     * @param hashtag    검색할 해시태그 ('#' 은 빼고 보내는 것을 권장, URL에 '#' 을 넣으려면 %23 으로 인코딩해야 함)
+     * @param lastPostId 직전에 요청받은 목록의 마지막 게시글 ID (처음 조회 시 null)
+     * @param size       한 번에 요청할 게시글 개수 (기본값 10)
+     *
+     * 요청 예시: GET /api/v1/posts/search?hashtag=강아지&size=10
+     */
+    @Operation(summary = "해시태그 검색", description = "해시태그가 정확히 일치하는 게시글을 최신순으로 조회합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<SliceResponse<PostListResponse>> searchPostsByHashtag(
+            @Parameter(description = "검색할 해시태그 ('#' 제외)", example = "강아지")
+            @RequestParam String hashtag,
+            @RequestParam(required = false) Long lastPostId,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        SliceResponse<PostListResponse> response = postService.searchPostsByHashtag(hashtag, lastPostId, size);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * REQ-POST-02: 게시글 상세 조회 (단건 조회)
      *
      * @param postId 조회할 게시글 ID

@@ -18,9 +18,7 @@ http:
         "profileImage":"http://example.png",
         "address":"서울시 노원구"
       }
-  auth:
-    type: bearer
-    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjciLCJlbWFpbCI6InF1ZGdoMDIxN0BleGFtcGxlLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3OTA1NzE4NDYsImV4cCI6MTc5MDU3NTQ0Nn0.FvF6Mf8YDrPOWKVmodKUsmj2kv-ieq7GgxNmbWWWE0mgvsA9Xc-PWnTjETXqADyw
+  auth: inherit
 
 settings:
   encodeUrl: true

@@ -6,9 +6,7 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/profile/7"
-  auth:
-    type: bearer
-    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA3Mjk1NDAsImV4cCI6MTc5MDczMzE0MH0.SLA222H-MPdSYFT3wVcvsa8MqL_LP_2nZakxRyH3Zwc
+  auth: inherit
 
 settings:
   encodeUrl: true

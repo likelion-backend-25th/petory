@@ -32,4 +32,6 @@ public class MemberProfile implements Profile {
     long followers;
     @Schema(description = "팔로잉 수", example = "2")
     long followings;
+    @Schema(description = "내가 이 회원을 팔로우 중인지", example = "true")
+    boolean isFollowing;
 }

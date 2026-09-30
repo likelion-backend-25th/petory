@@ -1,0 +1,47 @@
+info:
+  name: S3 게시글 작성
+  type: http
+  seq: 22
+  docs: |-
+    S3 E2E 4단계. fileUrl 변수에 Presign 응답의 공개 URL이 들어가 있어야 한다.
+    imageUrls 에 fileUrl 을 넣어 post_image 와 연동한다.
+    응답 id 를 postId 로 저장한다.
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "content": "S3 연동 테스트 게시글입니다.",
+        "isSubscriberOnly": 0,
+        "hashtags": "#S3 #테스트",
+        "imageUrls": [
+          "{{fileUrl}}"
+        ]
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.id
+        method: jsonq
+      variable:
+        name: postId
+        scope: runtime
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

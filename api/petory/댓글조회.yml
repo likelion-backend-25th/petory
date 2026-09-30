@@ -1,7 +1,7 @@
 info:
   name: 댓글조회
   type: http
-  seq: 4
+  seq: 7
 
 http:
   method: GET

@@ -1,0 +1,60 @@
+info:
+  name: S3 Presign 발급
+  type: http
+  seq: 20
+  docs: |-
+    S3 E2E 2단계.
+    사전: 로그인.yml 실행으로 accessToken 확보.
+    응답의 uploadUrl / fileUrl 을 runtime 변수로 저장한다.
+    다음: S3 파일 업로드.yml
+
+http:
+  method: POST
+  url: "{{baseUrl}}/files/presign"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "filename": "dog.jpg",
+        "contentType": "image/jpeg"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.uploadUrl
+        method: jsonq
+      variable:
+        name: uploadUrl
+        scope: runtime
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.fileUrl
+        method: jsonq
+      variable:
+        name: fileUrl
+        scope: runtime
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.key
+        method: jsonq
+      variable:
+        name: s3Key
+        scope: runtime
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

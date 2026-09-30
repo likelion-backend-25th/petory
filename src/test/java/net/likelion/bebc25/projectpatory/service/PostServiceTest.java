@@ -2,7 +2,9 @@ package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.dto.PostCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.PostCreateResponse;
+import net.likelion.bebc25.projectpatory.dto.PostListResponse;
 import net.likelion.bebc25.projectpatory.dto.PostUpdateRequest;
+import net.likelion.bebc25.projectpatory.dto.SliceResponse;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,6 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -145,6 +150,90 @@ class PostServiceTest {
             assertThatThrownBy(() -> postService.deletePost(postId, memberId))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("게시글을 찾을 수 없거나 삭제 권한이 없습니다.");
+        }
+    }
+
+    // 4. 해시태그 검색 테스트
+    @Nested
+    @DisplayName("해시태그 검색 테스트")
+    class SearchPostsByHashtagTest {
+
+        private List<PostListResponse> createPosts(long... ids) {
+            List<PostListResponse> posts = new ArrayList<>();
+            for (long id : ids) {
+                posts.add(PostListResponse.builder().id(id).build());
+            }
+            return posts;
+        }
+
+        @Test
+        @DisplayName("성공 - 앞의 '#' 과 공백을 지운 검색어로 조회한다")
+        void search_RemovesHashAndSpaces() {
+            // given
+            given(postMapper.selectPostListByHashtag("강아지", null, 11))
+                    .willReturn(createPosts(3L, 2L));
+
+            // when
+            SliceResponse<PostListResponse> response = postService.searchPostsByHashtag("  #강아지 ", null, 10);
+
+            // then
+            verify(postMapper).selectPostListByHashtag("강아지", null, 11);
+            assertThat(response.getContent()).hasSize(2);
+            assertThat(response.getHasNext()).isFalse();
+            assertThat(response.getLastPostId()).isEqualTo(2L);
+        }
+
+        @Test
+        @DisplayName("성공 - size 보다 1개 더 조회되면 hasNext 가 true 이고 마지막 1개는 버린다")
+        void search_HasNext() {
+            // given (size = 2 인데 3개가 조회됨)
+            given(postMapper.selectPostListByHashtag("강아지", null, 3))
+                    .willReturn(createPosts(5L, 4L, 3L));
+
+            // when
+            SliceResponse<PostListResponse> response = postService.searchPostsByHashtag("강아지", null, 2);
+
+            // then
+            assertThat(response.getContent()).hasSize(2);
+            assertThat(response.getHasNext()).isTrue();
+            assertThat(response.getLastPostId()).isEqualTo(4L);
+        }
+
+        @Test
+        @DisplayName("성공 - 결과가 없으면 빈 리스트와 lastPostId null 을 반환한다")
+        void search_NoResult() {
+            // given
+            given(postMapper.selectPostListByHashtag("없는태그", null, 11))
+                    .willReturn(new ArrayList<>());
+
+            // when
+            SliceResponse<PostListResponse> response = postService.searchPostsByHashtag("없는태그", null, 10);
+
+            // then
+            assertThat(response.getContent()).isEmpty();
+            assertThat(response.getHasNext()).isFalse();
+            assertThat(response.getLastPostId()).isNull();
+        }
+
+        @Test
+        @DisplayName("실패 - 검색어가 비어 있거나 '#' 만 있으면 예외가 발생한다")
+        void search_EmptyKeyword_ThrowsException() {
+            assertThatThrownBy(() -> postService.searchPostsByHashtag(null, null, 10))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> postService.searchPostsByHashtag("   ", null, 10))
+                    .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> postService.searchPostsByHashtag("#", null, 10))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("실패 - 태그를 여러 개 넣으면 예외가 발생한다")
+        void search_MultipleTags_ThrowsException() {
+            assertThatThrownBy(() -> postService.searchPostsByHashtag("#강아지 #산책", null, 10))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("해시태그는 한 개만 검색할 수 있습니다.");
+            assertThatThrownBy(() -> postService.searchPostsByHashtag("강아지#산책", null, 10))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

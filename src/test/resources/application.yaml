@@ -4,11 +4,11 @@ spring:
 
   # 변경: 프로젝트 루트의 .env를 읽어 JWT_SECRET, DB 계정 등 환경변수 값을 채움 (없으면 무시)
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:.env[.properties], optional:application-oauth.yaml
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/petory-db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${MYSQL_DATABASE:petory_db}?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
 

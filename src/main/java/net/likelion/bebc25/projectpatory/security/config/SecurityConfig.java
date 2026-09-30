@@ -2,8 +2,10 @@ package net.likelion.bebc25.projectpatory.security.config;
 
 import net.likelion.bebc25.projectpatory.security.handler.CustomAccessDeniedHandler;
 import net.likelion.bebc25.projectpatory.security.handler.CustomAuthenticationEntryPoint;
+import net.likelion.bebc25.projectpatory.security.handler.OAuth2SuccessHandler;
 import net.likelion.bebc25.projectpatory.security.jwt.JwtAuthenticationFilter;
 import net.likelion.bebc25.projectpatory.security.jwt.JwtProvider;
+import net.likelion.bebc25.projectpatory.security.oauth.CustomOAuth2UserService;
 import net.likelion.bebc25.projectpatory.security.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,10 +25,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    public SecurityConfig(JwtProvider jwtProvider, CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(
+            JwtProvider jwtProvider,
+            CustomUserDetailsService userDetailsService,
+            CustomOAuth2UserService customOAuth2UserService,
+            OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.jwtProvider = jwtProvider;
         this.userDetailsService = userDetailsService;
+        this.customOAuth2UserService = customOAuth2UserService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
@@ -78,10 +88,15 @@ public class SecurityConfig {
                         // 게시글 GET 공개
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/**").permitAll()
 
+                        // PortOne 웹훅 (PortOne 서버가 호출하므로 JWT가 없다)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+
                         // Swagger UI 및 API 문서
                         .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs"
                         ).permitAll()
+
+                        .requestMatchers("/favicon.ico", "/oauth/**").permitAll()
 
                         // 그 외는 인증 필요
                         .anyRequest().authenticated()
@@ -91,6 +106,14 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler)
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        // 1. 소셜 사용자 프로필 조회 및 DB 저장 커스텀 서비스 등록
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        // 2. 소셜 인증 성공 후 자체 JWT 발급 및 프론트엔드 리다이렉트 핸들러 등록
+                        .successHandler(oAuth2SuccessHandler)
                 );
 
         return http.build();

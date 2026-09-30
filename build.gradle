@@ -49,6 +49,11 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // AWS S3 (Presigned URL)
+    implementation platform('software.amazon.awssdk:bom:2.31.78')
+    implementation 'software.amazon.awssdk:s3'
+    implementation 'software.amazon.awssdk:auth'
 }
 
 tasks.named('test') {

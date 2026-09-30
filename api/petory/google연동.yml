@@ -1,0 +1,16 @@
+info:
+  name: google연동
+  type: http
+  seq: 20
+
+http:
+  method: GET
+  url: http://localhost:8080/oauth2/authorization/google
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

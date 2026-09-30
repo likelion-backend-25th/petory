@@ -75,12 +75,15 @@ class PostServiceIntegrationTest {
         Long targetPostId = 1L;
 
         // when: MyBatis 단건 JOIN 쿼리 실행
-        PostDetailResponse response = postService.getPostDetail(targetPostId);
+        PostDetailResponse response = postService.getPostDetail(targetPostId, null);
 
         // then: 기본 데이터 및 member 테이블과 조인된 작성자 정보 출력 및 검증
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(targetPostId);
         assertThat(response.getAuthorName()).isNotNull(); // member.nickname 조인 검증
+        assertThat(response.getComments()).isNotNull();
+        assertThat(response.getComments()).hasSize(2);
+        assertThat(response.getComments().get(0).getContent()).isEqualTo("한강 너무 좋겠다! 다음에 같이 가요~");
 
         System.out.println("=========================================");
         System.out.println("게시글 상세 조회 성공 - ID: " + response.getId());
@@ -98,8 +101,26 @@ class PostServiceIntegrationTest {
         Long notFoundPostId = 999999L;
 
         // when & then: 예외 발생 및 메시지 검증
-        assertThatThrownBy(() -> postService.getPostDetail(notFoundPostId))
+        assertThatThrownBy(() -> postService.getPostDetail(notFoundPostId, null))
                 .isInstanceOf(NoSuchElementException.class)
                 .hasMessageContaining("해당 ID의 게시글을 찾을 수 없습니다. id=" + notFoundPostId);
+    }
+
+    @Test
+    @DisplayName("로그인 회원이 같은 글을 두 번 조회해도 고유 조회수는 한 번만 증가한다")
+    void getPostDetail_UniqueViewCount_DoesNotIncreaseOnSecondView() {
+        Long postId = 1L;
+        Long viewerId = 3L; // 나비 (게시글 1 작성자 멍치=2가 아닌 로그인 회원)
+
+        PostDetailResponse before = postService.getPostDetail(postId, null);
+        long beforeCount = before.getViewCount();
+
+        PostDetailResponse first = postService.getPostDetail(postId, viewerId);
+        long firstCount = first.getViewCount();
+
+        PostDetailResponse second = postService.getPostDetail(postId, viewerId);
+
+        assertThat(firstCount).isEqualTo(beforeCount + 1);
+        assertThat(second.getViewCount()).isEqualTo(firstCount);
     }
 }

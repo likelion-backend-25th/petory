@@ -67,6 +67,50 @@
         LIMIT #{limit}
     </select>
 
+    <!-- 해시태그 검색 무한 스크롤 조회 쿼리 -->
+    <!--
+        hashtags 컬럼은 '#강아지 #산책 #한강' 처럼 공백으로 구분되어 저장된다.
+        끝에 공백을 하나 붙인 뒤 '%#검색어 %' 로 찾으면 태그 단위로 정확히 일치하는 게시글만 나온다.
+        예) '강아지' 검색 시 #강아지 는 찾고, #강아지간식 / #큰강아지 는 제외
+        이미지 JOIN 때문에 게시글 1개가 여러 행이 되므로, 게시글을 먼저 LIMIT 으로 자른 뒤(서브쿼리) 이미지를 붙인다.
+    -->
+    <select id="selectPostListByHashtag" resultMap="PostListResultMap">
+        SELECT
+        p.id,
+        p.type,
+        p.content,
+        p.bgm_url,
+        p.is_subscriber_only,
+        p.hashtags,
+        p.created_at,
+        p.updated_at,
+        m.id AS member_id,
+        m.nickname,
+        m.profile_image,
+        img.image_url,
+        (SELECT COUNT(*)
+        FROM post_interaction pi
+        WHERE pi.post_id = p.id
+        AND pi.interaction_type = 'LIKE') AS like_count,
+        (SELECT COUNT(*)
+        FROM comment c
+        WHERE c.post_id = p.id) AS comment_count
+        FROM (
+            SELECT *
+            FROM post_main
+            WHERE type = 1
+            AND CONCAT(hashtags, ' ') LIKE CONCAT('%#', #{hashtag}, ' %')
+            <if test="lastPostId != null">
+                AND id &lt; #{lastPostId}
+            </if>
+            ORDER BY id DESC
+            LIMIT #{limit}
+        ) p
+        INNER JOIN member m ON p.member_id = m.id
+        LEFT JOIN post_image img ON p.id = img.post_id
+        ORDER BY p.id DESC, img.sort_order ASC
+    </select>
+
     <select id="selectPostDetail" resultType="net.likelion.bebc25.projectpatory.dto.PostDetailResponse">
         SELECT
         p.id AS id,
@@ -143,6 +187,15 @@
         )
     </insert>
 
+    <!-- 게시글 첨부 이미지 insert (리스트 순서 = sort_order) -->
+    <insert id="insertPostImages">
+        INSERT INTO post_image (post_id, image_url, sort_order)
+        VALUES
+        <foreach collection="imageUrls" item="imageUrl" index="sortOrder" separator=",">
+            (#{postId}, #{imageUrl}, #{sortOrder})
+        </foreach>
+    </insert>
+
     <!-- 게시글 수정 -->
     <update id="updatePost">
         UPDATE post_main
@@ -159,5 +212,12 @@
         DELETE FROM post_main
         WHERE id = #{postId} AND member_id = #{memberId}
     </delete>
+
+    <!-- 게시글 삭제시 같이 삭제되어야할 이미지 url select -->
+    <select id="selectImageUrlsByPostId" resultType="string">
+        SELECT image_url FROM post_image
+        WHERE post_id = #{postId}
+        ORDER BY sort_order ASC
+    </select>
 
 </mapper>

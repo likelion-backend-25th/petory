@@ -1,7 +1,7 @@
 info:
   name: 댓글작성
   type: http
-  seq: 5
+  seq: 9
 
 http:
   method: POST
@@ -15,6 +15,17 @@ http:
   auth:
     type: bearer
     token: "{{accessToken}}"
+
+runtime:
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.id
+        method: jsonq
+      variable:
+        name: commentId
+        scope: runtime
 
 settings:
   encodeUrl: true

@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -32,4 +34,8 @@ public class PostCreateRequest {
 
     @Schema(description = "해시태그 목록", example = "#산책 #일상 #힐링")
     private String hashtags;
+
+    @Schema(description = "이미지 URL",
+            example = "[\"https://projectpatory-s3-bucket-2026.s3.ap-northeast-2.amazonaws.com/uploads/posts/1/uuid1.jpg\"]")
+    private List<String> imageUrls;
 }

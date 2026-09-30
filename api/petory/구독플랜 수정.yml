@@ -1,0 +1,25 @@
+info:
+  name: 구독플랜 수정
+  type: http
+  seq: 32
+
+http:
+  method: POST
+  url: "{{baseUrl}}/subscription/7/new"
+  body:
+    type: json
+    data: |-
+      {
+        "memberId":7,
+        "planName":"테스트용",
+        "price":10000,
+        "description":"이딴걸 누가 구독함"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

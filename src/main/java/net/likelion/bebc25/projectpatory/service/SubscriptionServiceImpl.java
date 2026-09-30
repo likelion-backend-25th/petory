@@ -20,8 +20,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void createSubscriptionPlan(SubscriptionCreateRequest request, Long loginMemberId) {
-        if (!request.getMemberId().equals(loginMemberId)) {
+    public void createSubscriptionPlan(SubscriptionCreateRequest request, Long loginMemberId, Long memberId) {
+        if (!loginMemberId.equals(memberId) || !loginMemberId.equals(request.getMemberId())) {
             throw new AccessDeniedException("비정상적인 접근입니다.");
         }
         subscriptionMapper.createSubscription(request);
@@ -38,24 +38,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void updateSubscriptionPlan(SubscriptionUpdateRequest request, Long loginMemberId) {
+    public void updateSubscriptionPlan(SubscriptionUpdateRequest request, Long loginMemberId, Long memberId) {
         Subscription subscription = subscriptionMapper.getSubscriptionById(request.getId());
         if (subscription == null) {
             throw new NoSuchElementException("더이상 존재하지 않는 구독플랜입니다.");
         }
-        if (!subscription.getMemberId().equals(loginMemberId)) {
+        if (!loginMemberId.equals(memberId) || !subscription.getMemberId().equals(loginMemberId)) {
             throw new AccessDeniedException("비정상적인 접근입니다.");
         }
         subscriptionMapper.updateSubscription(request);
     }
 
     @Override
-    public void deleteSubscriptionById(Long id, Long loginMemberId) {
+    public void deleteSubscriptionById(Long id, Long loginMemberId, Long memberId) {
         Subscription subscription = subscriptionMapper.getSubscriptionById(id);
         if (subscription == null) {
             throw new NoSuchElementException("더이상 존재하지 않는 구독플랜입니다.");
         }
-        if (!subscription.getMemberId().equals(loginMemberId)) {
+        if (!subscription.getMemberId().equals(memberId) || !subscription.getMemberId().equals(loginMemberId)) {
             throw new AccessDeniedException("비정상적인 접근입니다.");
         }
         subscriptionMapper.deleteSubscriptionById(id);

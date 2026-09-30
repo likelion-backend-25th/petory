@@ -1,0 +1,29 @@
+info:
+  name: 실종 신고
+  type: http
+  seq: 31
+
+http:
+  method: POST
+  url: http://localhost:8080/api/missing-pets
+  body:
+    type: json
+    data: |-
+      {
+        "missingDate": "2026-09-30",
+        "missingAddress": "경기도 성남시 수정구 태평동",
+        "detail": "갈색 푸들이고 빨간 목줄을 착용하고 있습니다.",
+        "imageUrl": "https://s3.example.com/missing/test-dog.jpg",
+        "latitude": 37.4501234,
+        "longitude": 127.1405678
+      }
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA3NDMwNTksImV4cCI6MTc5MDc0NjY1OX0.pzogmYcS9IJ-BkrEfayYmIwsPomrJudK3FrLKHlZSBs
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

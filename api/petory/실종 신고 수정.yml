@@ -1,0 +1,16 @@
+info:
+  name: 실종 신고 수정
+  type: http
+  seq: 32
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/missing-pets/1
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,16 @@
+info:
+  name: 실종 상태 변경
+  type: http
+  seq: 33
+
+http:
+  method: PATCH
+  url: http://localhost:8080/api/missing-pets/4/status
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.SubscriptionMapper">
+    <insert id="createSubscription">
+        INSERT INTO subscription_plan(member_id, plan_name, price, description)
+        VALUES (#{request.memberId}, #{request.planName}, #{request.price}, #{request.description})
+    </insert>
+
+    <select id="getSubscriptionById" resultType="net.likelion.bebc25.projectpatory.domain.Subscription">
+        SELECT * FROM subscription_plan WHERE id = #{id}
+    </select>
+
+    <select id="getSubscriptionsByMemberId" resultType="net.likelion.bebc25.projectpatory.domain.Subscription">
+        SELECT * FROM subscription_plan WHERE member_id = #{memberId}
+    </select>
+
+    <update id="updateSubscription">
+        UPDATE subscription_plan
+        <set>
+            plan_name = #{request.planName},
+            description = #{request.description},
+            status = #{request.status}
+        </set>
+        WHERE id = #{request.id}
+    </update>
+
+    <delete id="deleteSubscriptionById">
+        DELETE FROM subscription_plan WHERE id = #{id}
+    </delete>
+</mapper>

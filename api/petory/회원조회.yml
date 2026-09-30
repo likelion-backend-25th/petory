@@ -8,7 +8,7 @@ http:
   url: "{{baseUrl}}/profile/7"
   auth:
     type: bearer
-    token: eyJhbGciOiJIUzM4NCJ9.eyJpc3MiOiJteWJhdGlzLXNucyIsInN1YiI6IjciLCJlbWFpbCI6InF1ZGdoMDIxN0BleGFtcGxlLmNvbSIsInJvbGVzIjpbIlJPTEVfVVNFUiJdLCJpYXQiOjE3OTA1NzE4NDYsImV4cCI6MTc5MDU3NTQ0Nn0.FvF6Mf8YDrPOWKVmodKUsmj2kv-ieq7GgxNmbWWWE0mgvsA9Xc-PWnTjETXqADyw
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJwZXRvcnkiLCJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBwZXRvcnkuY29tIiwicm9sZXMiOlsiUk9MRV9BRE1JTiJdLCJpYXQiOjE3OTA3Mjk1NDAsImV4cCI6MTc5MDczMzE0MH0.SLA222H-MPdSYFT3wVcvsa8MqL_LP_2nZakxRyH3Zwc
 
 settings:
   encodeUrl: true

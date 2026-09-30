@@ -75,12 +75,11 @@ class SubscriptionMapperTest {
     }
 
     @Test
-    @DisplayName("구독 플랜 이름, 가격, 설명, 상태를 수정한다")
+    @DisplayName("구독 플랜 이름, 설명, 상태를 수정하고 가격은 유지한다")
     void updateSubscription() {
         SubscriptionUpdateRequest request = SubscriptionUpdateRequest.builder()
                 .id(4L)
                 .planName("수정플랜")
-                .price(1000)
                 .description("수정 설명")
                 .status("INACTIVE")
                 .build();
@@ -89,7 +88,7 @@ class SubscriptionMapperTest {
 
         Subscription updated = subscriptionMapper.getSubscriptionById(4L);
         assertThat(updated.getPlanName()).isEqualTo("수정플랜");
-        assertThat(updated.getPrice()).isEqualTo(1000);
+        assertThat(updated.getPrice()).isEqualTo(2900);
         assertThat(updated.getDescription()).isEqualTo("수정 설명");
         assertThat(updated.getStatus()).isEqualTo("INACTIVE");
         assertThat(updated.getMemberId()).isEqualTo(2L);

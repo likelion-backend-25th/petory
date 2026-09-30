@@ -99,7 +99,6 @@ class SubscriptionServiceImplTest {
         SubscriptionUpdateRequest request = SubscriptionUpdateRequest.builder()
                 .id(1L)
                 .planName("프리미엄")
-                .price(9900)
                 .description("수정 설명")
                 .status("ACTIVE")
                 .build();
@@ -116,7 +115,6 @@ class SubscriptionServiceImplTest {
         SubscriptionUpdateRequest request = SubscriptionUpdateRequest.builder()
                 .id(99L)
                 .planName("프리미엄")
-                .price(9900)
                 .description("수정 설명")
                 .status("ACTIVE")
                 .build();
@@ -136,7 +134,6 @@ class SubscriptionServiceImplTest {
                 .id(1L)
                 .memberId(2L)
                 .planName("프리미엄")
-                .price(9900)
                 .description("수정 설명")
                 .status("ACTIVE")
                 .build();

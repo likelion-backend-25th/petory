@@ -11,7 +11,6 @@ public class SubscriptionUpdateRequest {
     Long id;
     Long memberId;
     String planName;
-    int price;
     String description;
     String status;
 }

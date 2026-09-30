@@ -20,7 +20,6 @@
         UPDATE subscription_plan
         <set>
             plan_name = #{request.planName},
-            price = #{request.price},
             description = #{request.description},
             status = #{request.status}
         </set>

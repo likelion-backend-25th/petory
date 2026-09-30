@@ -13,8 +13,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOriginPatterns(
                         "http://localhost:5173",
                         "http://localhost:3000",
-                        "https://petory-web.netlify.app"
-
+                        "https://petory-web.netlify.app",
+                        "https://petory.likelion.shop"
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")

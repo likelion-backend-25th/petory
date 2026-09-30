@@ -16,3 +16,4 @@ public class PostCreateResponse {
     @Schema(description = "생성된 게시글 ID", example = "10")
     private Long id;
 }
+

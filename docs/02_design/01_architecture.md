@@ -134,7 +134,7 @@ sequenceDiagram
 ```
 
 1. **결제 준비 (클라이언트 ➔ 백엔드)**: `POST /api/v1/payments/prepare` (JWT 인증)
-   - 요청: `targetMemberId`(후원 대상), `orderName`, `totalAmount`, `payMethod`
+   - 요청: `targetMemberId`(후원 대상), `orderName`, `totalAmount`, `merchandise`
    - 본인 후원 차단, 대상 회원 존재 여부 검증.
    - 서버가 주문번호 `paymentId`(`ORD_{타임스탬프}_{UUID 8자리}`)를 생성하고 `payment` 테이블에 결제 예정 금액과 함께 `READY` 상태로 저장.
 2. **결제창 호출 (클라이언트 ➔ PortOne)**: 발급받은 `paymentId`와 금액으로 PortOne 브라우저 SDK 결제창을 띄워 사용자가 결제 진행.

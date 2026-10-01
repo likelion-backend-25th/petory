@@ -92,7 +92,7 @@ READY ────┼──▶ FAILED     (PortOne이 FAILED라고 함)
 | `currency` | VARCHAR(10) | X | /prepare | KRW |
 | `total_amount` | INT | X | /prepare | **예정 금액 (비교 기준)** |
 | `paid_amount` | INT | O | PAID 확정 시 | 실제 결제 금액 |
-| `pay_method` | VARCHAR(30) | X | /prepare | 결제 수단 |
+| `merchandise` | VARCHAR(30) | X | /prepare | 결제 상품 (간식 쏘기, 펫 클럽 구독) |
 | `status` | VARCHAR(20) | X | 계속 바뀜 | READY / PAID / FAILED / CANCELLED |
 | `transaction_id` | VARCHAR(100) | O | PAID 확정 시 | PortOne 거래 ID |
 | `pg_tx_id` | VARCHAR(100) | O | PAID 확정 시 | PG사 거래 ID |
@@ -227,9 +227,9 @@ public record PaymentPrepareRequest(
         @Positive(message = "결제 금액은 0보다 커야 합니다.")
         Integer totalAmount,
 
-        @NotBlank(message = "결제 수단은 필수입니다.")
-        @Size(max = 30, message = "결제 수단은 30자 이하여야 합니다.")
-        String payMethod
+        @NotBlank(message = "결제 상품은 필수입니다.")
+        @Size(max = 30, message = "결제 상품은 30자 이하여야 합니다.")
+        String merchandise
 ) {}
 ```
 
@@ -443,7 +443,7 @@ Content-Type: application/json
   "targetMemberId": 2,
   "orderName": "간식 쏘기",
   "totalAmount": 5000,
-  "payMethod": "CARD"
+  "merchandise": "간식 쏘기"
 }
 ```
 
@@ -514,7 +514,7 @@ Payment payment = Payment.builder()
         .orderName(requestDto.orderName())
         .currency("KRW")
         .totalAmount(requestDto.totalAmount())
-        .payMethod(requestDto.payMethod())
+        .merchandise(requestDto.merchandise())
         .status("READY")
         .build();
 paymentMapper.savePayment(payment);
@@ -527,9 +527,9 @@ return PaymentPrepareResponse.from(payment);
 <insert id="savePayment" parameterType="net.likelion.bebc25.projectpatory.domain.Payment"
         useGeneratedKeys="true" keyProperty="id">
     INSERT INTO payment (member_id, target_member_id, payment_id, order_name,
-                         currency, total_amount, pay_method, status, created_at)
+                         currency, total_amount, merchandise, status, created_at)
     VALUES (#{memberId}, #{targetMemberId}, #{paymentId}, #{orderName},
-            IFNULL(#{currency}, 'KRW'), #{totalAmount}, #{payMethod}, 'READY', NOW())
+            IFNULL(#{currency}, 'KRW'), #{totalAmount}, #{merchandise}, 'READY', NOW())
 </insert>
 ```
 

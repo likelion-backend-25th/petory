@@ -1,9 +1,13 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
 import net.likelion.bebc25.projectpatory.domain.Payment;
+import net.likelion.bebc25.projectpatory.domain.SubscriptionRecord;
+import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordCreateRequest;
+import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordUpdateRequest;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Mapper
@@ -44,4 +48,17 @@ public interface PaymentMapper {
                             @Param("reason") String reason,
                             @Param("receiptUrl") String receiptUrl,
                             @Param("cancelledAt") LocalDateTime cancelledAt);
+
+
+    void createSubscriptionRecord(
+            Long memberId,
+            @Param("request") SubscriptionRecordCreateRequest request,
+            LocalDate nextBillingAt
+    );
+
+    void updateSubscriptionRecord(@Param("request") SubscriptionRecordUpdateRequest request);
+
+    void cancelSubscription(Long id);
+
+    SubscriptionRecord getSubscriptionRecord(@Param("id") Long id);
 }

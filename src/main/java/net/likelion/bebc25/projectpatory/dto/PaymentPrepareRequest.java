@@ -17,7 +17,7 @@ public record PaymentPrepareRequest(
         @Positive(message = "결제 금액은 0보다 커야 합니다.")
         Integer totalAmount,    // 결제 예정 금액
 
-        @NotBlank(message = "결제 수단은 필수입니다.")
-        @Size(max = 30, message = "결제 수단은 30자 이하여야 합니다.")
-        String payMethod        // 결제 수단
+        @NotBlank(message = "결제 상품은 필수입니다.")
+        @Size(max = 30, message = "결제 상품은 30자 이하여야 합니다.")
+        String merchandise      // 결제 상품 (간식 쏘기, 펫 클럽 구독)
 ) {}

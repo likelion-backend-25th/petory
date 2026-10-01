@@ -120,7 +120,7 @@ erDiagram
         VARCHAR currency "결제 통화 단위"
         INT total_amount "결제 금액"
         INT paid_amount "결제 금액"
-        VARCHAR pay_method "결제 상품 (간식 쏘기, 펫 클럽 구독)"
+        VARCHAR merchandise "결제 상품 (간식 쏘기, 펫 클럽 구독)"
         VARCHAR status "결제 상태 (READY, PAID, FAILED, CANCELLED)"
         VARCHAR transaction_id "거래 ID"
         VARCHAR pg_tx_id "PG 거래 ID"
@@ -164,9 +164,9 @@ erDiagram
         BIGINT target_member_id FK "구독 대상 회원 식별자"
         BIGINT plan_id FK "구독 플랜 식별자"
         VARCHAR billing_key "정기 결제 카드 빌링키"
-        DATETIME started_at "시작일"
-        DATETIME ended_at "만료일"
-        DATETIME next_billing_at "다음 자동 결제 예정일"
+        DATE started_at "시작일"
+        DATE ended_at "만료일"
+        DATE next_billing_at "다음 자동 결제 예정일"
         VARCHAR status "구독 상태 (ACTIVE, CANCELLED)"
         TINYINT(1) agreement "자동결제 동의여부 (0: 비동의, 1: 동의)"
     }
@@ -337,12 +337,12 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | id               | BIGINT       | PK, AUTO_INCREMENT                         | 결제 내역 식별자                              |
 | member_id        | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 결제 회원(동물 유저) ID                        |
 | target_member_id | BIGINT       | NOT NULL, FK                               | 후원 대상 동물 유저                            |
-| payment_id       | VARCHAR(100) | NOT NULL, UNIQUE                           | 결제 승인 고유 번호                            |
-| order_name       | VARCHAR(100) | NOT NULL                                   | 자체 생성 주문 식별자 (예: ORD_20260917_001)     |
+| payment_id       | VARCHAR(100) | NOT NULL, UNIQUE                           | 결제 승인 고유 번호 (예: ORD_20260917_001)      |
+| order_name       | VARCHAR(100) | NOT NULL                                   | 자체 생성 주문 식별자                           |
 | currency         | VARCHAR(10)  | NOT NULL, DEFAULT 'KRW'                    | 결제 통화 단위                               |
 | total_amount     | INT          | NOT NULL                                   | 결제 금액                                  |
 | paid_amount      | INT          | NULL                                       | 결제 금액                                  |
-| pay_method       | VARCHAR(30)  | NOT NULL                                   | 결제 상품 (간식 쏘기, 펫 클럽 구독)                 | 
+| merchandise      | VARCHAR(30)  | NOT NULL                                   | 결제 상품 (간식 쏘기, 펫 클럽 구독)                 | 
 | status           | VARCHAR(20)  | NOT NULL, DEFAULT 'READY'                  | 결제 상태 (READY, PAID, FAILED, CANCELLED) |
 | transaction_id   | VARCHAR(100) | NULL                                       | 포트원에서 발급한 거래번호                         |
 | pg_tx_id         | VARCHAR(100) | NULL                                       | PG사가 발급한 거래번호                          |
@@ -398,9 +398,9 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 | target_member_id | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE)            | 구독 대상 회원 식별자              |
 | plan_id          | BIGINT       | NOT NULL, FK (subscription_plan.id ON DELETE CASCADE) | 구독 플랜 식별자                 |
 | billing_key      | VARCHAR(100) | NOT NULL                                              | 정기 결제 카드 빌링키              |
-| started_at       | DATETIME     | DEFAULT CURRENT_TIMESTAMP                             | 시작일                       |
-| ended_at         | DATETIME     | NULL                                                  | 만료일                       |
-| next_billing_at  | DATETIME     | NULL                                                  | 다음 자동 결제 예정일              |
+| started_at       | DATE         | DEFAULT (CURRENT_DATE)                                | 시작일                       |
+| ended_at         | DATE         | NULL                                                  | 만료일                       |
+| next_billing_at  | DATE         | NULL                                                  | 다음 자동 결제 예정일              |
 | status           | VARCHAR(20)  | NOT NULL, DEFAULT 'ACTIVE'                            | 구독 상태 (ACTIVE, CANCELLED) |
 | agreement        | TINYINT(1)   | NOT NULL, DEFAULT 1                                   | 자동결제 동의여부 (0: 비동의, 1: 동의) |
 
@@ -453,33 +453,33 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 
 ### 1.2.14 missing_pet_post(실종 신고 게시글)
 
-| 컬럼명             | 데이터 타입        | 제약 조건                                       | 설명                            |
-|:----------------|:--------------|:--------------------------------------------|:------------------------------|
-| id              | BIGINT        | PK, AUTO_INCREMENT                          | 실종 신고 게시글 고유 ID               |
-| member_id       | BIGINT        | NOT NULL, FK (member.id ON DELETE CASCADE)  | 작성자 회원 ID                     |
-| missing_date    | DATE          | NOT NULL                                    | 실종일자                          |
-| missing_address | VARCHAR(255)  | NOT NULL                                    | 실종장소                          |
-| detail          | TEXT          | NULL                                        | 특이사항                          |
-| image_url       | VARCHAR(255)  | NULL                                        | 실종 반려동물 대표사진  S3 URL          |
-| status          | VARCHAR(20)   | NOT NULL  DEFAULT 'MISSING'                 | 상태(MISSING, FOUND, CANCELLED) |
-| latitude        | DECIMAL(10,7) | NULL                                        | 위도                            |
-| longitude       | DECIMAL(10,7) | NULL                                        | 경도                            |
-| created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                   | 작성 시각                         |
-| updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                   | 게시글 수정 일시                     |
+| 컬럼명             | 데이터 타입        | 제약 조건                                      | 설명                            |
+|:----------------|:--------------|:-------------------------------------------|:------------------------------|
+| id              | BIGINT        | PK, AUTO_INCREMENT                         | 실종 신고 게시글 고유 ID               |
+| member_id       | BIGINT        | NOT NULL, FK (member.id ON DELETE CASCADE) | 작성자 회원 ID                     |
+| missing_date    | DATE          | NOT NULL                                   | 실종일자                          |
+| missing_address | VARCHAR(255)  | NOT NULL                                   | 실종장소                          |
+| detail          | TEXT          | NULL                                       | 특이사항                          |
+| image_url       | VARCHAR(255)  | NULL                                       | 실종 반려동물 대표사진  S3 URL          |
+| status          | VARCHAR(20)   | NOT NULL  DEFAULT 'MISSING'                | 상태(MISSING, FOUND, CANCELLED) |
+| latitude        | DECIMAL(10,7) | NULL                                       | 위도                            |
+| longitude       | DECIMAL(10,7) | NULL                                       | 경도                            |
+| created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 작성 시각                         |
+| updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 게시글 수정 일시                     |
 
 ### 1.2.15 missing_pet_report(실종 동물 목격 제보)
 
-| 컬럼명                       | 데이터 타입            | 제약 조건                                                   | 설명                        |
-|:--------------------------|:------------------|:--------------------------------------------------------|:--------------------------|
-| id                        | BIGINT            | PK, AUTO_INCREMENT                                      | 실종 신고 게시글 고유 ID           |
-| missing_pet_post_id       | BIGINT            | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE)    | 대상 실종 신고 게시글 ID           |
-| member_id                 | BIGINT            | NOT NULL, FK(member.id ON DELETE CASCADE)               | 제보자 회원 ID                 |
-| address                   | VARCHAR(255)      | NOT NULL                                                | 목격 장소                     |
-| detail                    | TEXT              | NULL                                                    | 목격 상황 및 상태 설명(추가 추천)      |
-| image_url                 | VARCHAR(255)      | NULL                                                    | 제보자가 찰영한 이미지 S3 URL       |
-| sight_at                  | DATETIME          | NOT NULL                                                | 실제 동물을 목격한 일시             |
-| status                    | VARCHAR(20)       | NOT NULL DEFAULT 'SIGHTED'                              | SIGHTED 목격, PROTECTED 보호중 |
-| latitude                  | DECIMAL(10,7)     | NULL                                                    | 위도                        |
-| longitude                 | DECIMAL(10,7)     | NULL                                                    | 경도                        |
-| created_at                | DATETIME          | DEFAULT CURRENT_TIMESTAMP                               | 제보 등록 일시                  |
-| updated_at                | DATETIME          | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP   | 제보 수정 일시                  |
+| 컬럼명                 | 데이터 타입        | 제약 조건                                                 | 설명                        |
+|:--------------------|:--------------|:------------------------------------------------------|:--------------------------|
+| id                  | BIGINT        | PK, AUTO_INCREMENT                                    | 실종 신고 게시글 고유 ID           |
+| missing_pet_post_id | BIGINT        | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE)  | 대상 실종 신고 게시글 ID           |
+| member_id           | BIGINT        | NOT NULL, FK(member.id ON DELETE CASCADE)             | 제보자 회원 ID                 |
+| address             | VARCHAR(255)  | NOT NULL                                              | 목격 장소                     |
+| detail              | TEXT          | NULL                                                  | 목격 상황 및 상태 설명(추가 추천)      |
+| image_url           | VARCHAR(255)  | NULL                                                  | 제보자가 찰영한 이미지 S3 URL       |
+| sight_at            | DATETIME      | NOT NULL                                              | 실제 동물을 목격한 일시             |
+| status              | VARCHAR(20)   | NOT NULL DEFAULT 'SIGHTED'                            | SIGHTED 목격, PROTECTED 보호중 |
+| latitude            | DECIMAL(10,7) | NULL                                                  | 위도                        |
+| longitude           | DECIMAL(10,7) | NULL                                                  | 경도                        |
+| created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                             | 제보 등록 일시                  |
+| updated_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 제보 수정 일시                  |

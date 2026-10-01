@@ -1,12 +1,20 @@
 package net.likelion.bebc25.projectpatory.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import net.likelion.bebc25.projectpatory.domain.Payment;
 
-// /prepare 응답: 프론트엔드가 PortOne 결제창을 띄우는 데 필요한 값만 내려준다
+@Schema(description = "결제 준비 응답")
 public record PaymentPrepareResponse(
-        String paymentId,       // PortOne SDK requestPayment의 paymentId로 그대로 사용
+        @Schema(description = "PortOne SDK requestPayment에 전달할 paymentId", example = "pay_20261001120000_10")
+        String paymentId,
+
+        @Schema(description = "주문명", example = "베이직 구독")
         String orderName,
+
+        @Schema(description = "결제 예정 금액", example = "4900")
         Integer totalAmount,
+
+        @Schema(description = "통화 코드", example = "KRW")
         String currency
 ) {
     public static PaymentPrepareResponse from(Payment payment) {

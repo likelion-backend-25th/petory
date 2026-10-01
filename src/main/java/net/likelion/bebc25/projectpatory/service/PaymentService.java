@@ -1,10 +1,9 @@
 package net.likelion.bebc25.projectpatory.service;
 
-import net.likelion.bebc25.projectpatory.dto.PaymentCompleteRequest;
-import net.likelion.bebc25.projectpatory.dto.PaymentCompleteResponse;
-import net.likelion.bebc25.projectpatory.dto.PaymentPrepareRequest;
-import net.likelion.bebc25.projectpatory.dto.PaymentPrepareResponse;
-import net.likelion.bebc25.projectpatory.dto.PortOneWebhookRequest;
+import net.likelion.bebc25.projectpatory.domain.Payment;
+import net.likelion.bebc25.projectpatory.dto.*;
+
+import java.util.List;
 
 public interface PaymentService {
 
@@ -21,4 +20,6 @@ public interface PaymentService {
 
     // PortOne 웹훅 처리: 웹훅 내용은 믿지 않고 PortOne API로 다시 조회해서 DB를 맞춘다
     void handleWebhook(PortOneWebhookRequest webhook);
-}
+
+    // 결제 내역 조회
+    List<PaymentHistoryResponse> getMyPayments(Long memberId);}

@@ -86,38 +86,4 @@
                 #{status},
                 #{cancelAmount}, #{reason}, #{receiptUrl}, #{cancelledAt})
     </insert>
-
-    <insert id="createSubscriptionRecord">
-        INSERT INTO subscription (member_id, target_member_id, plan_id, billing_key, next_billing_at)
-        VALUES (#{memberId}, #{request.targetMemberId}, #{request.planId}, #{request.billingKey}, #{nextBillingAt})
-    </insert>
-
-    <update id="updateSubscriptionRecord">
-        UPDATE subscription
-        SET agreement = #{request.agreement}
-        WHERE id = #{request.id}
-    </update>
-
-    <update id="cancelSubscription">
-        UPDATE subscription
-        SET status          = 'CANCELLED',
-            ended_at        = CURDATE(),
-            next_billing_at = null
-        WHERE id = #{id}
-    </update>
-
-    <select id="getSubscriptionRecord" resultType="net.likelion.bebc25.projectpatory.domain.SubscriptionRecord">
-        SELECT id,
-               member_id,
-               target_member_id,
-               plan_id,
-               billing_key,
-               started_at,
-               ended_at,
-               next_billing_at,
-               status,
-               agreement
-        FROM subscription
-        WHERE id = #{id}
-    </select>
 </mapper>

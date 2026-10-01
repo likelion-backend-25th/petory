@@ -1,9 +1,6 @@
 package net.likelion.bebc25.projectpatory.mapper;
 
 import net.likelion.bebc25.projectpatory.domain.Payment;
-import net.likelion.bebc25.projectpatory.domain.SubscriptionRecord;
-import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordCreateRequest;
-import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordUpdateRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,7 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -217,107 +213,5 @@ class PaymentMapperTest {
         Integer count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM cancel_payment WHERE payment_id = ?", Integer.class, saved.getId());
         assertThat(count).isEqualTo(1);
-    }
-
-    // 5. 정기 구독 저장 / 조회 / 동의 / 해지
-    @Nested
-    @DisplayName("subscription 정기결제 테스트")
-    class SubscriptionRecordTest {
-
-        @Test
-        @DisplayName("성공 - 동의(1) 구독은 agreement가 true로 조회된다")
-        void getSubscriptionRecord_agreementTrue() {
-            SubscriptionRecord found = paymentMapper.getSubscriptionRecord(1L);
-
-            assertThat(found).isNotNull();
-            assertThat(found.getMemberId()).isEqualTo(4L);
-            assertThat(found.getTargetMemberId()).isEqualTo(2L);
-            assertThat(found.getPlanId()).isEqualTo(2L);
-            assertThat(found.getBillingKey()).isEqualTo("billing_coco_001");
-            assertThat(found.getStartedAt()).isEqualTo(LocalDate.of(2025, 7, 11));
-            assertThat(found.getEndedAt()).isNull();
-            assertThat(found.getNextBillingAt()).isEqualTo(LocalDate.of(2025, 8, 11));
-            assertThat(found.getStatus()).isEqualTo("ACTIVE");
-            assertThat(found.isAgreement()).isTrue();
-        }
-
-        @Test
-        @DisplayName("성공 - 비동의(0) 구독은 agreement가 false로 조회된다")
-        void getSubscriptionRecord_agreementFalse() {
-            SubscriptionRecord found = paymentMapper.getSubscriptionRecord(3L);
-
-            assertThat(found.getStatus()).isEqualTo("CANCELLED");
-            assertThat(found.getEndedAt()).isEqualTo(LocalDate.of(2025, 7, 20));
-            assertThat(found.getNextBillingAt()).isNull();
-            assertThat(found.isAgreement()).isFalse();
-        }
-
-        @Test
-        @DisplayName("실패 - 없는 구독 id면 null을 반환한다")
-        void getSubscriptionRecord_notFound() {
-            assertThat(paymentMapper.getSubscriptionRecord(9999L)).isNull();
-        }
-
-        @Test
-        @DisplayName("성공 - 구독을 저장하면 다음 결제일과 동의(1)가 기록된다")
-        void createSubscriptionRecord_success() {
-            LocalDate nextBillingAt = LocalDate.of(2026, 11, 1);
-            SubscriptionRecordCreateRequest request = SubscriptionRecordCreateRequest.builder()
-                    .targetMemberId(2L)
-                    .planId(1L)
-                    .billingKey("billing_test_create")
-                    .build();
-
-            paymentMapper.createSubscriptionRecord(5L, request, nextBillingAt);
-
-            Long id = jdbcTemplate.queryForObject(
-                    "SELECT id FROM subscription WHERE billing_key = ?", Long.class, "billing_test_create");
-            SubscriptionRecord found = paymentMapper.getSubscriptionRecord(id);
-
-            assertThat(found.getMemberId()).isEqualTo(5L);
-            assertThat(found.getTargetMemberId()).isEqualTo(2L);
-            assertThat(found.getPlanId()).isEqualTo(1L);
-            assertThat(found.getBillingKey()).isEqualTo("billing_test_create");
-            assertThat(found.getStartedAt()).isEqualTo(LocalDate.now());
-            assertThat(found.getNextBillingAt()).isEqualTo(nextBillingAt);
-            assertThat(found.getEndedAt()).isNull();
-            assertThat(found.getStatus()).isEqualTo("ACTIVE");
-            assertThat(found.isAgreement()).isTrue();
-            assertThat(agreementColumn(id)).isEqualTo(1);
-        }
-
-        @Test
-        @DisplayName("성공 - 동의를 철회하면 DB에는 0, 조회는 false다")
-        void updateSubscriptionRecord_disagree() {
-            paymentMapper.updateSubscriptionRecord(new SubscriptionRecordUpdateRequest(2L, false));
-
-            assertThat(agreementColumn(2L)).isEqualTo(0);
-            assertThat(paymentMapper.getSubscriptionRecord(2L).isAgreement()).isFalse();
-        }
-
-        @Test
-        @DisplayName("성공 - 다시 동의하면 DB에는 1, 조회는 true다")
-        void updateSubscriptionRecord_agree() {
-            paymentMapper.updateSubscriptionRecord(new SubscriptionRecordUpdateRequest(3L, true));
-
-            assertThat(agreementColumn(3L)).isEqualTo(1);
-            assertThat(paymentMapper.getSubscriptionRecord(3L).isAgreement()).isTrue();
-        }
-
-        @Test
-        @DisplayName("성공 - 해지하면 CANCELLED가 되고 종료일은 오늘, 다음 결제일은 비운다")
-        void cancelSubscription_success() {
-            paymentMapper.cancelSubscription(2L);
-
-            SubscriptionRecord found = paymentMapper.getSubscriptionRecord(2L);
-            assertThat(found.getStatus()).isEqualTo("CANCELLED");
-            assertThat(found.getEndedAt()).isEqualTo(LocalDate.now());
-            assertThat(found.getNextBillingAt()).isNull();
-        }
-    }
-
-    private Integer agreementColumn(Long id) {
-        return jdbcTemplate.queryForObject(
-                "SELECT agreement FROM subscription WHERE id = ?", Integer.class, id);
     }
 }

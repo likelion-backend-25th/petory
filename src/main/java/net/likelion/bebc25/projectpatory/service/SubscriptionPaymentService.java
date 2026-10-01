@@ -1,6 +1,6 @@
 package net.likelion.bebc25.projectpatory.service;
 
-import net.likelion.bebc25.projectpatory.domain.SubscriptionRecord;
+import net.likelion.bebc25.projectpatory.dto.MySubscriptionsResponse;
 import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordUpdateRequest;
 
@@ -13,11 +13,11 @@ public interface SubscriptionPaymentService {
             Long loginMemberId
     );
 
-    void updateSubscriptionRecord(SubscriptionRecordUpdateRequest request, Long loginMemberId);
+    void updateSubscriptionRecord(SubscriptionRecordUpdateRequest request, Long loginMemberId, Long memberId, Long subscriptionId);
 
-    void cancelSubscription(Long subscriptionId, Long loginMemberId);
+    void cancelSubscription(Long subscriptionId, Long memberId, Long loginMemberId);
 
-    SubscriptionRecord getSubscriptionRecord(Long subscriptionId);
+    MySubscriptionsResponse getSubscriptionRecord(Long subscriptionId, Long memberId, Long loginMemberId);
 
-    List<SubscriptionRecord> getMySubscriptionRecords(Long memberId, Long loginMemberId);
+    List<MySubscriptionsResponse> getMySubscriptionRecords(Long memberId, Long loginMemberId);
 }

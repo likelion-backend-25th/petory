@@ -2,9 +2,11 @@ package net.likelion.bebc25.projectpatory.service;
 
 import lombok.RequiredArgsConstructor;
 import net.likelion.bebc25.projectpatory.domain.BillingKey;
+import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.Subscription;
 import net.likelion.bebc25.projectpatory.domain.SubscriptionRecord;
 import net.likelion.bebc25.projectpatory.dto.*;
+import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.SubscriptionMapper;
 import net.likelion.bebc25.projectpatory.mapper.SubscriptionPaymentMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,16 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
-public class SubscriptionPaymentImpl implements SubscriptionPaymentService {
+public class SubscriptionPaymentServiceImpl implements SubscriptionPaymentService {
     private final SubscriptionPaymentMapper subscriptionPaymentMapper;
     private final SubscriptionMapper subscriptionMapper;
     private final PaymentService paymentService;
     private final RestClient restClient;
+    private final MemberMapper memberMapper;
 
     @Value("${portone.api.secret}")
     private String apiSecret;
@@ -103,40 +107,72 @@ public class SubscriptionPaymentImpl implements SubscriptionPaymentService {
     }
 
     @Override
-    public void updateSubscriptionRecord(SubscriptionRecordUpdateRequest request, Long loginMemberId) {
-        SubscriptionRecord record = subscriptionPaymentMapper.getSubscriptionRecordById(request.getId());
-        if (!record.getMemberId().equals(loginMemberId)) {
+    public void updateSubscriptionRecord(SubscriptionRecordUpdateRequest request, Long loginMemberId, Long memberId, Long subscriptionRecordId) {
+        if (!request.getId().equals(subscriptionRecordId)) {
             throw new AccessDeniedException("비정상적인 접근입니다.");
         }
-        if (record.getStatus().equals("CANCELLED")) {
-            throw new NoSuchElementException("이미 구독 해지한 상품입니다.");
+        SubscriptionRecord record = subscriptionPaymentMapper.getSubscriptionRecordById(request.getId());
+        if (record == null || record.getStatus().equals("CANCELLED")) {
+            throw new NoSuchElementException("이미 해지됐거나 존재하지 않는 구독입니다.");
+        }
+        if (!memberId.equals(loginMemberId) || !record.getMemberId().equals(loginMemberId)) {
+            throw new AccessDeniedException("비정상적인 접근입니다.");
         }
         subscriptionPaymentMapper.updateSubscriptionRecord(request);
     }
 
     @Override
-    public void cancelSubscription(Long subscriptionId, Long loginMemberId) {
+    public void cancelSubscription(Long subscriptionId, Long loginMemberId, Long memberId) {
         SubscriptionRecord record = subscriptionPaymentMapper.getSubscriptionRecordById(subscriptionId);
-        if (!record.getMemberId().equals(loginMemberId)) {
-            throw new AccessDeniedException("비정상적인 접근입니다.");
+        if (record == null || record.getStatus().equals("CANCELLED")) {
+            throw new NoSuchElementException("이미 해지됐거나 존재하지 않는 구독입니다.");
         }
-        if (record.getStatus().equals("CANCELLED")) {
-            throw new NoSuchElementException("이미 구독 해지한 상품입니다.");
+        if (!memberId.equals(loginMemberId) || !record.getMemberId().equals(loginMemberId)) {
+            throw new AccessDeniedException("비정상적인 접근입니다.");
         }
         subscriptionPaymentMapper.cancelSubscription(subscriptionId);
     }
 
     @Override
-    public SubscriptionRecord getSubscriptionRecord(Long subscriptionId) {
-        return subscriptionPaymentMapper.getSubscriptionRecordById(subscriptionId);
+    public MySubscriptionsResponse getSubscriptionRecord(Long subscriptionId, Long memberId, Long loginMemberId) {
+        SubscriptionRecord record = subscriptionPaymentMapper.getSubscriptionRecordById(subscriptionId);
+        if (record == null || record.getStatus().equals("CANCELLED")) {
+            throw new NoSuchElementException("이미 해지됐거나 존재하지 않는 구독입니다.");
+        }
+        if (!memberId.equals(loginMemberId) || !record.getMemberId().equals(loginMemberId)) {
+            throw new AccessDeniedException("비정상적인 접근입니다.");
+        }
+
+        Subscription plan = subscriptionMapper.getSubscriptionById(record.getPlanId());
+        Member member = memberMapper.findById(record.getTargetMemberId());
+
+        return new MySubscriptionsResponse(record.getId(), record.getMemberId(), member.getNickname(), plan.getPlanName(), record.getStartedAt(), record.getNextBillingAt(), record.isAgreement());
     }
 
     @Override
-    public List<SubscriptionRecord> getMySubscriptionRecords(Long memberId, Long loginMemberId) {
+    public List<MySubscriptionsResponse> getMySubscriptionRecords(Long memberId, Long loginMemberId) {
         if (!memberId.equals(loginMemberId)) {
             throw new AccessDeniedException("비정상적인 접근입니다.");
         }
-        return subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(memberId);
+
+        List<SubscriptionRecord> records = subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(memberId);
+
+        List<MySubscriptionsResponse> subscriptions = new ArrayList<>();
+        for (SubscriptionRecord record : records) {
+            Subscription plan = subscriptionMapper.getSubscriptionById(record.getPlanId());
+            Member member = memberMapper.findById(record.getTargetMemberId());
+            MySubscriptionsResponse subscription = new MySubscriptionsResponse(
+                    record.getId(),
+                    record.getMemberId(),
+                    member.getNickname(),
+                    plan.getPlanName(),
+                    record.getStartedAt(),
+                    record.getNextBillingAt(),
+                    record.isAgreement()
+            );
+            subscriptions.add(subscription);
+        }
+        return subscriptions;
     }
 
 

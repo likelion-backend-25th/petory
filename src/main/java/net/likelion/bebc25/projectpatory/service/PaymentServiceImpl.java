@@ -69,6 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .currency("KRW")
                 .totalAmount(requestDto.getTotalAmount())
                 .merchandise(requestDto.getMerchandise())
+                .status("READY")
                 .build();
         paymentMapper.savePayment(payment);
 

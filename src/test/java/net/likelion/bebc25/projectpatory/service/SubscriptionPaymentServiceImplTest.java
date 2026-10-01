@@ -1,12 +1,15 @@
 package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.BillingKey;
+import net.likelion.bebc25.projectpatory.domain.Member;
 import net.likelion.bebc25.projectpatory.domain.Subscription;
 import net.likelion.bebc25.projectpatory.domain.SubscriptionRecord;
+import net.likelion.bebc25.projectpatory.dto.MySubscriptionsResponse;
 import net.likelion.bebc25.projectpatory.dto.PaymentCompleteResponse;
 import net.likelion.bebc25.projectpatory.dto.PaymentPrepareResponse;
 import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordCreateRequest;
 import net.likelion.bebc25.projectpatory.dto.SubscriptionRecordUpdateRequest;
+import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.SubscriptionMapper;
 import net.likelion.bebc25.projectpatory.mapper.SubscriptionPaymentMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,17 +28,12 @@ import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SubscriptionPaymentImplTest {
+class SubscriptionPaymentServiceImplTest {
 
     @Mock
     private SubscriptionPaymentMapper subscriptionPaymentMapper;
@@ -44,13 +42,16 @@ class SubscriptionPaymentImplTest {
     private SubscriptionMapper subscriptionMapper;
 
     @Mock
+    private MemberMapper memberMapper;
+
+    @Mock
     private PaymentService paymentService;
 
     @Mock
     private RestClient restClient;
 
     @InjectMocks
-    private SubscriptionPaymentImpl subscriptionPaymentService;
+    private SubscriptionPaymentServiceImpl subscriptionPaymentService;
 
     private RestClient.RequestHeadersUriSpec<?> getSpec;
     private RestClient.RequestBodyUriSpec postSpec;
@@ -190,7 +191,7 @@ class SubscriptionPaymentImplTest {
         given(subscriptionPaymentMapper.getSubscriptionRecordById(1L)).willReturn(activeRecord(4L));
         SubscriptionRecordUpdateRequest request = new SubscriptionRecordUpdateRequest(1L, false);
 
-        subscriptionPaymentService.updateSubscriptionRecord(request, 4L);
+        subscriptionPaymentService.updateSubscriptionRecord(request, 4L, 4L, 1L);
 
         verify(subscriptionPaymentMapper).updateSubscriptionRecord(request);
     }
@@ -201,7 +202,7 @@ class SubscriptionPaymentImplTest {
         given(subscriptionPaymentMapper.getSubscriptionRecordById(1L)).willReturn(activeRecord(4L));
         SubscriptionRecordUpdateRequest request = new SubscriptionRecordUpdateRequest(1L, false);
 
-        assertThatThrownBy(() -> subscriptionPaymentService.updateSubscriptionRecord(request, 9L))
+        assertThatThrownBy(() -> subscriptionPaymentService.updateSubscriptionRecord(request, 9L, 9L, 1L))
                 .isInstanceOf(AccessDeniedException.class);
 
         verify(subscriptionPaymentMapper, never()).updateSubscriptionRecord(any());
@@ -215,7 +216,7 @@ class SubscriptionPaymentImplTest {
         given(subscriptionPaymentMapper.getSubscriptionRecordById(1L)).willReturn(cancelled);
 
         assertThatThrownBy(() -> subscriptionPaymentService.updateSubscriptionRecord(
-                new SubscriptionRecordUpdateRequest(1L, false), 4L))
+                new SubscriptionRecordUpdateRequest(1L, false), 4L, 4L, 1L))
                 .isInstanceOf(NoSuchElementException.class);
     }
 
@@ -224,7 +225,7 @@ class SubscriptionPaymentImplTest {
     void cancelSubscription_success() {
         given(subscriptionPaymentMapper.getSubscriptionRecordById(1L)).willReturn(activeRecord(4L));
 
-        subscriptionPaymentService.cancelSubscription(1L, 4L);
+        subscriptionPaymentService.cancelSubscription(1L, 4L, 4L);
 
         verify(subscriptionPaymentMapper).cancelSubscription(1L);
     }
@@ -234,7 +235,7 @@ class SubscriptionPaymentImplTest {
     void cancelSubscription_denied() {
         given(subscriptionPaymentMapper.getSubscriptionRecordById(1L)).willReturn(activeRecord(4L));
 
-        assertThatThrownBy(() -> subscriptionPaymentService.cancelSubscription(1L, 9L))
+        assertThatThrownBy(() -> subscriptionPaymentService.cancelSubscription(1L, 9L, 9L))
                 .isInstanceOf(AccessDeniedException.class);
 
         verify(subscriptionPaymentMapper, never()).cancelSubscription(any());
@@ -243,10 +244,16 @@ class SubscriptionPaymentImplTest {
     @Test
     @DisplayName("본인 구독 목록만 조회한다")
     void getMySubscriptionRecords() {
-        List<SubscriptionRecord> records = List.of(activeRecord(4L));
-        given(subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(4L)).willReturn(records);
+        SubscriptionRecord record = activeRecord(4L);
+        record.setStartedAt(LocalDate.of(2026, 10, 1));
+        record.setNextBillingAt(LocalDate.of(2026, 11, 1));
+        given(subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(4L)).willReturn(List.of(record));
+        given(subscriptionMapper.getSubscriptionById(1L)).willReturn(activePlan());
+        given(memberMapper.findById(2L)).willReturn(Member.builder().id(2L).nickname("코코").build());
 
-        assertThat(subscriptionPaymentService.getMySubscriptionRecords(4L, 4L)).isEqualTo(records);
+        assertThat(subscriptionPaymentService.getMySubscriptionRecords(4L, 4L))
+                .containsExactly(new MySubscriptionsResponse(
+                        1L, 4L, "코코", "베이직", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 1), true));
 
         assertThatThrownBy(() -> subscriptionPaymentService.getMySubscriptionRecords(4L, 9L))
                 .isInstanceOf(AccessDeniedException.class);

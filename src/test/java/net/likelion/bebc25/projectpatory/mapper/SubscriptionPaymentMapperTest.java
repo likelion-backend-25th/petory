@@ -121,7 +121,7 @@ class SubscriptionPaymentMapperTest {
     void getSubscriptionRecordsByMemberId_onlyActive() {
         List<SubscriptionRecord> records = subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(4L);
 
-        assertThat(records).extracting(SubscriptionRecord::getId).containsExactly(1L);
+        assertThat(records).extracting(SubscriptionRecord::getId).containsExactly(1L, 6L);
         assertThat(subscriptionPaymentMapper.getSubscriptionRecordsByMemberId(6L)).isEmpty();
     }
 

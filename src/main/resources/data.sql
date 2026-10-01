@@ -380,8 +380,8 @@ INSERT INTO post_interaction (id, member_id, post_id, interaction_type, created_
 (88, 12, 44, 'LIKE', '2025-07-25 09:00:00'),
 (89, 12, 44, 'BOOKMARK', '2025-07-25 09:01:00');
 
--- 7. payment (pay_method 컬럼에는 결제 상품 merchandise 값이 저장된다)
-INSERT INTO payment (id, member_id, target_member_id, payment_id, order_name, currency, total_amount, paid_amount, pay_method, status, transaction_id, pg_tx_id, receipt_url, fail_code, fail_message, cancel_amount, cancel_reason, created_at, paid_at, cancelled_at) VALUES
+-- 7. payment
+INSERT INTO payment (id, member_id, target_member_id, payment_id, order_name, currency, total_amount, paid_amount, merchandise, status, transaction_id, pg_tx_id, receipt_url, fail_code, fail_message, cancel_amount, cancel_reason, created_at, paid_at, cancelled_at) VALUES
 (6, 7, 2, 'ORD_1752634800000_a1b2c3', '간식 쏘기', 'KRW', 3000, 3000, 'singlePayment', 'PAID', 'tx_0000000006', 'pg_0000000006', 'https://receipt.example.com/pay/6', NULL, NULL, NULL, NULL, '2025-07-16 12:00:00', '2025-07-16 12:00:25', NULL),
 (7, 9, 13, 'ORD_1752724800000_d4e5f6', '간식 쏘기', 'KRW', 5000, 5000, 'singlePayment', 'PAID', 'tx_0000000007', 'pg_0000000007', 'https://receipt.example.com/pay/7', NULL, NULL, NULL, NULL, '2025-07-17 13:00:00', '2025-07-17 13:00:25', NULL),
 (8, 14, 10, 'ORD_1752800400000_g7h8i9', '펫 클럽 구독', 'KRW', 9900, 9900, 'automaticPayment', 'PAID', 'tx_0000000008', 'pg_0000000008', 'https://receipt.example.com/pay/8', NULL, NULL, NULL, NULL, '2025-07-18 10:00:00', '2025-07-18 10:00:20', NULL),

@@ -101,7 +101,7 @@
             currency,
             total_amount,
             paid_amount,
-            pay_method,
+            merchandise,
             status,
             created_at,
             paid_at,

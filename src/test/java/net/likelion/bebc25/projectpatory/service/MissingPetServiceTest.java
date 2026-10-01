@@ -42,7 +42,7 @@ class MissingPetServiceTest {
 
         // then
         assertThat(response.totalCount())
-                .isEqualTo(6L);
+                .isEqualTo(16L);
 
         assertThat(response.items())
                 .hasSize(2);

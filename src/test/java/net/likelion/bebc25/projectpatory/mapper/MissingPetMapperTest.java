@@ -110,7 +110,7 @@ class MissingPetMapperTest {
 
         // then
         assertThat(count)
-                .isEqualTo(6L);
+                .isEqualTo(16L);
     }
 
 

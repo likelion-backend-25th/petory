@@ -11,6 +11,10 @@ public interface MemberService {
 
     Member findMemberByEmail(String email);
 
+    boolean existsByEmail(String email);
+
+    boolean existsByNickname(String nickname);
+
     Member findMemberById(Long id);
 
     Profile getMyProfile(Member member, Long loginMemberId);

@@ -38,6 +38,24 @@ public class MemberRestController {
         this.postService = postService;
     }
 
+    @GetMapping("/email/exists")
+    @Operation(summary = "이메일 중복 확인", description = "이미 가입된 이메일이면 true. 로그인 없이 호출한다.")
+    public ResponseEntity<Boolean> emailExists(@RequestParam String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("이메일을 입력해 주세요.");
+        }
+        return ResponseEntity.ok(memberService.existsByEmail(email.trim()));
+    }
+
+    @GetMapping("/nickname/exists")
+    @Operation(summary = "닉네임 중복 확인", description = "이미 사용 중인 닉네임이면 true. 로그인 없이 호출한다.")
+    public ResponseEntity<Boolean> nicknameExists(@RequestParam String nickname) {
+        if (nickname == null || nickname.isBlank()) {
+            throw new IllegalArgumentException("닉네임을 입력해 주세요.");
+        }
+        return ResponseEntity.ok(memberService.existsByNickname(nickname.trim()));
+    }
+
     @PostMapping("/signup")
     @Operation(summary = "회원 가입", description = "신규 회원을 등록한다")
     public ResponseEntity<SignUpResponse> signUp(@RequestBody SignUpRequest request) {

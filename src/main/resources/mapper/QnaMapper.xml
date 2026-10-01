@@ -33,6 +33,9 @@
     </resultMap>
 
     <!-- QnA 무한 스크롤 조회 쿼리 (type = 2) -->
+    <!--
+        이미지 JOIN 때문에 게시글 1개가 여러 행이 되므로, 게시글을 먼저 LIMIT 으로 자른 뒤(서브쿼리) 이미지를 붙인다.
+    -->
     <select id="selectQnaListCursor" resultMap="QnaListResultMap">
         SELECT
         p.id,
@@ -58,17 +61,19 @@
         FROM post_interaction vi
         WHERE vi.post_id = p.id
         AND vi.interaction_type = 'VIEW') AS view_count
-        FROM post_main p
+        FROM (
+            SELECT *
+            FROM post_main
+            WHERE type = 2
+            <if test="lastPostId != null">
+                AND id &lt; #{lastPostId}
+            </if>
+            ORDER BY id DESC
+            LIMIT #{limit}
+        ) p
         INNER JOIN member m ON p.member_id = m.id
         LEFT JOIN post_image img ON p.id = img.post_id
-        <where>
-            AND p.type = 2
-            <if test="lastPostId != null">
-                AND p.id &lt; #{lastPostId}
-            </if>
-        </where>
         ORDER BY p.id DESC, img.sort_order ASC
-        LIMIT #{limit}
     </select>
 
     <!-- QnA 해시태그 검색 무한 스크롤 조회 쿼리 (type = 2) -->

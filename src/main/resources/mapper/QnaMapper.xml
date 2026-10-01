@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.QnaMapper">
+
+    <!-- QnA 목록 응답 DTO 매핑 정의 (PostListResponse 재사용) -->
+    <resultMap id="QnaListResultMap" type="net.likelion.bebc25.projectpatory.dto.PostListResponse">
+        <!-- 1. post_main (게시글 기본 정보) -->
+        <id property="id" column="id"/>
+        <result property="type" column="type"/>
+        <result property="content" column="content"/>
+        <result property="bgmUrl" column="bgm_url"/>
+        <result property="isSubscriberOnly" column="is_subscriber_only"/>
+        <result property="hashtags" column="hashtags"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+
+        <!-- 2. member (작성자 프로필 정보) -->
+        <result property="memberId" column="member_id"/>
+        <result property="nickname" column="nickname"/>
+        <result property="profileImage" column="profile_image"/>
+
+        <!-- 3. 반응/소셜 수치 (집계) -->
+        <result property="likeCount" column="like_count"/>
+        <result property="commentCount" column="comment_count"/>
+
+        <!-- 4. post_image (1:N 첨부 이미지 목록 매핑) -->
+        <collection property="imageUrls" ofType="java.lang.String">
+            <result column="image_url"/>
+        </collection>
+    </resultMap>
+
+    <!-- QnA 무한 스크롤 조회 쿼리 (type = 2) -->
+    <select id="selectQnaListCursor" resultMap="QnaListResultMap">
+        SELECT
+        p.id,
+        p.type,
+        p.content,
+        p.bgm_url,
+        p.is_subscriber_only,
+        p.hashtags,
+        p.created_at,
+        p.updated_at,
+        m.id AS member_id,
+        m.nickname,
+        m.profile_image,
+        img.image_url,
+        (SELECT COUNT(*)
+        FROM post_interaction pi
+        WHERE pi.post_id = p.id
+        AND pi.interaction_type = 'LIKE') AS like_count,
+        (SELECT COUNT(*)
+        FROM comment c
+        WHERE c.post_id = p.id) AS comment_count
+        FROM post_main p
+        INNER JOIN member m ON p.member_id = m.id
+        LEFT JOIN post_image img ON p.id = img.post_id
+        <where>
+            AND p.type = 2
+            <if test="lastPostId != null">
+                AND p.id &lt; #{lastPostId}
+            </if>
+        </where>
+        ORDER BY p.id DESC, img.sort_order ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- QnA 해시태그 검색 무한 스크롤 조회 쿼리 (type = 2) -->
+    <!--
+        hashtags 컬럼은 '#강아지 #산책 #한강' 처럼 공백으로 구분되어 저장된다.
+        끝에 공백을 하나 붙인 뒤 '%#검색어 %' 로 찾으면 태그 단위로 정확히 일치하는 게시글만 나온다.
+        예) '강아지' 검색 시 #강아지 는 찾고, #강아지간식 / #큰강아지 는 제외
+        이미지 JOIN 때문에 게시글 1개가 여러 행이 되므로, 게시글을 먼저 LIMIT 으로 자른 뒤(서브쿼리) 이미지를 붙인다.
+    -->
+    <select id="selectQnaListByHashtag" resultMap="QnaListResultMap">
+        SELECT
+        p.id,
+        p.type,
+        p.content,
+        p.bgm_url,
+        p.is_subscriber_only,
+        p.hashtags,
+        p.created_at,
+        p.updated_at,
+        m.id AS member_id,
+        m.nickname,
+        m.profile_image,
+        img.image_url,
+        (SELECT COUNT(*)
+        FROM post_interaction pi
+        WHERE pi.post_id = p.id
+        AND pi.interaction_type = 'LIKE') AS like_count,
+        (SELECT COUNT(*)
+        FROM comment c
+        WHERE c.post_id = p.id) AS comment_count
+        FROM (
+            SELECT *
+            FROM post_main
+            WHERE type = 2
+            AND CONCAT(hashtags, ' ') LIKE CONCAT('%#', #{hashtag}, ' %')
+            <if test="lastPostId != null">
+                AND id &lt; #{lastPostId}
+            </if>
+            ORDER BY id DESC
+            LIMIT #{limit}
+        ) p
+        INNER JOIN member m ON p.member_id = m.id
+        LEFT JOIN post_image img ON p.id = img.post_id
+        ORDER BY p.id DESC, img.sort_order ASC
+    </select>
+
+    <!-- QnA 작성: type=2, is_subscriber_only=0 고정 -->
+    <insert id="insertQna" parameterType="net.likelion.bebc25.projectpatory.dto.PostCreateRequest"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_main (
+        member_id,
+        type,
+        content,
+        bgm_url,
+        is_subscriber_only,
+        hashtags,
+        created_at,
+        updated_at
+        ) VALUES (
+        #{memberId},
+        2,
+        #{content},
+        #{bgmUrl},
+        0,
+        #{hashtags},
+        NOW(),
+        NOW()
+        )
+    </insert>
+
+    <!-- QnA 첨부 이미지 insert (리스트 순서 = sort_order) -->
+    <insert id="insertQnaImages">
+        INSERT INTO post_image (post_id, image_url, sort_order)
+        VALUES
+        <foreach collection="imageUrls" item="imageUrl" index="sortOrder" separator=",">
+            (#{postId}, #{imageUrl}, #{sortOrder})
+        </foreach>
+    </insert>
+
+    <!-- 게시글 유형 조회 (1: 피드, 2: QnA) -->
+    <select id="selectPostType" resultType="java.lang.Integer">
+        SELECT type
+        FROM post_main
+        WHERE id = #{postId}
+    </select>
+
+</mapper>

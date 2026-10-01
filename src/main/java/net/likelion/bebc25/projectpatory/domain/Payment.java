@@ -19,7 +19,7 @@ public class Payment {
     private String currency;        // KRW
     private Integer totalAmount;    // 결제 예정 금액
     private Integer paidAmount;     // 실제 결제 금액 (PAID일 때만)
-    private String payMethod;
+    private String merchandise;
     private String status;          // READY, PAID, FAILED, CANCELLED
     private String transactionId;
     private String pgTxId;

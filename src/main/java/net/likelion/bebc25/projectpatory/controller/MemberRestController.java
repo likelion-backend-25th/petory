@@ -91,7 +91,7 @@ public class MemberRestController {
             @PathVariable Long memberId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long loginMemberId = userDetails.getId();
+        Long loginMemberId = userDetails == null ? null : userDetails.getId();
         Member member = memberService.findMemberById(memberId);
         return ResponseEntity.ok(memberService.getMyProfile(member, loginMemberId));
     }

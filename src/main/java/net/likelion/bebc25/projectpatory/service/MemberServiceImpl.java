@@ -108,7 +108,7 @@ public class MemberServiceImpl implements MemberService {
                     .followings(followingCount)
                     .build();
         }
-        boolean isFollowing = followMapper.existsFollow(loginMemberId, memberId);
+        boolean isFollowing = loginMemberId != null && followMapper.existsFollow(loginMemberId, memberId);
         return MemberProfile.builder()
                 .id(member.getId())
                 .nickname(member.getNickname())

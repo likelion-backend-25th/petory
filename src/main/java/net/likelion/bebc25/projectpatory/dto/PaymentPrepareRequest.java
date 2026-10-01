@@ -2,6 +2,7 @@ package net.likelion.bebc25.projectpatory.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
@@ -17,7 +18,7 @@ public record PaymentPrepareRequest(
         @Positive(message = "결제 금액은 0보다 커야 합니다.")
         Integer totalAmount,    // 결제 예정 금액
 
-        @NotBlank(message = "결제 수단은 필수입니다.")
-        @Size(max = 30, message = "결제 수단은 30자 이하여야 합니다.")
-        String payMethod        // 결제 수단
+        @NotBlank(message = "결제 상품은 필수입니다.")
+        @Pattern(regexp = "singlePayment|automaticPayment", message = "결제 상품은 singlePayment 또는 automaticPayment만 가능합니다.")
+        String merchandise      // 결제 상품 (singlePayment: 간식 쏘기, automaticPayment: 구독하기)
 ) {}

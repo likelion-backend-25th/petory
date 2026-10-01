@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Missing Pet", description = "실종 동물 신고 관련 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/missing-pets")
+@RequestMapping("/api/v1/missing-pets")
 public class MissingPetController {
 
     private final MissingPetService missingPetService;

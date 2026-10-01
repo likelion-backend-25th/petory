@@ -86,4 +86,29 @@
                 #{status},
                 #{cancelAmount}, #{reason}, #{receiptUrl}, #{cancelledAt})
     </insert>
+
+
+<!--    결제 내역 조회 -->
+    <select id="findAllByMemberId"
+            resultType="net.likelion.bebc25.projectpatory.domain.Payment">
+
+        SELECT
+            id,
+            member_id,
+            target_member_id,
+            payment_id,
+            order_name,
+            currency,
+            total_amount,
+            paid_amount,
+            pay_method,
+            status,
+            created_at,
+            paid_at,
+            cancelled_at
+        FROM payment
+        WHERE member_id = #{memberId}
+        ORDER BY created_at DESC
+
+    </select>
 </mapper>

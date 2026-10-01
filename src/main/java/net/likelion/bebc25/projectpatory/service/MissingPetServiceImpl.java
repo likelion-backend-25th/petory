@@ -5,6 +5,7 @@ import net.likelion.bebc25.projectpatory.domain.MissingPetPost;
 import net.likelion.bebc25.projectpatory.domain.MissingPetStatus;
 import net.likelion.bebc25.projectpatory.dto.*;
 import net.likelion.bebc25.projectpatory.mapper.MissingPetMapper;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -159,7 +160,7 @@ public class MissingPetServiceImpl implements MissingPetService {
             Long memberId,
             Long id,
             MissingPetUpdateRequest request
-    ) {
+    ){
 
         // 1. 게시글 작성자 조회
         Long authorId =
@@ -174,7 +175,7 @@ public class MissingPetServiceImpl implements MissingPetService {
 
         // 3. 현재 로그인 회원이 작성자인지 확인
         if (!authorId.equals(memberId)) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     "실종 신고 게시글을 수정할 권한이 없습니다."
             );
         }
@@ -210,7 +211,7 @@ public class MissingPetServiceImpl implements MissingPetService {
             Long memberId,
             Long id,
             MissingPetStatusUpdateRequest request
-    ) {
+    ){
 
         // 1. 게시글 작성자 조회
         Long authorId =
@@ -225,7 +226,7 @@ public class MissingPetServiceImpl implements MissingPetService {
 
         // 3. 작성자 본인인지 확인
         if (!authorId.equals(memberId)) {
-            throw new IllegalArgumentException(
+            throw new AccessDeniedException(
                     "실종 신고 상태를 변경할 권한이 없습니다."
             );
         }

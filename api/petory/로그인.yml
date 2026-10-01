@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "email":"qudgh0217@example.com",
+        "email":"nabi@petory.com",
         "password":"password123"
       }
   auth:

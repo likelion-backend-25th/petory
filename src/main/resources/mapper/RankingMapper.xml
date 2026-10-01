@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="net.likelion.bebc25.projectpatory.mapper.RankingMapper">
+
+    <!-- 팔로워 수 기준 랭킹 -->
+    <select id="selectByFollowerCount" resultType="PetRankingResponse">
+        SELECT
+            ranked.memberId,
+            ranked.nickname,
+            ranked.profileImage,
+            ranked.followerCount
+        FROM (
+            SELECT
+                m.id AS memberId,
+                m.nickname AS nickname,
+                m.profile_image AS profileImage,
+                COUNT(f.id) AS followerCount
+            FROM member m
+            LEFT JOIN follow f ON f.following_id = m.id
+            WHERE m.status = 'ACTIVE'
+            GROUP BY m.id, m.nickname, m.profile_image
+        ) ranked
+        <where>
+            <if test="lastFollowerCount != null and lastMemberId != null">
+                (
+                    ranked.followerCount &lt; #{lastFollowerCount}
+                    OR (
+                        ranked.followerCount = #{lastFollowerCount}
+                        AND ranked.memberId &lt; #{lastMemberId}
+                    )
+                )
+            </if>
+        </where>
+        ORDER BY ranked.followerCount DESC, ranked.memberId DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

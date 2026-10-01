@@ -1,7 +1,7 @@
 # 간식쏘기 결제 시스템 뜯어보기 (PortOne V2 단건 결제)
 
 > 코드 기준: `feat-webhook/65` 이후 결제 리팩터링(도메인 분리, Dto 접미사 제거, record 전환) 반영 상태
-> 공부 방법: 각 장을 읽고 → 코드 파일을 직접 열어 대조 → 장 끝의 질문에 먼저 답해 보고 → 맨 아래 정답과 비교
+> 공부 방법: 각 장을 읽고 → 코드 파일을 직접 열어 대조 → 장 끝의 질문에 먼저 답해 보고 → 질문 아래 "정답 보기"를 펼쳐 비교
 
 ---
 
@@ -24,7 +24,6 @@
 14. [예외 → HTTP 상태 코드 정리](#14-예외--http-상태-코드-정리)
 15. [테스트 코드 읽기](#15-테스트-코드-읽기)
 16. [알려진 한계와 개선 과제](#16-알려진-한계와-개선-과제)
-17. [정답 모음](#17-정답-모음)
 
 ---
 
@@ -70,9 +69,32 @@ READY ────┼──▶ FAILED     (PortOne이 FAILED라고 함)
 
 ### 질문
 
-- **Q0-1.** 사용자가 결제창에서 금액을 5000원에서 100원으로 조작해서 결제했다. 우리는 어떤 컬럼과 무엇을 비교해서 알아챌 수 있을까?
-- **Q0-2.** 이미 PAID인 결제에 웹훅이 또 오면 어떻게 처리될까?
-- **Q0-3.** ③ `/complete`만 있으면 충분할 것 같은데, ④ 웹훅은 왜 필요할까?
+**Q0-1.** 사용자가 결제창에서 금액을 5000원에서 100원으로 조작해서 결제했다. 우리는 어떤 컬럼과 무엇을 비교해서 알아챌 수 있을까?
+
+<details>
+<summary>정답 보기</summary>
+
+`/prepare` 때 서버가 `total_amount = 5000`을 DB에 저장해 둔다. `/complete`나 웹훅이 오면 서버가 PortOne에 직접 물어보고, PortOne은 "실제로 100원 결제됐다"고 답한다. `payment.total_amount`(5000)와 PortOne의 `amount.total`(100)이 다르니 위변조로 판단하고 자동 취소한다.
+
+</details>
+
+**Q0-2.** 이미 PAID인 결제에 웹훅이 또 오면 어떻게 처리될까?
+
+<details>
+<summary>정답 보기</summary>
+
+`handleWebhook`이 `findByPaymentIdForUpdate`로 결제를 조회한다. 상태는 PAID다. `syncWithPortOne`의 첫 번째 검사(`!payment.isReady()`)에서 바로 반환한다. PortOne API는 호출하지 않는다.
+
+</details>
+
+**Q0-3.** ③ `/complete`만 있으면 충분할 것 같은데, ④ 웹훅은 왜 필요할까?
+
+<details>
+<summary>정답 보기</summary>
+
+사용자가 결제 직후 브라우저를 닫거나, 네트워크가 끊기거나, 프론트 버그로 `/complete`가 안 오면 DB가 영원히 READY로 남는다. 웹훅은 PortOne 서버가 직접 보내니까 브라우저 상태와 무관하게 확정할 수 있다.
+
+</details>
 
 ---
 
@@ -126,8 +148,23 @@ READY ────┼──▶ FAILED     (PortOne이 FAILED라고 함)
 
 ### 질문
 
-- **Q1-1.** `total_amount`는 NOT NULL, `paid_amount`는 NULL 허용인 이유는?
-- **Q1-2.** `cancel_payment.payment_id`에 주문번호(`ORD_...`)가 아니라 숫자 PK를 넣는 이유는?
+**Q1-1.** `total_amount`는 NOT NULL, `paid_amount`는 NULL 허용인 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+`total_amount`는 `/prepare` 시점에 이미 알고, `paid_amount`는 결제가 끝나야 알 수 있기 때문이다. FAILED면 끝까지 null이다.
+
+</details>
+
+**Q1-2.** `cancel_payment.payment_id`에 주문번호(`ORD_...`)가 아니라 숫자 PK를 넣는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+숫자 PK가 JOIN과 FK에 더 작고 빠르다. 그리고 FK(`REFERENCES payment(id)`)로 묶어서, 없는 결제에 대한 취소 이력이 들어갈 수 없게 DB가 보장한다.
+
+</details>
 
 ---
 
@@ -196,9 +233,34 @@ DB에 넣을 때 / 꺼낼 때 → Payment (필드 20개, 테이블 컬럼과 1:1
 
 ### 질문
 
-- **Q2-1.** `PortOnePaymentResponse`는 도메인일까 DTO일까? 이유는?
-- **Q2-2.** 컨트롤러가 `PaymentPrepareResponse` 대신 `Payment`를 그대로 반환하면 어떤 문제가 생길까? 두 가지 이상.
-- **Q2-3.** `Payment`를 record로 바꾸면 무엇이 깨질까?
+**Q2-1.** `PortOnePaymentResponse`는 도메인일까 DTO일까? 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+DTO. PortOne 서버(백엔드 바깥)와 주고받고, 모양을 PortOne이 정하고, 한 번 받아서 쓰고 버린다. 서비스가 필요한 값만 `Payment`/DB로 옮겨 적는다.
+
+</details>
+
+**Q2-2.** 컨트롤러가 `PaymentPrepareResponse` 대신 `Payment`를 그대로 반환하면 어떤 문제가 생길까? 두 가지 이상.
+
+<details>
+<summary>정답 보기</summary>
+
+- `failCode`, `pgTxId`, `memberId` 등 내부 정보가 프론트에 노출된다.
+- 테이블 컬럼을 바꾸면 API 응답도 같이 바뀌어서 프론트가 깨진다.
+- API 스펙과 DB 구조가 묶여서 따로 바꿀 수 없다.
+
+</details>
+
+**Q2-3.** `Payment`를 record로 바꾸면 무엇이 깨질까?
+
+<details>
+<summary>정답 보기</summary>
+
+`savePayment`의 `useGeneratedKeys`가 INSERT 후 id를 객체에 넣지 못한다. record는 불변이다. (MyBatis SELECT 결과 매핑도 생성자 방식으로 바꿔야 한다.)
+
+</details>
 
 ---
 
@@ -325,10 +387,43 @@ public record PortOneWebhookRequest(String type, String timestamp, Data data) {
 
 ### 질문
 
-- **Q3-1.** 프론트가 `"orderName": "   "`(공백 3칸)을 보내면 통과할까? `@NotBlank` 대신 `@NotNull`이었다면?
-- **Q3-2.** 해커가 /prepare body에 `"memberId": 5`를 몰래 넣어서 보내면 5번 회원 이름으로 결제가 만들어질까? 이유 두 가지.
-- **Q3-3.** `totalAmount: -5000`을 보내면 어느 단계에서 막히고 응답 코드는 몇일까?
-- **Q3-4.** `PortOnePaymentResponse`에서 `@JsonIgnoreProperties(ignoreUnknown = true)`를 빼면 어떤 일이 생길 수 있을까?
+**Q3-1.** 프론트가 `"orderName": "   "`(공백 3칸)을 보내면 통과할까? `@NotBlank` 대신 `@NotNull`이었다면?
+
+<details>
+<summary>정답 보기</summary>
+
+`@NotBlank`면 공백만 있는 문자열도 막혀서 400. `@NotNull`이었다면 null만 막으니 `"   "`는 통과하고 공백 주문명이 DB에 저장된다.
+
+</details>
+
+**Q3-2.** 해커가 /prepare body에 `"memberId": 5`를 몰래 넣어서 보내면 5번 회원 이름으로 결제가 만들어질까? 이유 두 가지.
+
+<details>
+<summary>정답 보기</summary>
+
+안 만들어진다.
+1. 받는 칸이 없다. `PaymentPrepareRequest`에는 `memberId` 필드가 없고, Spring Boot의 Jackson은 기본적으로 DTO에 없는 JSON 필드를 에러 없이 조용히 버린다.
+2. 서비스는 JWT의 id만 쓴다. 칸이 있었더라도 서비스는 request가 아니라 JWT에서 꺼낸 `currentMemberId`를 넣는다 (`Payment.builder().memberId(currentMemberId)`).
+
+</details>
+
+**Q3-3.** `totalAmount: -5000`을 보내면 어느 단계에서 막히고 응답 코드는 몇일까?
+
+<details>
+<summary>정답 보기</summary>
+
+컨트롤러의 `@Valid` 단계에서 `@Positive`에 걸린다. `MethodArgumentNotValidException` → 400. 서비스는 실행되지 않는다.
+
+</details>
+
+**Q3-4.** `PortOnePaymentResponse`에서 `@JsonIgnoreProperties(ignoreUnknown = true)`를 빼면 어떤 일이 생길 수 있을까?
+
+<details>
+<summary>정답 보기</summary>
+
+PortOne 응답에는 우리가 선언하지 않은 필드가 많다. Jackson의 `FAIL_ON_UNKNOWN_PROPERTIES`가 켜진 환경이면 역직렬화가 실패해서 결제 조회가 전부 에러가 된다. (Spring Boot 기본값은 꺼져 있지만, 전역 설정에 의존하지 않고 클래스에 명시해 둔 것이다.)
+
+</details>
 
 ---
 
@@ -364,8 +459,23 @@ public class Payment {
 
 ### 질문
 
-- **Q4-1.** `@NoArgsConstructor`를 지우면 어디서 문제가 생길까?
-- **Q4-2.** `isReady()`를 `status.equals("READY")`로 쓰면 어떤 위험이 있을까?
+**Q4-1.** `@NoArgsConstructor`를 지우면 어디서 문제가 생길까?
+
+<details>
+<summary>정답 보기</summary>
+
+MyBatis가 SELECT 결과를 담을 빈 `Payment` 객체를 만들지 못한다. (`@AllArgsConstructor`만 있으면 MyBatis가 생성자 매핑을 시도하다가 컬럼 수/순서가 안 맞아 에러가 날 수 있다.) Jackson 등 기본 생성자가 필요한 라이브러리도 영향을 받는다.
+
+</details>
+
+**Q4-2.** `isReady()`를 `status.equals("READY")`로 쓰면 어떤 위험이 있을까?
+
+<details>
+<summary>정답 보기</summary>
+
+`status`가 null이면 `NullPointerException`. `"READY".equals(status)`는 null이면 그냥 false.
+
+</details>
 
 ---
 
@@ -425,8 +535,23 @@ member_id AS memberId
 
 ### 질문
 
-- **Q5-1.** XML의 `namespace`를 오타 내면 어떤 에러가 언제 날까?
-- **Q5-2.** `#{paymentId}` 대신 `'${paymentId}'`로 썼다면 어떤 공격이 가능할까?
+**Q5-1.** XML의 `namespace`를 오타 내면 어떤 에러가 언제 날까?
+
+<details>
+<summary>정답 보기</summary>
+
+앱 실행 후 해당 메서드를 처음 호출할 때 `BindingException: Invalid bound statement (not found)`가 난다. 인터페이스와 XML이 연결되지 않았다는 뜻이다.
+
+</details>
+
+**Q5-2.** `#{paymentId}` 대신 `'${paymentId}'`로 썼다면 어떤 공격이 가능할까?
+
+<details>
+<summary>정답 보기</summary>
+
+SQL 인젝션. 예를 들어 `paymentId`에 `' OR '1'='1`을 넣으면 `WHERE payment_id = '' OR '1'='1'`이 되어 조건이 무력화된다. `#{}`는 값을 `?`에 바인딩해서 이런 문자열도 그냥 값으로 취급한다.
+
+</details>
 
 ---
 
@@ -545,9 +670,36 @@ return PaymentPrepareResponse.from(payment);
 
 ### 질문
 
-- **Q6-1.** `targetMemberId`가 1000인 회원에게 1000번 회원이 결제하려 할 때, `==`로 비교했다면 어떻게 될까?
-- **Q6-2.** 주문번호를 프론트가 만들어서 보내게 하면 어떤 장난이 가능할까?
-- **Q6-3.** /prepare에서 5000원을 보내 놓고 결제창에서 100원으로 결제하면 /prepare에서 막을 수 있을까? 막을 수 없다면 어디서 잡힐까?
+**Q6-1.** `targetMemberId`가 1000인 회원에게 1000번 회원이 결제하려 할 때, `==`로 비교했다면 어떻게 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+`Long` 1000은 캐시 범위(-128~127) 밖이라 서로 다른 객체일 수 있다. `==`가 false가 되어 본인 결제 검사를 통과해 버린다.
+
+</details>
+
+**Q6-2.** 주문번호를 프론트가 만들어서 보내게 하면 어떤 장난이 가능할까?
+
+<details>
+<summary>정답 보기</summary>
+
+이미 존재하는 남의 주문번호를 재사용하거나, 추측하기 쉬운 번호를 만들어 충돌을 일으키거나, 결제 완료된 주문번호로 다시 결제를 시도하는 등의 장난이 가능하다. 서버가 만들면 번호의 형식과 유일성을 서버가 보장한다.
+
+</details>
+
+**Q6-3.** /prepare에서 5000원을 보내 놓고 결제창에서 100원으로 결제하면 /prepare에서 막을 수 있을까? 막을 수 없다면 어디서 잡힐까?
+
+<details>
+<summary>정답 보기</summary>
+
+`/prepare`에서는 막을 수 없다. `/complete`나 웹훅의 금액 비교에서 잡힌다.
+- `/prepare` 시점에는 요청이 5000원이라서 통과하고, DB에 `total_amount = 5000`이 저장된다.
+- 이후 `/complete`나 웹훅이 오면 `syncWithPortOne()`이 PortOne에 조회한다. 실제 결제는 100원이라 DB의 5000과 비교해 불일치를 발견한다.
+- `handleAmountMismatch()`가 PortOne에 결제 취소를 요청하고, DB를 CANCELLED로 바꾸고, `cancel_payment`에 이력을 남긴다.
+- `/prepare`의 역할은 막기가 아니라 **나중에 비교할 기준을 박제해 두기**다.
+
+</details>
 
 ---
 
@@ -672,11 +824,50 @@ if (!payment.getMemberId().equals(currentMemberId)) {
 
 ### 질문
 
-- **Q7-1.** 해커가 남의 주문번호를 알아내서 자기 JWT로 `/complete`를 보냈다. 어느 단계에서 막히고 응답 코드는 몇일까? 그 사이 잡혔던 행 잠금은 어떻게 될까?
-- **Q7-2.** `@Transactional`을 지우면 `FOR UPDATE` 잠금은 언제 풀릴까? `/complete`와 웹훅이 동시에 오면 어떤 일이 생길 수 있을까?
-- **Q7-3.** `findByPaymentIdForUpdate`로 받은 `payment`에서 `payment.getOrderName()`을 부르면 무엇이 나올까? 왜?
-- **Q7-4.** `payment_id`에 UNIQUE 인덱스가 없다면 `FOR UPDATE`가 어떻게 달라질까?
-- **Q7-5.** null 검사와 본인 확인의 순서를 바꾸면 어떻게 될까?
+**Q7-1.** 해커가 남의 주문번호를 알아내서 자기 JWT로 `/complete`를 보냈다. 어느 단계에서 막히고 응답 코드는 몇일까? 그 사이 잡혔던 행 잠금은 어떻게 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+1(보안 필터)은 통과한다. JWT 자체는 유효하니까. 2(컨트롤러)도 통과한다. 4(`FOR UPDATE`)에서 그 행을 잠깐 잠근다. 5(본인 확인)에서 `payment.getMemberId()`(원래 주인)와 `currentMemberId`(해커)가 달라서 `IllegalArgumentException` → 400 "존재하지 않는 주문 번호입니다". 예외로 트랜잭션이 롤백되면서 잠금도 즉시 풀린다. 해커는 그 주문이 실제로 있는지조차 알 수 없다.
+
+</details>
+
+**Q7-2.** `@Transactional`을 지우면 `FOR UPDATE` 잠금은 언제 풀릴까? `/complete`와 웹훅이 동시에 오면 어떤 일이 생길 수 있을까?
+
+<details>
+<summary>정답 보기</summary>
+
+트랜잭션이 없으면 MySQL의 autocommit 모드로 SELECT 한 문장이 끝나는 순간 커밋되고 잠금이 풀린다. `FOR UPDATE`가 사실상 의미 없어진다. `/complete`와 웹훅이 둘 다 READY를 읽고, 둘 다 PortOne을 조회하고, 둘 다 UPDATE를 시도한다. (13장의 `AND status = 'READY'` 덕분에 두 번째 UPDATE는 0행이 되지만, 위변조 케이스라면 PortOne 취소 API가 두 번 호출될 수 있다.)
+
+</details>
+
+**Q7-3.** `findByPaymentIdForUpdate`로 받은 `payment`에서 `payment.getOrderName()`을 부르면 무엇이 나올까? 왜?
+
+<details>
+<summary>정답 보기</summary>
+
+null. `findByPaymentIdForUpdate`의 SELECT에 `order_name`이 없어서 MyBatis가 그 필드를 채우지 않는다.
+
+</details>
+
+**Q7-4.** `payment_id`에 UNIQUE 인덱스가 없다면 `FOR UPDATE`가 어떻게 달라질까?
+
+<details>
+<summary>정답 보기</summary>
+
+MySQL이 `payment_id`로 행을 찾으려고 테이블을 훑으면서 지나간 행에 전부 잠금을 건다. 사실상 테이블 전체가 잠겨서 다른 사람의 결제까지 기다리게 된다.
+
+</details>
+
+**Q7-5.** null 검사와 본인 확인의 순서를 바꾸면 어떻게 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+주문이 없을 때 `payment`가 null인데 `payment.getMemberId()`를 먼저 부르니 `NullPointerException` → 500.
+
+</details>
 
 ---
 
@@ -783,10 +974,41 @@ return new PaymentCompleteResponse(paymentId, "PAID", actualPaidAmount, "결제 
 
 ### 질문
 
-- **Q8-1.** 이미 PAID인 결제에 웹훅이 또 오면 코드 어느 줄에서 끝나고, PortOne API는 몇 번 호출될까?
-- **Q8-2.** ③에서 DB를 FAILED로 바꾸지 않고 그대로 두는 이유는?
-- **Q8-3.** 금액 비교를 `expectedAmount != actualPaidAmount`로 쓰면 어떤 버그가 생길까? 어떤 금액부터?
-- **Q8-4.** `getPortOnePayment`에서 `body.status() == null` 검사를 빼면 어디서 무슨 에러가 날까?
+**Q8-1.** 이미 PAID인 결제에 웹훅이 또 오면 코드 어느 줄에서 끝나고, PortOne API는 몇 번 호출될까?
+
+<details>
+<summary>정답 보기</summary>
+
+`syncWithPortOne`의 ① `if (!payment.isReady())`에서 반환한다. PortOne API는 0번 호출된다.
+
+</details>
+
+**Q8-2.** ③에서 DB를 FAILED로 바꾸지 않고 그대로 두는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+PortOne이 READY/PENDING이라는 건 아직 결제가 진행 중이라는 뜻이다. 여기서 FAILED로 확정하면 나중에 실제로 결제가 성공해도 `AND status = 'READY'` 때문에 PAID로 바꿀 수 없다. 돈은 나갔는데 DB는 FAILED인 최악의 상황이 된다.
+
+</details>
+
+**Q8-3.** 금액 비교를 `expectedAmount != actualPaidAmount`로 쓰면 어떤 버그가 생길까? 어떤 금액부터?
+
+<details>
+<summary>정답 보기</summary>
+
+`Integer`끼리 `!=`는 객체 비교다. -128~127은 캐시된 같은 객체라 우연히 맞지만, 128원 이상이면 값이 같아도 다른 객체라서 `!=`가 true가 된다. 정상 결제(5000원 = 5000원)가 전부 위변조로 판단되어 자동 취소된다.
+
+</details>
+
+**Q8-4.** `getPortOnePayment`에서 `body.status() == null` 검사를 빼면 어디서 무슨 에러가 날까?
+
+<details>
+<summary>정답 보기</summary>
+
+`portOneStatus`가 null이 되고 `portOneStatus.equals("FAILED")`에서 `NullPointerException` → 500.
+
+</details>
 
 ---
 
@@ -837,8 +1059,23 @@ private PaymentCompleteResponse handleFailedPayment(String paymentId, PortOnePay
 
 ### 질문
 
-- **Q9-1.** FAILED일 때 PortOne 취소 API를 부르지 않는 이유는?
-- **Q9-2.** `updatePaymentFail`에 FAILED를 넘기면 `cancelled_at`은 어떤 값이 될까?
+**Q9-1.** FAILED일 때 PortOne 취소 API를 부르지 않는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+FAILED는 돈이 안 나간 상태다. 취소할 결제가 없다.
+
+</details>
+
+**Q9-2.** `updatePaymentFail`에 FAILED를 넘기면 `cancelled_at`은 어떤 값이 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+`IF('FAILED' = 'CANCELLED', NOW(), NULL)` → NULL.
+
+</details>
 
 ---
 
@@ -906,9 +1143,32 @@ PortOne 취소는 **외부 시스템**이라 DB 롤백으로 되돌릴 수 없�
 
 ### 질문
 
-- **Q10-1.** `cancel_amount`에 5000(예정 금액)이 아니라 100(실제 금액)을 넣는 이유는?
-- **Q10-2.** PortOne 취소 요청과 DB 업데이트 순서를 바꾸면 어떤 위험이 있을까?
-- **Q10-3.** PortOne 취소 응답이 null이면 `cancel_payment`의 `cancellation_id`에는 무엇이 들어갈까? `cancellation_id`가 UNIQUE인데 null이 여러 개 들어가도 괜찮을까?
+**Q10-1.** `cancel_amount`에 5000(예정 금액)이 아니라 100(실제 금액)을 넣는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+실제로 사용자 카드에서 나간 돈은 100원이고, 돌려주는 돈도 100원이다. 기록은 실제 돈의 흐름과 맞아야 한다.
+
+</details>
+
+**Q10-2.** PortOne 취소 요청과 DB 업데이트 순서를 바꾸면 어떤 위험이 있을까?
+
+<details>
+<summary>정답 보기</summary>
+
+지금처럼 한 트랜잭션 안이면, PortOne 취소가 예외를 던질 때 앞의 DB 변경도 롤백되니 결과는 같다. 하지만 DB 변경이 먼저 커밋되는 구조라면(별도 트랜잭션, 실패를 삼키는 코드) PortOne 취소가 실패했을 때 **돈은 결제됐는데 DB는 CANCELLED**가 된다. 사용자는 돈을 잃고, 우리는 취소된 줄 안다. 그래서 외부 호출 성공을 먼저 확인하고 DB를 확정하는 순서가 원칙이다.
+
+</details>
+
+**Q10-3.** PortOne 취소 응답이 null이면 `cancel_payment`의 `cancellation_id`에는 무엇이 들어갈까? `cancellation_id`가 UNIQUE인데 null이 여러 개 들어가도 괜찮을까?
+
+<details>
+<summary>정답 보기</summary>
+
+null. MySQL의 UNIQUE 인덱스는 null을 여러 개 허용한다 (null은 서로 같지 않다고 본다). 그래서 괜찮다.
+
+</details>
 
 ---
 
@@ -990,10 +1250,41 @@ private LocalDateTime toKoreanTime(String isoDateTime) {
 
 ### 질문
 
-- **Q11-1.** PortOne API를 프론트에서 직접 호출하면 안 되는 이유는?
-- **Q11-2.** `catch (RestClientException e)`를 `catch (HttpClientErrorException e)`보다 위에 쓰면?
-- **Q11-3.** PortOne 5xx일 때 우리 서버가 500이 아니라 502를 주는 이유는?
-- **Q11-4.** `"2026-09-28T15:30:00Z"`는 한국 시간으로 언제일까?
+**Q11-1.** PortOne API를 프론트에서 직접 호출하면 안 되는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+API Secret이 브라우저 코드에 들어가서 누구나 볼 수 있게 된다. 그 키로 우리 상점의 결제를 조회하고 **취소**까지 할 수 있다. 또 브라우저가 "PortOne이 PAID래요"라고 하는 걸 믿어야 해서 금액 검증이 무의미해진다.
+
+</details>
+
+**Q11-2.** `catch (RestClientException e)`를 `catch (HttpClientErrorException e)`보다 위에 쓰면?
+
+<details>
+<summary>정답 보기</summary>
+
+컴파일 에러. 부모(`RestClientException`)가 먼저 다 잡아 버리면 자식 catch는 절대 실행되지 않는 코드(unreachable)가 되기 때문이다.
+
+</details>
+
+**Q11-3.** PortOne 5xx일 때 우리 서버가 500이 아니라 502를 주는 이유는?
+
+<details>
+<summary>정답 보기</summary>
+
+500은 "우리 서버 내부 문제", 502 Bad Gateway는 "우리가 중계하는 상대 서버가 이상한 응답을 줬다"는 뜻이다. 원인을 정확히 알려 줘야 프론트/운영자가 대응할 수 있다. 웹훅의 경우 PortOne이 재전송하게 만드는 효과도 있다.
+
+</details>
+
+**Q11-4.** `"2026-09-28T15:30:00Z"`는 한국 시간으로 언제일까?
+
+<details>
+<summary>정답 보기</summary>
+
+UTC+9 → 2026-09-29 00:30:00 (날짜가 바뀐다).
+
+</details>
 
 ---
 
@@ -1081,10 +1372,41 @@ public void handleWebhook(PortOneWebhookRequest webhook) {
 
 ### 질문
 
-- **Q12-1.** 웹훅에는 본인 확인이 없다. 왜 없어도 될까?
-- **Q12-2.** 해커가 가짜 `Transaction.Paid` 웹훅을 보내면 결제가 PAID가 될까?
-- **Q12-3.** DB에 없는 주문번호로 웹훅이 오면 왜 예외를 던지지 않고 조용히 끝낼까?
-- **Q12-4.** 그런데 PortOne 5xx일 때는 왜 예외를 던질까?
+**Q12-1.** 웹훅에는 본인 확인이 없다. 왜 없어도 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+웹훅은 "누가 요청했나"로 판단하지 않는다. 본문에서 주문번호만 꺼내고, 실제 결제 상태와 금액은 PortOne API에 직접 물어봐서 판단한다. 누가 보냈든 결과는 PortOne의 실제 상태대로만 바뀐다.
+
+</details>
+
+**Q12-2.** 해커가 가짜 `Transaction.Paid` 웹훅을 보내면 결제가 PAID가 될까?
+
+<details>
+<summary>정답 보기</summary>
+
+안 된다. 우리 서버가 PortOne API에 다시 물어보는데, 실제로 결제가 안 됐으면 PortOne은 READY나 FAILED를 돌려준다. 결제가 실제로 됐다면 원래 PAID가 되는 게 맞으니 문제없다.
+
+</details>
+
+**Q12-3.** DB에 없는 주문번호로 웹훅이 오면 왜 예외를 던지지 않고 조용히 끝낼까?
+
+<details>
+<summary>정답 보기</summary>
+
+예외 → 4xx/5xx 응답 → PortOne이 같은 웹훅을 재전송한다. 그런데 DB에 없는 주문은 몇 번을 다시 보내도 계속 없다. 쓸데없는 재전송만 반복되니 200으로 받고 끝낸다.
+
+</details>
+
+**Q12-4.** 그런데 PortOne 5xx일 때는 왜 예외를 던질까?
+
+<details>
+<summary>정답 보기</summary>
+
+PortOne 5xx는 일시적인 장애일 가능성이 크다. 502를 주면 PortOne이 나중에 다시 보내 주고, 그때 PortOne이 살아 있으면 정상 처리된다. 200을 주면 그 웹훅은 영영 다시 안 온다.
+
+</details>
 
 ---
 
@@ -1102,7 +1424,14 @@ WHERE payment_id = #{paymentId}
 
 ### 질문
 
-- **Q13-1.** 이미 PAID인 결제에 `updatePaymentFail(..., "CANCELLED", ...)`가 실행되면 DB는 어떻게 될까? 반환값은?
+**Q13-1.** 이미 PAID인 결제에 `updatePaymentFail(..., "CANCELLED", ...)`가 실행되면 DB는 어떻게 될까? 반환값은?
+
+<details>
+<summary>정답 보기</summary>
+
+`WHERE ... AND status = 'READY'` 조건에 안 맞아서 아무 행도 바뀌지 않는다. DB는 PAID 그대로. 반환값은 0. 에러는 나지 않는다.
+
+</details>
 
 ---
 
@@ -1125,7 +1454,14 @@ WHERE payment_id = #{paymentId}
 
 ### 질문
 
-- **Q14-1.** 서비스에서 `throw new Exception(...)`(checked)을 던지면 `@Transactional`은 롤백할까?
+**Q14-1.** 서비스에서 `throw new Exception(...)`(checked)을 던지면 `@Transactional`은 롤백할까?
+
+<details>
+<summary>정답 보기</summary>
+
+기본적으로 롤백하지 않는다. `@Transactional`은 `RuntimeException`과 `Error`만 롤백한다. checked exception도 롤백하려면 `@Transactional(rollbackFor = Exception.class)`.
+
+</details>
 
 ---
 
@@ -1199,8 +1535,23 @@ class PaymentServiceImplTest {
 
 ### 질문
 
-- **Q15-1.** `complete_AlreadyPaid`에서 "PortOne을 다시 호출하지 않았다"는 걸 어떻게 확인할까?
-- **Q15-2.** 이 단위 테스트가 전부 통과해도 `FOR UPDATE`가 빠진 버그는 잡을 수 없다. 왜?
+**Q15-1.** `complete_AlreadyPaid`에서 "PortOne을 다시 호출하지 않았다"는 걸 어떻게 확인할까?
+
+<details>
+<summary>정답 보기</summary>
+
+`verify(restTemplate, never()).exchange(...)` 또는 `verifyNoInteractions(restTemplate)`로 가짜 RestTemplate이 호출되지 않았음을 확인한다.
+
+</details>
+
+**Q15-2.** 이 단위 테스트가 전부 통과해도 `FOR UPDATE`가 빠진 버그는 잡을 수 없다. 왜?
+
+<details>
+<summary>정답 보기</summary>
+
+`paymentMapper`가 가짜(Mock)라서 SQL이 실행되지 않는다. `findByPaymentIdForUpdate`는 `given`으로 정해 둔 객체를 돌려줄 뿐, 실제 잠금이 걸리는지는 알 수 없다. 이걸 확인하려면 실제 DB를 붙인 통합 테스트에서 두 스레드로 동시에 호출해 봐야 한다.
+
+</details>
 
 ---
 
@@ -1221,172 +1572,3 @@ class PaymentServiceImplTest {
 | 11 | 오래된 READY가 쌓인다 | 결제창만 열고 닫은 주문이 계속 READY | 스케줄러로 N시간 지난 READY 정리 |
 | 12 | 결제 테이블 `ON DELETE CASCADE` | 회원 탈퇴 시 결제 기록 삭제 | 결제 기록은 보관 (소프트 삭제) |
 | 13 | `schema.sql`에 DROP + `sql.init.mode: always` | 운영 서버 재시작 시 DB 초기화 | 운영에서는 `never` |
-
----
-
-## 17. 정답 모음
-
-> 먼저 답을 적어 보고 펼쳐 보기
-
-<details>
-<summary>0장</summary>
-
-**Q0-1.** `/prepare` 때 서버가 `total_amount = 5000`을 DB에 저장해 둔다. `/complete`나 웹훅이 오면 서버가 PortOne에 직접 물어보고, PortOne은 "실제로 100원 결제됐다"고 답한다. `payment.total_amount`(5000)와 PortOne의 `amount.total`(100)이 다르니 위변조로 판단하고 자동 취소한다.
-
-**Q0-2.** `handleWebhook`이 `findByPaymentIdForUpdate`로 결제를 조회한다. 상태는 PAID다. `syncWithPortOne`의 첫 번째 검사(`!payment.isReady()`)에서 바로 반환한다. PortOne API는 호출하지 않는다.
-
-**Q0-3.** 사용자가 결제 직후 브라우저를 닫거나, 네트워크가 끊기거나, 프론트 버그로 `/complete`가 안 오면 DB가 영원히 READY로 남는다. 웹훅은 PortOne 서버가 직접 보내니까 브라우저 상태와 무관하게 확정할 수 있다.
-</details>
-
-<details>
-<summary>1장</summary>
-
-**Q1-1.** `total_amount`는 `/prepare` 시점에 이미 알고, `paid_amount`는 결제가 끝나야 알 수 있기 때문이다. FAILED면 끝까지 null이다.
-
-**Q1-2.** 숫자 PK가 JOIN과 FK에 더 작고 빠르다. 그리고 FK(`REFERENCES payment(id)`)로 묶어서, 없는 결제에 대한 취소 이력이 들어갈 수 없게 DB가 보장한다.
-</details>
-
-<details>
-<summary>2장</summary>
-
-**Q2-1.** DTO. PortOne 서버(백엔드 바깥)와 주고받고, 모양을 PortOne이 정하고, 한 번 받아서 쓰고 버린다. 서비스가 필요한 값만 `Payment`/DB로 옮겨 적는다.
-
-**Q2-2.**
-- `failCode`, `pgTxId`, `memberId` 등 내부 정보가 프론트에 노출된다.
-- 테이블 컬럼을 바꾸면 API 응답도 같이 바뀌어서 프론트가 깨진다.
-- API 스펙과 DB 구조가 묶여서 따로 바꿀 수 없다.
-
-**Q2-3.** `savePayment`의 `useGeneratedKeys`가 INSERT 후 id를 객체에 넣지 못한다. record는 불변이다. (MyBatis SELECT 결과 매핑도 생성자 방식으로 바꿔야 한다.)
-</details>
-
-<details>
-<summary>3장</summary>
-
-**Q3-1.** `@NotBlank`면 공백만 있는 문자열도 막혀서 400. `@NotNull`이었다면 null만 막으니 `"   "`는 통과하고 공백 주문명이 DB에 저장된다.
-
-**Q3-2.** 안 만들어진다.
-1. 받는 칸이 없다. `PaymentPrepareRequest`에는 `memberId` 필드가 없고, Spring Boot의 Jackson은 기본적으로 DTO에 없는 JSON 필드를 에러 없이 조용히 버린다.
-2. 서비스는 JWT의 id만 쓴다. 칸이 있었더라도 서비스는 request가 아니라 JWT에서 꺼낸 `currentMemberId`를 넣는다 (`Payment.builder().memberId(currentMemberId)`).
-
-**Q3-3.** 컨트롤러의 `@Valid` 단계에서 `@Positive`에 걸린다. `MethodArgumentNotValidException` → 400. 서비스는 실행되지 않는다.
-
-**Q3-4.** PortOne 응답에는 우리가 선언하지 않은 필드가 많다. Jackson의 `FAIL_ON_UNKNOWN_PROPERTIES`가 켜진 환경이면 역직렬화가 실패해서 결제 조회가 전부 에러가 된다. (Spring Boot 기본값은 꺼져 있지만, 전역 설정에 의존하지 않고 클래스에 명시해 둔 것이다.)
-</details>
-
-<details>
-<summary>4장</summary>
-
-**Q4-1.** MyBatis가 SELECT 결과를 담을 빈 `Payment` 객체를 만들지 못한다. (`@AllArgsConstructor`만 있으면 MyBatis가 생성자 매핑을 시도하다가 컬럼 수/순서가 안 맞아 에러가 날 수 있다.) Jackson 등 기본 생성자가 필요한 라이브러리도 영향을 받는다.
-
-**Q4-2.** `status`가 null이면 `NullPointerException`. `"READY".equals(status)`는 null이면 그냥 false.
-</details>
-
-<details>
-<summary>5장</summary>
-
-**Q5-1.** 앱 실행 후 해당 메서드를 처음 호출할 때 `BindingException: Invalid bound statement (not found)`가 난다. 인터페이스와 XML이 연결되지 않았다는 뜻이다.
-
-**Q5-2.** SQL 인젝션. 예를 들어 `paymentId`에 `' OR '1'='1`을 넣으면 `WHERE payment_id = '' OR '1'='1'`이 되어 조건이 무력화된다. `#{}`는 값을 `?`에 바인딩해서 이런 문자열도 그냥 값으로 취급한다.
-</details>
-
-<details>
-<summary>6장</summary>
-
-**Q6-1.** `Long` 1000은 캐시 범위(-128~127) 밖이라 서로 다른 객체일 수 있다. `==`가 false가 되어 본인 결제 검사를 통과해 버린다.
-
-**Q6-2.** 이미 존재하는 남의 주문번호를 재사용하거나, 추측하기 쉬운 번호를 만들어 충돌을 일으키거나, 결제 완료된 주문번호로 다시 결제를 시도하는 등의 장난이 가능하다. 서버가 만들면 번호의 형식과 유일성을 서버가 보장한다.
-
-**Q6-3.** `/prepare`에서는 막을 수 없다. `/complete`나 웹훅의 금액 비교에서 잡힌다.
-- `/prepare` 시점에는 요청이 5000원이라서 통과하고, DB에 `total_amount = 5000`이 저장된다.
-- 이후 `/complete`나 웹훅이 오면 `syncWithPortOne()`이 PortOne에 조회한다. 실제 결제는 100원이라 DB의 5000과 비교해 불일치를 발견한다.
-- `handleAmountMismatch()`가 PortOne에 결제 취소를 요청하고, DB를 CANCELLED로 바꾸고, `cancel_payment`에 이력을 남긴다.
-- `/prepare`의 역할은 막기가 아니라 **나중에 비교할 기준을 박제해 두기**다.
-</details>
-
-<details>
-<summary>7장</summary>
-
-**Q7-1.** 1(보안 필터)은 통과한다. JWT 자체는 유효하니까. 2(컨트롤러)도 통과한다. 4(`FOR UPDATE`)에서 그 행을 잠깐 잠근다. 5(본인 확인)에서 `payment.getMemberId()`(원래 주인)와 `currentMemberId`(해커)가 달라서 `IllegalArgumentException` → 400 "존재하지 않는 주문 번호입니다". 예외로 트랜잭션이 롤백되면서 잠금도 즉시 풀린다. 해커는 그 주문이 실제로 있는지조차 알 수 없다.
-
-**Q7-2.** 트랜잭션이 없으면 MySQL의 autocommit 모드로 SELECT 한 문장이 끝나는 순간 커밋되고 잠금이 풀린다. `FOR UPDATE`가 사실상 의미 없어진다. `/complete`와 웹훅이 둘 다 READY를 읽고, 둘 다 PortOne을 조회하고, 둘 다 UPDATE를 시도한다. (13장의 `AND status = 'READY'` 덕분에 두 번째 UPDATE는 0행이 되지만, 위변조 케이스라면 PortOne 취소 API가 두 번 호출될 수 있다.)
-
-**Q7-3.** null. `findByPaymentIdForUpdate`의 SELECT에 `order_name`이 없어서 MyBatis가 그 필드를 채우지 않는다.
-
-**Q7-4.** MySQL이 `payment_id`로 행을 찾으려고 테이블을 훑으면서 지나간 행에 전부 잠금을 건다. 사실상 테이블 전체가 잠겨서 다른 사람의 결제까지 기다리게 된다.
-
-**Q7-5.** 주문이 없을 때 `payment`가 null인데 `payment.getMemberId()`를 먼저 부르니 `NullPointerException` → 500.
-</details>
-
-<details>
-<summary>8장</summary>
-
-**Q8-1.** `syncWithPortOne`의 ① `if (!payment.isReady())`에서 반환한다. PortOne API는 0번 호출된다.
-
-**Q8-2.** PortOne이 READY/PENDING이라는 건 아직 결제가 진행 중이라는 뜻이다. 여기서 FAILED로 확정하면 나중에 실제로 결제가 성공해도 `AND status = 'READY'` 때문에 PAID로 바꿀 수 없다. 돈은 나갔는데 DB는 FAILED인 최악의 상황이 된다.
-
-**Q8-3.** `Integer`끼리 `!=`는 객체 비교다. -128~127은 캐시된 같은 객체라 우연히 맞지만, 128원 이상이면 값이 같아도 다른 객체라서 `!=`가 true가 된다. 정상 결제(5000원 = 5000원)가 전부 위변조로 판단되어 자동 취소된다.
-
-**Q8-4.** `portOneStatus`가 null이 되고 `portOneStatus.equals("FAILED")`에서 `NullPointerException` → 500.
-</details>
-
-<details>
-<summary>9장</summary>
-
-**Q9-1.** FAILED는 돈이 안 나간 상태다. 취소할 결제가 없다.
-
-**Q9-2.** `IF('FAILED' = 'CANCELLED', NOW(), NULL)` → NULL.
-</details>
-
-<details>
-<summary>10장</summary>
-
-**Q10-1.** 실제로 사용자 카드에서 나간 돈은 100원이고, 돌려주는 돈도 100원이다. 기록은 실제 돈의 흐름과 맞아야 한다.
-
-**Q10-2.** 지금처럼 한 트랜잭션 안이면, PortOne 취소가 예외를 던질 때 앞의 DB 변경도 롤백되니 결과는 같다. 하지만 DB 변경이 먼저 커밋되는 구조라면(별도 트랜잭션, 실패를 삼키는 코드) PortOne 취소가 실패했을 때 **돈은 결제됐는데 DB는 CANCELLED**가 된다. 사용자는 돈을 잃고, 우리는 취소된 줄 안다. 그래서 외부 호출 성공을 먼저 확인하고 DB를 확정하는 순서가 원칙이다.
-
-**Q10-3.** null. MySQL의 UNIQUE 인덱스는 null을 여러 개 허용한다 (null은 서로 같지 않다고 본다). 그래서 괜찮다.
-</details>
-
-<details>
-<summary>11장</summary>
-
-**Q11-1.** API Secret이 브라우저 코드에 들어가서 누구나 볼 수 있게 된다. 그 키로 우리 상점의 결제를 조회하고 **취소**까지 할 수 있다. 또 브라우저가 "PortOne이 PAID래요"라고 하는 걸 믿어야 해서 금액 검증이 무의미해진다.
-
-**Q11-2.** 컴파일 에러. 부모(`RestClientException`)가 먼저 다 잡아 버리면 자식 catch는 절대 실행되지 않는 코드(unreachable)가 되기 때문이다.
-
-**Q11-3.** 500은 "우리 서버 내부 문제", 502 Bad Gateway는 "우리가 중계하는 상대 서버가 이상한 응답을 줬다"는 뜻이다. 원인을 정확히 알려 줘야 프론트/운영자가 대응할 수 있다. 웹훅의 경우 PortOne이 재전송하게 만드는 효과도 있다.
-
-**Q11-4.** UTC+9 → 2026-09-29 00:30:00 (날짜가 바뀐다).
-</details>
-
-<details>
-<summary>12장</summary>
-
-**Q12-1.** 웹훅은 "누가 요청했나"로 판단하지 않는다. 본문에서 주문번호만 꺼내고, 실제 결제 상태와 금액은 PortOne API에 직접 물어봐서 판단한다. 누가 보냈든 결과는 PortOne의 실제 상태대로만 바뀐다.
-
-**Q12-2.** 안 된다. 우리 서버가 PortOne API에 다시 물어보는데, 실제로 결제가 안 됐으면 PortOne은 READY나 FAILED를 돌려준다. 결제가 실제로 됐다면 원래 PAID가 되는 게 맞으니 문제없다.
-
-**Q12-3.** 예외 → 4xx/5xx 응답 → PortOne이 같은 웹훅을 재전송한다. 그런데 DB에 없는 주문은 몇 번을 다시 보내도 계속 없다. 쓸데없는 재전송만 반복되니 200으로 받고 끝낸다.
-
-**Q12-4.** PortOne 5xx는 일시적인 장애일 가능성이 크다. 502를 주면 PortOne이 나중에 다시 보내 주고, 그때 PortOne이 살아 있으면 정상 처리된다. 200을 주면 그 웹훅은 영영 다시 안 온다.
-</details>
-
-<details>
-<summary>13장</summary>
-
-**Q13-1.** `WHERE ... AND status = 'READY'` 조건에 안 맞아서 아무 행도 바뀌지 않는다. DB는 PAID 그대로. 반환값은 0. 에러는 나지 않는다.
-</details>
-
-<details>
-<summary>14장</summary>
-
-**Q14-1.** 기본적으로 롤백하지 않는다. `@Transactional`은 `RuntimeException`과 `Error`만 롤백한다. checked exception도 롤백하려면 `@Transactional(rollbackFor = Exception.class)`.
-</details>
-
-<details>
-<summary>15장</summary>
-
-**Q15-1.** `verify(restTemplate, never()).exchange(...)` 또는 `verifyNoInteractions(restTemplate)`로 가짜 RestTemplate이 호출되지 않았음을 확인한다.
-
-**Q15-2.** `paymentMapper`가 가짜(Mock)라서 SQL이 실행되지 않는다. `findByPaymentIdForUpdate`는 `given`으로 정해 둔 객체를 돌려줄 뿐, 실제 잠금이 걸리는지는 알 수 없다. 이걸 확인하려면 실제 DB를 붙인 통합 테스트에서 두 스레드로 동시에 호출해 봐야 한다.
-</details>

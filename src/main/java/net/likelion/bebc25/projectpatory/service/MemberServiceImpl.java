@@ -1,6 +1,7 @@
 package net.likelion.bebc25.projectpatory.service;
 
 import net.likelion.bebc25.projectpatory.domain.Member;
+import net.likelion.bebc25.projectpatory.exception.DuplicateResourceException;
 import net.likelion.bebc25.projectpatory.domain.MemberProfile;
 import net.likelion.bebc25.projectpatory.domain.MyProfile;
 import net.likelion.bebc25.projectpatory.domain.Profile;
@@ -9,6 +10,7 @@ import net.likelion.bebc25.projectpatory.dto.SignUpRequest;
 import net.likelion.bebc25.projectpatory.mapper.FollowMapper;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PostMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +34,42 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public Member signup(SignUpRequest member) {
+        String email = member.getEmail() == null ? "" : member.getEmail().trim();
+        String nickname = member.getNickname() == null ? "" : member.getNickname().trim();
+        member.setEmail(email);
+        member.setNickname(nickname);
+        if (memberMapper.existsByEmail(email)) {
+            throw new DuplicateResourceException("이미 가입된 이메일입니다.");
+        }
+        if (memberMapper.existsByNickname(nickname)) {
+            throw new DuplicateResourceException("이미 사용 중인 닉네임입니다.");
+        }
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         LocalDateTime infoProvideAgreement = null;
-        if (member.getIsAgreed()) {infoProvideAgreement = LocalDateTime.now();}
-        memberMapper.createMember(member, infoProvideAgreement);
-        return memberMapper.findByEmail(member.getEmail());
+        if (Boolean.TRUE.equals(member.getIsAgreed())) {
+            infoProvideAgreement = LocalDateTime.now();
+        }
+        try {
+            memberMapper.createMember(member, infoProvideAgreement);
+        } catch (DataIntegrityViolationException exception) {
+            throw new DuplicateResourceException("이미 가입된 이메일입니다.");
+        }
+        return memberMapper.findByEmail(email);
     }
 
     @Override
     public Member findMemberByEmail(String email) {
         return memberMapper.findByEmail(email);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return memberMapper.existsByEmail(email);
+    }
+
+    @Override
+    public boolean existsByNickname(String nickname) {
+        return memberMapper.existsByNickname(nickname);
     }
 
     @Override
@@ -80,7 +108,7 @@ public class MemberServiceImpl implements MemberService {
                     .followings(followingCount)
                     .build();
         }
-        boolean isFollowing = followMapper.existsFollow(loginMemberId, memberId);
+        boolean isFollowing = loginMemberId != null && followMapper.existsFollow(loginMemberId, memberId);
         return MemberProfile.builder()
                 .id(member.getId())
                 .nickname(member.getNickname())

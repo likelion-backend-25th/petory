@@ -25,7 +25,7 @@
                      #{orderName},
                      IFNULL(#{currency}, 'KRW'),
                      #{totalAmount},
-                     #{payMethod},
+                     #{merchandise},
                      'READY',
                      NOW()
                  )
@@ -44,7 +44,7 @@
             currency,
             total_amount AS totalAmount,
             paid_amount AS paidAmount,
-            pay_method AS payMethod,
+            pay_method AS merchandise,
             status,
             transaction_id AS transactionId,
             pg_tx_id AS pgTxId,

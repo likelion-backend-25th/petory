@@ -33,7 +33,7 @@ class PaymentMapperTest {
                 .orderName("간식 쏘기 테스트")
                 .currency("KRW")
                 .totalAmount(totalAmount)
-                .payMethod("간식 쏘기")
+                .merchandise("singlePayment")
                 .build();
         paymentMapper.savePayment(request);
         return request;

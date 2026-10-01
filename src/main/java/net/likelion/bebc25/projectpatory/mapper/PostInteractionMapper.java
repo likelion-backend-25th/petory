@@ -23,4 +23,13 @@ public interface PostInteractionMapper {
 
     // 조회수 집계
     long countViews(@Param("postId") Long postId);
+
+    // 북마크 여부 확인
+    boolean existsBookmark(@Param("postId") Long postId, @Param("memberId") Long memberId);
+
+    // 북마크 등록
+    void insertBookmark(@Param("postId") Long postId, @Param("memberId") Long memberId);
+
+    // 북마크 취소
+    int deleteBookmark(@Param("postId") Long postId, @Param("memberId") Long memberId);
 }

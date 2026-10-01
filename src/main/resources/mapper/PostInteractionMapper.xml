@@ -69,4 +69,38 @@
           AND interaction_type = 'VIEW'
     </select>
 
+    <!-- 북마크 여부 확인 -->
+    <select id="existsBookmark" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM post_interaction
+            WHERE post_id = #{postId}
+              AND member_id = #{memberId}
+              AND interaction_type = 'BOOKMARK'
+        )
+    </select>
+
+    <!-- 북마크 등록 -->
+    <insert id="insertBookmark">
+        INSERT INTO post_interaction (
+            member_id,
+            post_id,
+            interaction_type,
+            created_at
+        ) VALUES (
+            #{memberId},
+            #{postId},
+            'BOOKMARK',
+            NOW()
+        )
+    </insert>
+
+    <!-- 북마크 취소 -->
+    <delete id="deleteBookmark">
+        DELETE FROM post_interaction
+        WHERE post_id = #{postId}
+          AND member_id = #{memberId}
+          AND interaction_type = 'BOOKMARK'
+    </delete>
+
 </mapper>

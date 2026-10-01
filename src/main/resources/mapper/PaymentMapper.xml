@@ -4,31 +4,14 @@
 
 <mapper namespace="net.likelion.bebc25.projectpatory.mapper.PaymentMapper">
 
-    <!-- payment 테이블에 새 줄을 하나 추가 결제자, 대상, 주문번호, 주문명, 통화, 금액, 결제수단은 Payment에서 꺼
+    <!-- payment 테이블에 새 줄을 하나 추가 결제자, 대상, 주문번호, 주문명, 통화, 금액, 결제 상품은 Payment에서 꺼
      넣고 상태는 무조건 ready 생성 시각은 지금-->
 
-    <insert id="savePayment" parameterType="net.likelion.bebc25.projectpatory.domain.Payment" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO payment (
-            member_id,
-            target_member_id,
-            payment_id,
-            order_name,
-            currency,
-            total_amount,
-            pay_method,
-            status,
-            created_at
-        ) VALUES (
-                     #{memberId},
-                     #{targetMemberId},
-                     #{paymentId},
-                     #{orderName},
-                     IFNULL(#{currency}, 'KRW'),
-                     #{totalAmount},
-                     #{merchandise},
-                     'READY',
-                     NOW()
-                 )
+    <insert id="savePayment" parameterType="net.likelion.bebc25.projectpatory.domain.Payment" useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO payment (member_id, target_member_id, payment_id, order_name, currency, total_amount, merchandise)
+        VALUES (#{memberId}, #{targetMemberId}, #{paymentId}, #{orderName}, IFNULL(#{currency}, 'KRW'), #{totalAmount},
+                #{merchandise})
     </insert>
 
     <!-- 3단계: 주문번호 조회 -->
@@ -36,26 +19,13 @@
 
     <select id="findByPaymentId" parameterType="string" resultType="net.likelion.bebc25.projectpatory.domain.Payment">
         SELECT
-            id,
-            member_id AS memberId,
-            target_member_id AS targetMemberId,
-            payment_id AS paymentId,
-            order_name AS orderName,
-            currency,
-            total_amount AS totalAmount,
-            paid_amount AS paidAmount,
-            pay_method AS merchandise,
-            status,
-            transaction_id AS transactionId,
-            pg_tx_id AS pgTxId,
-            receipt_url AS receiptUrl,
-            fail_code AS failCode,
-            fail_message AS failMessage,
-            cancel_amount AS cancelAmount, <!-- 취소 정보도 조회 -->
-            cancel_reason AS cancelReason,
-            created_at AS createdAt,
-            paid_at AS paidAt,
-            cancelled_at AS cancelledAt
+        id, member_id, target_member_id,
+        payment_id, order_name, currency, total_amount, paid_amount, merchandise, status,
+        transaction_id, pg_tx_id,
+        receipt_url,
+        fail_code, fail_message,
+        cancel_amount, <!-- 취소 정보도 조회 --> cancel_reason,
+        created_at, paid_at, cancelled_at
         FROM payment
         WHERE payment_id = #{paymentId}
     </select>
@@ -63,17 +33,13 @@
     <!--3단계 검증용 행 잠금 조회 (동시 검증 요청 직렬화, 트랜잭션 안에서만 사용) -->
     <!--주문번호가 이것인 줄을 찾아서 검증에 필요한 6칸만 가져온다. 그리고 내 작업이 끝날 때까지 다른 요청은 이 줄을 건드리지 못하게 잠근다. -->
 
-    <select id="findByPaymentIdForUpdate" parameterType="string" resultType="net.likelion.bebc25.projectpatory.domain.Payment">
-        SELECT
-            id,
-            member_id AS memberId,
-            payment_id AS paymentId,
-            total_amount AS totalAmount,
-            paid_amount AS paidAmount,
-            status
+    <select id="findByPaymentIdForUpdate" parameterType="string"
+            resultType="net.likelion.bebc25.projectpatory.domain.Payment">
+        SELECT id, member_id, payment_id, total_amount, paid_amount, status
         FROM payment
         WHERE payment_id = #{paymentId}
-        FOR UPDATE
+            FOR
+        UPDATE
     </select>
 
     <!-- 3단계: 결제 성공 (PAID) -->
@@ -83,14 +49,14 @@
     <update id="updatePaymentSuccess">
         UPDATE payment
         SET
-            status = 'PAID',
-            transaction_id = #{transactionId},
-            pg_tx_id = #{pgTxId},
-            receipt_url = #{receiptUrl},
-            paid_amount = #{paidAmount},
-            paid_at = COALESCE(#{paidAt}, NOW())
+        status = 'PAID',
+        transaction_id = #{transactionId},
+        pg_tx_id = #{pgTxId},
+        receipt_url = #{receiptUrl},
+        paid_amount = #{paidAmount},
+        paid_at = COALESCE(#{paidAt}, NOW())
         WHERE payment_id = #{paymentId}
-          AND status = 'READY' <!--: READY 상태에서만 전이 (중복 처리 방지) -->
+        AND status = 'READY' <!--: READY 상태에서만 전이 (중복 처리 방지) -->
     </update>
 
     <!-- 3단계: 위변조 차단 또는 실패 처리 (CANCELLED / FAILED) -->
@@ -99,41 +65,26 @@
     <update id="updatePaymentFail">
         UPDATE payment
         SET
-            status = #{status},
-            fail_code = #{failCode},
-            fail_message = #{failMessage},
-            cancel_amount = #{cancelAmount},
-            cancel_reason = #{cancelReason},
-            cancelled_at = IF(#{status} = 'CANCELLED', NOW(), NULL)
+        status = #{status},
+        fail_code = #{failCode},
+        fail_message = #{failMessage},
+        cancel_amount = #{cancelAmount},
+        cancel_reason = #{cancelReason},
+        cancelled_at = IF(#{status} = 'CANCELLED', NOW(), NULL)
         WHERE payment_id = #{paymentId}
-          AND status = 'READY' <!--: READY 상태에서만 전이 (중복 처리 방지) -->
+        AND status = 'READY' <!--: READY 상태에서만 전이 (중복 처리 방지) -->
     </update>
 
     <!--: 취소 이력 저장 (payment_id 컬럼에는 payment.id(PK)를 저장) -->
     <!--:cancel_payment 테이블에 새 줄을 추가한다. 어떤 결제(payment의 숫자 id)를, 얼마, 왜 취소했는지와 PortOne 취소번호, 영수증, 요청 시각, 취소 완료 시각을 기록한다. -->
 
     <insert id="insertCancelPayment">
-        INSERT INTO cancel_payment (
-            payment_id,
-            cancellation_id,
-            pg_cancellation_id,
-            status,
-            cancel_amount,
-            reason,
-            receipt_url,
-            requested_at,
-            cancelled_at
-        ) VALUES (
-            #{paymentPk},
-            #{cancellationId},
-            #{pgCancellationId},
-            #{status},
-            #{cancelAmount},
-            #{reason},
-            #{receiptUrl},
-            NOW(),
-            #{cancelledAt}
-        )
+        INSERT INTO cancel_payment (payment_id, cancellation_id, pg_cancellation_id,
+                                    status,
+                                    cancel_amount, reason, receipt_url, cancelled_at)
+        VALUES (#{paymentPk}, #{cancellationId}, #{pgCancellationId},
+                #{status},
+                #{cancelAmount}, #{reason}, #{receiptUrl}, #{cancelledAt})
     </insert>
 
 
@@ -150,7 +101,7 @@
             currency,
             total_amount,
             paid_amount,
-            pay_method,
+            merchandise,
             status,
             created_at,
             paid_at,

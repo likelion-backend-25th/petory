@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +42,7 @@ class MissingPetServiceTest {
 
         // then
         assertThat(response.totalCount())
-                .isEqualTo(6L);
+                .isEqualTo(16L);
 
         assertThat(response.items())
                 .hasSize(2);
@@ -406,7 +407,7 @@ class MissingPetServiceTest {
                         request
                 )
         )
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("실종 신고 게시글을 수정할 권한이 없습니다.");
     }
 
@@ -495,7 +496,7 @@ class MissingPetServiceTest {
                         request
                 )
         )
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessage("실종 신고 상태를 변경할 권한이 없습니다.");
     }
 

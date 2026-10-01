@@ -9,11 +9,7 @@ import net.likelion.bebc25.projectpatory.exception.PaymentGatewayException;
 import net.likelion.bebc25.projectpatory.mapper.MemberMapper;
 import net.likelion.bebc25.projectpatory.mapper.PaymentMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -48,7 +44,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentPrepareResponse preparePayment(Long currentMemberId, PaymentPrepareRequest requestDto) {
-        Long targetMemberId = requestDto.targetMemberId();
+        Long targetMemberId = requestDto.getTargetMemberId();
 
         // 1. 본인에게는 후원할 수 없다
         if (currentMemberId.equals(targetMemberId)) {
@@ -70,16 +66,16 @@ public class PaymentServiceImpl implements PaymentService {
                 .memberId(currentMemberId)
                 .targetMemberId(targetMemberId)
                 .paymentId(paymentId)
-                .orderName(requestDto.orderName())
+                .orderName(requestDto.getOrderName())
                 .currency("KRW")
-                .totalAmount(requestDto.totalAmount())
-                .merchandise(requestDto.merchandise())
+                .totalAmount(requestDto.getTotalAmount())
+                .merchandise(requestDto.getMerchandise())
                 .status("READY")
                 .build();
         paymentMapper.savePayment(payment);
 
         log.info("[결제 준비 완료] 주문번호: {}, 결제자: {}, 예정금액: {}원",
-                paymentId, currentMemberId, requestDto.totalAmount());
+                 paymentId, currentMemberId, requestDto.getTotalAmount());
         return PaymentPrepareResponse.from(payment);
     }
 
@@ -157,7 +153,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (!payment.isReady()) {
             log.info("[이미 처리된 결제] 주문번호: {}, 상태: {}", paymentId, payment.getStatus());
             return new PaymentCompleteResponse(paymentId, payment.getStatus(), payment.getPaidAmount(),
-                    "이미 처리된 결제입니다.");
+                                               "이미 처리된 결제입니다.");
         }
 
         // 2. PortOne 서버에 실제 결제 내역을 물어본다
@@ -173,7 +169,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (!portOneStatus.equals("PAID")) {
             log.info("[결제 미완료] 주문번호: {}, PortOne 상태: {}", paymentId, portOneStatus);
             return new PaymentCompleteResponse(paymentId, "READY", null,
-                    "결제가 아직 완료되지 않았습니다. (PortOne 상태: " + portOneStatus + ")");
+                                               "결제가 아직 완료되지 않았습니다. (PortOne 상태: " + portOneStatus + ")");
         }
 
         // 5. 금액을 비교한다 (DB에 저장한 예정 금액 vs PortOne에서 실제 결제된 금액)
@@ -225,14 +221,14 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentCompleteResponse handleAmountMismatch(Payment payment, Integer actualPaidAmount) {
         String paymentId = payment.getPaymentId();
         log.error("[위변조 감지] 주문번호: {}, DB 예정금액: {}원, 실제 결제금액: {}원 -> 자동 취소",
-                paymentId, payment.getTotalAmount(), actualPaidAmount);
+                  paymentId, payment.getTotalAmount(), actualPaidAmount);
 
         // 1. PortOne에 결제 취소를 요청한다 (사용자에게 돈을 돌려준다)
         PortOneCancelResponse.Cancellation cancellation = cancelPortOnePayment(paymentId, AMOUNT_MISMATCH_REASON);
 
         // 2. payment 테이블을 CANCELLED로 바꾼다
         paymentMapper.updatePaymentFail(paymentId, "CANCELLED", "AMOUNT_MISMATCH",
-                "DB 예정금액과 PG 실결제 금액 불일치", actualPaidAmount, AMOUNT_MISMATCH_REASON);
+                                        "DB 예정금액과 PG 실결제 금액 불일치", actualPaidAmount, AMOUNT_MISMATCH_REASON);
 
         // 3. cancel_payment 테이블에 취소 이력을 남긴다
         //    PortOne 취소 응답이 비어 있을 수도 있어서 기본값을 먼저 넣어 둔다
@@ -260,10 +256,10 @@ public class PaymentServiceImpl implements PaymentService {
 
         // cancel_payment.payment_id 컬럼에는 주문번호(문자열)가 아니라 payment.id(숫자 PK)가 들어간다
         paymentMapper.insertCancelPayment(payment.getId(), cancellationId, pgCancellationId,
-                cancelStatus, cancelAmount, AMOUNT_MISMATCH_REASON, receiptUrl, cancelledAt);
+                                          cancelStatus, cancelAmount, AMOUNT_MISMATCH_REASON, receiptUrl, cancelledAt);
 
         return new PaymentCompleteResponse(paymentId, "CANCELLED", null,
-                "결제 금액 위변조 시도가 감지되어 결제가 취소되었습니다.");
+                                           "결제 금액 위변조 시도가 감지되어 결제가 취소되었습니다.");
     }
 
     // =================================================================

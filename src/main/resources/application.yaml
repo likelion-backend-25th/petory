@@ -96,6 +96,8 @@ cloud:
       static: ap-northeast-2
 
 portone:
+  store-id: ${PORTONE_STORE_ID:dummy-store-id}
+  channel-key: ${PORTONE_CHANNEL_KEY:dummy-channel-key}
   api:
     store-id: ${PORTONE_STORE_ID:dummy-store-id}
     secret: ${PORTONE_API_SECRET:dummy-api-secret}

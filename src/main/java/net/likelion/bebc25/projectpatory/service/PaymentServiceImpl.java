@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -331,5 +332,16 @@ public class PaymentServiceImpl implements PaymentService {
         }
         OffsetDateTime utcTime = OffsetDateTime.parse(isoDateTime);
         return utcTime.atZoneSameInstant(ZoneId.of("Asia/Seoul")).toLocalDateTime();
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PaymentHistoryResponse> getMyPayments(Long memberId) {
+
+        return paymentMapper.findAllByMemberId(memberId)
+                .stream()
+                .map(PaymentHistoryResponse::from)
+                .toList();
     }
 }

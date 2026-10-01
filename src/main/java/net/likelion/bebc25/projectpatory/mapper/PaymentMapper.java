@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Mapper
 public interface PaymentMapper {
@@ -44,4 +45,7 @@ public interface PaymentMapper {
                             @Param("reason") String reason,
                             @Param("receiptUrl") String receiptUrl,
                             @Param("cancelledAt") LocalDateTime cancelledAt);
+
+    // 결제 내역 조회
+    List<Payment> findAllByMemberId(@Param("memberId") Long memberId);
 }

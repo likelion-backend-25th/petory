@@ -1,9 +1,18 @@
 package net.likelion.bebc25.projectpatory.dto;
 
-//complete 응답을 문자열 대신 JSON으로 반환
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "결제 완료 검증 응답")
 public record PaymentCompleteResponse(
+        @Schema(description = "주문 번호. PortOne V2 paymentId", example = "pay_20261001120000_10")
         String paymentId,
-        String status,          // PAID, FAILED, CANCELLED, READY(아직 결제 안 됨)
-        Integer paidAmount,     // PAID일 때만 값이 있음
-        String message          // 화면에 보여줄 안내 메시지
+
+        @Schema(description = "결제 상태", example = "PAID", allowableValues = {"READY", "PAID", "FAILED", "CANCELLED"})
+        String status,
+
+        @Schema(description = "실제 결제 완료 금액. PAID 상태일 때 값이 존재", example = "4900", nullable = true)
+        Integer paidAmount,
+
+        @Schema(description = "화면에 표시할 안내 메시지", example = "결제가 완료되었습니다.")
+        String message
 ) {}

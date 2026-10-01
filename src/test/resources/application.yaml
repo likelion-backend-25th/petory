@@ -54,7 +54,7 @@ mybatis:
 
 # JWT 설정
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:ZGVmYXVsdC1qd3Qtc2VjcmV0LWtleS1mb3ItbG9jYWwtdGVzdC1lbnZpcm9ubWVudA==}
   access-token-expiration: 3600000      # 1시간 (밀리초)
   refresh-token-expiration: 604800000   # 7일 (밀리초)
 
@@ -74,5 +74,5 @@ portone:
   store-id: ${PORTONE_STORE_ID:dummy-store-id}
   channel-key: ${PORTONE_CHANNEL_KEY:dummy-channel-key}
   api:
-    store-id: ${PORTONE_STORE_ID}
-    secret: ${PORTONE_API_SECRET}
+    store-id: ${PORTONE_STORE_ID:test-store}
+    secret: ${PORTONE_API_SECRET:test-secret}

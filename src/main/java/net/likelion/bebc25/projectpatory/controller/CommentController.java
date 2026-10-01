@@ -4,13 +4,29 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+<<<<<<< Updated upstream
 import net.likelion.bebc25.projectpatory.dto.*;
+=======
+import net.likelion.bebc25.projectpatory.dto.CommentCreateRequest;
+import net.likelion.bebc25.projectpatory.dto.CommentResponse;
+import net.likelion.bebc25.projectpatory.dto.CommentUpdateRequest;
+>>>>>>> Stashed changes
 import net.likelion.bebc25.projectpatory.security.principal.CustomUserDetails;
 import net.likelion.bebc25.projectpatory.service.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+<<<<<<< Updated upstream
 import org.springframework.web.bind.annotation.*;
+=======
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+>>>>>>> Stashed changes
 
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")

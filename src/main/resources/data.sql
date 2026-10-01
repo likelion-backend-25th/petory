@@ -60,7 +60,7 @@ INSERT INTO post_interaction (id, member_id, post_id, interaction_type, created_
 (10, 2, 6, 'LIKE', '2025-07-06 11:20:00');
 
 -- 7. payment
-INSERT INTO payment (id, member_id, target_member_id, payment_id, order_name, currency, total_amount, paid_amount, pay_method, status, transaction_id, pg_tx_id, receipt_url, fail_code, fail_message, cancel_amount, cancel_reason, created_at, paid_at, cancelled_at) VALUES
+INSERT INTO payment (id, member_id, target_member_id, payment_id, order_name, currency, total_amount, paid_amount, merchandise, status, transaction_id, pg_tx_id, receipt_url, fail_code, fail_message, cancel_amount, cancel_reason, created_at, paid_at, cancelled_at) VALUES
 (1, 3, 2, 'pay_0000000001', 'ORD_20250710_001', 'KRW', 5000, 5000, '간식 쏘기', 'PAID', 'tx_0000000001', 'pg_0000000001', 'https://receipt.example.com/pay/1', NULL, NULL, NULL, NULL, '2025-07-10 12:00:00', '2025-07-10 12:00:30', NULL),
 (2, 4, 2, 'pay_0000000002', 'ORD_20250711_001', 'KRW', 9900, 9900, '펫 클럽 구독', 'PAID', 'tx_0000000002', 'pg_0000000002', 'https://receipt.example.com/pay/2', NULL, NULL, NULL, NULL, '2025-07-11 09:00:00', '2025-07-11 09:00:20', NULL),
 (3, 5, 2, 'pay_0000000003', 'ORD_20250712_001', 'KRW', 3000, NULL, '간식 쏘기', 'READY', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-07-12 15:00:00', NULL, NULL),
@@ -80,9 +80,9 @@ INSERT INTO subscription_plan (id, member_id, plan_name, price, description, sta
 
 -- 10. subscription
 INSERT INTO subscription (id, member_id, target_member_id, plan_id, billing_key, started_at, ended_at, next_billing_at, status, agreement) VALUES
-(1, 4, 2, 2, 'billing_coco_001', '2025-07-11 09:00:20', NULL, '2025-08-11 09:00:00', 'ACTIVE', 1),
-(2, 3, 2, 1, 'billing_nabi_001', '2025-07-15 10:00:00', NULL, '2025-08-15 10:00:00', 'ACTIVE', 1),
-(3, 6, 5, 3, 'billing_kakao_001', '2025-06-20 12:00:00', '2025-07-20 12:00:00', NULL, 'CANCELLED', 0);
+(1, 4, 2, 2, 'billing_coco_001', '2025-07-11', NULL, '2025-08-11', 'ACTIVE', 1),
+(2, 3, 2, 1, 'billing_nabi_001', '2025-07-15', NULL, '2025-08-15', 'ACTIVE', 1),
+(3, 6, 5, 3, 'billing_kakao_001', '2025-06-20', '2025-07-20', NULL, 'CANCELLED', 0);
 
 -- 11. follow
 INSERT INTO follow (id, follower_id, following_id, created_at) VALUES

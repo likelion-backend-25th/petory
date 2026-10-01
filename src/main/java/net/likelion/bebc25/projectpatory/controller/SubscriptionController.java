@@ -23,13 +23,13 @@ import java.util.List;
 
 @Tag(name = "Subscription Plan API", description = "구독 플랜 생성, 조회, 수정, 삭제를 담당하는 REST 컨트롤러")
 @RestController
-@RequestMapping("/api/v1/subscription")
+@RequestMapping("/api/v1/subscriptionPlan")
 @RequiredArgsConstructor
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
-    @PostMapping("/{memberId}/new")
+    @PostMapping("/{memberId}")
     @Operation(
             summary = "구독 플랜 생성",
             description = "로그인한 회원의 구독 플랜을 등록한다. 경로의 회원 ID, 요청 본문의 memberId, 로그인 회원 ID가 모두 같아야 한다."
@@ -82,7 +82,7 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptions);
     }
 
-    @PostMapping("/{memberId}/edit")
+    @PutMapping("/{memberId}")
     @Operation(
             summary = "구독 플랜 수정",
             description = "본인 구독 플랜의 이름, 설명, 상태를 수정한다. 가격은 변경되지 않는다. 요청 본문의 id로 대상 플랜을 지정한다."
@@ -115,7 +115,7 @@ public class SubscriptionController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{memberId}/delete")
+    @DeleteMapping("/{memberId}")
     @Operation(
             summary = "구독 플랜 삭제",
             description = "본인 구독 플랜을 삭제한다. 쿼리 파라미터 id로 대상 플랜을 지정한다."

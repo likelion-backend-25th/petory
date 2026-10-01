@@ -13,7 +13,7 @@ http:
         "targetMemberId": 6,
         "orderName": "간식쏘기",
         "totalAmount": 5000,
-        "payMethod": "CARD"
+        "merchandise": "간식 쏘기"
       }
   auth:
     type: bearer

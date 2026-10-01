@@ -82,8 +82,9 @@ public class SecurityConfig {
                         // 인증 API (login, refresh)
                         .requestMatchers("/api/v1/login", "/api/v1/refresh").permitAll()
 
-                        // 회원가입
+                        // 회원가입과 가입 전 중복 확인
                         .requestMatchers("/api/v1/signup").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/email/exists", "/api/v1/nickname/exists").permitAll()
 
                         // 게시글 GET 공개
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts", "/api/v1/posts/**").permitAll()

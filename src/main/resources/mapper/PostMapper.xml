@@ -24,6 +24,7 @@
         <!-- 3. 반응/소셜 수치 (집계) -->
         <result property="likeCount" column="like_count"/>
         <result property="commentCount" column="comment_count"/>
+        <result property="viewCount" column="view_count"/>
 
         <!-- 4. post_image (1:N 첨부 이미지 목록 매핑) -->
         <collection property="imageUrls" ofType="java.lang.String">
@@ -52,7 +53,11 @@
         AND pi.interaction_type = 'LIKE') AS like_count,
         (SELECT COUNT(*)
         FROM comment c
-        WHERE c.post_id = p.id) AS comment_count
+        WHERE c.post_id = p.id) AS comment_count,
+        (SELECT COUNT(*)
+        FROM post_interaction vi
+        WHERE vi.post_id = p.id
+        AND vi.interaction_type = 'VIEW') AS view_count
         FROM post_main p
         INNER JOIN member m ON p.member_id = m.id
         LEFT JOIN post_image img ON p.id = img.post_id
@@ -94,7 +99,11 @@
         AND pi.interaction_type = 'LIKE') AS like_count,
         (SELECT COUNT(*)
         FROM comment c
-        WHERE c.post_id = p.id) AS comment_count
+        WHERE c.post_id = p.id) AS comment_count,
+        (SELECT COUNT(*)
+        FROM post_interaction vi
+        WHERE vi.post_id = p.id
+        AND vi.interaction_type = 'VIEW') AS view_count
         FROM (
             SELECT *
             FROM post_main

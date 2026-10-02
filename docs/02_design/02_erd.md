@@ -1,8 +1,8 @@
-# 1. 데이터베이스 모델링 및 ERD 명세서 (사자그램 SNS)
+# 1. 데이터베이스 모델링 및 ERD 명세서 (펫토리)
 
 ## 목차
 
-- [1. 데이터베이스 모델링 및 ERD 명세서 (사자그램 SNS)](#1-데이터베이스-모델링-및-erd-명세서-사자그램-sns)
+- [1. 데이터베이스 모델링 및 ERD 명세서 (펫토리)](#1-데이터베이스-모델링-및-erd-명세서-펫토리)
 - [1.1 엔티티 관계 다이어그램 (ERD)](#11-엔티티-관계-다이어그램-erd)
 - [1.2 테이블별 상세 컬럼 명세](#12-테이블별-상세-컬럼-명세)
 
@@ -10,7 +10,8 @@
 
 ## 1.1 엔티티 관계 다이어그램 (ERD)
 
-사자그램 서비스의 회원·피드·소셜·결제·구독·채팅·실종 신고 도메인 테이블 전체 구조도.
+펫토리 서비스의 회원·피드·소셜·결제·구독·실종 신고 도메인 테이블 전체 구조도.
+(백엔드 API 기준으로 채팅·알림 등 미구현 도메인은 제외)
 
 ```mermaid
 erDiagram
@@ -26,10 +27,6 @@ erDiagram
     member ||--o{ subscription : "구독받음 (1:N)"
     member ||--o{ follow : "팔로우함 (1:N)"
     member ||--o{ follow : "팔로우받음 (1:N)"
-    member ||--o{ notification : "알림받음 (1:N)"
-    member ||--o{ notification : "알림유발함 (1:N)"
-    member ||--o{ chat_room : "채팅참여함 (1:N)"
-    member ||--o{ chat_message : "메시지전송함 (1:N)"
     member ||--o{ missing_pet_post : "실종신고함 (1:N)"
     member ||--o{ missing_pet_report : "제보함 (1:N)"
 
@@ -40,7 +37,6 @@ erDiagram
     payment ||--o{ cancel_payment : "취소됨 (1:N)"
     subscription_plan ||--o{ subscription : "적용됨 (1:N)"
     missing_pet_post ||--o{ missing_pet_report : "제보받음 (1:N)"
-    chat_room ||--o{ chat_message : "포함함 (1:N)"
 
     member {
         BIGINT id PK "회원 고유 식별자"
@@ -176,33 +172,6 @@ erDiagram
         BIGINT follower_id FK "팔로우 하는 회원 ID"
         BIGINT following_id FK "팔로우 대상 회원 ID"
         DATETIME created_at "팔로우 일시"
-    }
-
-    notification {
-        BIGINT id PK "알림 식별자"
-        BIGINT member_id FK "수신 회원 식별자"
-        BIGINT sender_id FK "알림 유발 회원 ID"
-        VARCHAR notification_type "알림 유형"
-        VARCHAR content "알림 메시지 내용"
-        TINYINT is_checked "알림 확인 여부"
-        DATETIME created_at "알림 발생 시각"
-    }
-
-    chat_room {
-        BIGINT id PK "채팅방 식별자"
-        BIGINT member1_id FK "채팅 참여자 1"
-        BIGINT member2_id FK "채팅 참여자 2"
-        TINYINT member1_exited "참여자 1 나가기 여부"
-        TINYINT member2_exited "참여자 2 나가기 여부"
-        DATETIME created_at "채팅방 생성 일시"
-    }
-
-    chat_message {
-        BIGINT id PK "메시지 식별자"
-        BIGINT room_id FK "속한 채팅방 ID"
-        BIGINT sender_id FK "메시지 보낸 사람 ID"
-        TEXT message "메시지 본문"
-        DATETIME created_at "메시지 전송 시각"
     }
 
     missing_pet_post {
@@ -415,43 +384,7 @@ db저장 특성상 자동정렬이 되지 않아서 유저가 올린 사진 순�
 
 UNIQUE KEY uk_follower_following (follower_id, following_id)
 
-### 1.2.11 notification(알림)
-
-| 컬럼명               | 데이터 타입       | 제약 조건                                      | 설명                                                           |
-|:------------------|:-------------|:-------------------------------------------|:-------------------------------------------------------------|
-| id                | BIGINT       | PK, AUTO_INCREMENT                         | 알림 식별자                                                       |
-| member_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 회원 식별자                                                       |
-| sender_id         | BIGINT       | NOT NULL, FK (member.id ON DELETE CASCADE) | 알림을 유발한 회원 ID                                                |
-| notification_type | VARCHAR(30)  | NOT NULL                                   | 알림 유형(FOLLOW, COMMENT, DONATION, SUBSCRIPTION, PET BIRTHDAY) |
-| content           | VARCHAR(255) | NOT NULL                                   | 알림 메시지 내용                                                    |
-| is_checked        | TINYINT(1)   | NOT NULL, DEFAULT 0                        | 알림 확인 여부 (0: 안읽음, 1: 읽음)                                     |
-| created_at        | DATETIME     | DEFAULT CURRENT_TIMESTAMP                  | 알림 발생 시각                                                     |
-
-### 1.2.12 chat_room(1:1 채팅방)
-
-| 컬럼명            | 데이터 타입     | 제약 조건                                      | 설명                           |
-|:---------------|:-----------|:-------------------------------------------|:-----------------------------|
-| id             | BIGINT     | PK, AUTO_INCREMENT                         | 채팅방 식별자                      |
-| member1_id     | BIGINT     | NOT NULL, FK (member.id ON DELETE CASCADE) | 채팅 참여자 1                     |
-| member2_id     | BIGINT     | NOT NULL, FK(member.id ON DELETE CASCADE)  | 채팅 참여자 2                     |
-| member1_exited | TINYINT(1) | NOT NULL, DEFAULT 0                        | 참여자 1 나가기 여부 (0: 참여중, 1: 나감) |
-| member2_exited | TINYINT(1) | NOT NULL, DEFAULT 0                        | 참여자 2 나가기 여부 (0: 참여중, 1: 나감) |
-| created_at     | DATETIME   | DEFAULT CURRENT_TIMESTAMP                  | 채팅방 생성 일시                    |
-
-- 고유 제약조건: UNIQUE KEY `uk_member_chat` (`member1_id`, `member2_id`)
--
-
-### 1.2.13 chat_message(채팅 메시지 이력)
-
-| 컬럼명        | 데이터 타입   | 제약 조건                                         | 설명        |
-|:-----------|:---------|:----------------------------------------------|:----------|
-| id         | BIGINT   | PK, AUTO_INCREMENT                            | 메시지 식별자   |
-| room_id    | BIGINT   | NOT NULL, FK (chat_room.id ON DELETE CASCADE) | 속한 채팅방 ID |
-| sender_id  | BIGINT   | NOT NULL, FK  (member.id 참조)                  | 메시지 보낸 사람 |
-| message    | TEXT     | NOT NULL                                      | 메시지 본문    |
-| created_at | DATETIME | DEFAULT CURRENT_TIMESTAMP                     | 매시지 전송 시각 |
-
-### 1.2.14 missing_pet_post(실종 신고 게시글)
+### 1.2.11 missing_pet_post(실종 신고 게시글)
 
 | 컬럼명             | 데이터 타입        | 제약 조건                                      | 설명                            |
 |:----------------|:--------------|:-------------------------------------------|:------------------------------|
@@ -467,19 +400,18 @@ UNIQUE KEY uk_follower_following (follower_id, following_id)
 | created_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 작성 시각                         |
 | updated_at      | DATETIME      | DEFAULT CURRENT_TIMESTAMP                  | 게시글 수정 일시                     |
 
-### 1.2.15 missing_pet_report(실종 동물 목격 제보)
+### 1.2.12 missing_pet_report(실종 동물 목격 제보)
 
-| 컬럼명                 | 데이터 타입        | 제약 조건                                                 | 설명                        |
-|:--------------------|:--------------|:------------------------------------------------------|:--------------------------|
-| id                  | BIGINT        | PK, AUTO_INCREMENT                                    | 실종 신고 게시글 고유 ID           |
-| missing_pet_post_id | BIGINT        | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE)  | 대상 실종 신고 게시글 ID           |
-| member_id           | BIGINT        | NOT NULL, FK(member.id ON DELETE CASCADE)             | 제보자 회원 ID                 |
-| address             | VARCHAR(255)  | NOT NULL                                              | 목격 장소                     |
-| detail              | TEXT          | NULL                                                  | 목격 상황 및 상태 설명(추가 추천)      |
-| image_url           | VARCHAR(255)  | NULL                                                  | 제보자가 찰영한 이미지 S3 URL       |
-| sight_at            | DATETIME      | NOT NULL                                              | 실제 동물을 목격한 일시             |
-| status              | VARCHAR(20)   | NOT NULL DEFAULT 'SIGHTED'                            | SIGHTED 목격, PROTECTED 보호중 |
-| latitude            | DECIMAL(10,7) | NULL                                                  | 위도                        |
-| longitude           | DECIMAL(10,7) | NULL                                                  | 경도                        |
-| created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                             | 제보 등록 일시                  |
-| updated_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 제보 수정 일시                  |
+| 컬럼명                 | 데이터 타입        | 제약 조건                                                 | 설명                   |
+|:--------------------|:--------------|:------------------------------------------------------|:---------------------|
+| id                  | BIGINT        | PK, AUTO_INCREMENT                                    | 제보 식별자                |
+| missing_pet_post_id | BIGINT        | NOT NULL, FK (missing_pet_post.id ON DELETE CASCADE)  | 대상 실종 신고 게시글 ID      |
+| member_id           | BIGINT        | NOT NULL, FK(member.id ON DELETE CASCADE)             | 제보자 회원 ID            |
+| address             | VARCHAR(255)  | NOT NULL                                              | 목격 장소                |
+| detail              | TEXT          | NULL                                                  | 목격 상황 및 상태 설명        |
+| image_url           | VARCHAR(255)  | NULL                                                  | 제보자가 촬영한 이미지 S3 URL  |
+| sight_at            | DATETIME      | NOT NULL                                              | 실제 동물을 목격한 일시        |
+| latitude            | DECIMAL(10,7) | NULL                                                  | 위도                   |
+| longitude           | DECIMAL(10,7) | NULL                                                  | 경도                   |
+| created_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP                             | 제보 등록 일시             |
+| updated_at          | DATETIME      | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | 제보 수정 일시             |
